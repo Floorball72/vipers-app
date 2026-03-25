@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UHC Jonschwil Vipers — Vereinsplattform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0c0d0f;
+    --bg2:     #141518;
+    --bg3:     #1c1d22;
+    --bg4:     #232429;
+    --border:  rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text:    #eceaf4;
+    --text2:   #8f8d9a;
+    --text3:   #4e4c58;
+    --accent:  #d4f04a;
+    --accent2: #b8d93a;
+    --purple:  #9b8fff;
+    --blue:    #5bbfff;
+    --green:   #4dd68c;
+    --amber:   #ffbe47;
+    --red:     #ff6b6b;
+    --r: 10px;
+    --r-lg: 16px;
+
+    /* Swiss Unihockey API — hier Keys eintragen sobald vorhanden */
+    /* SUPABASE_URL und SUPABASE_KEY im Script-Block unten */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar { width: 230px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 7px; display: grid; place-items: center; flex-shrink: 0; }
+  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; line-height: 1.2; color: var(--text); }
+  .logo-sub { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; letter-spacing: 0.1em; }
+  .nav { padding: 10px 8px; flex: 1; }
+  .nav-sec { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 14px 10px 5px; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px; font-size: 13px; color: var(--text2); cursor: pointer; transition: all 0.12s; text-decoration: none; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(212,240,74,0.1); color: var(--accent); font-weight: 500; }
+  .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-badge { margin-left: auto; background: var(--amber); color: #1a1200; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 1px 7px; }
+  .api-status { margin: 12px 8px; padding: 10px 12px; background: var(--bg3); border-radius: 8px; border: 1px solid var(--border); }
+  .api-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); display: inline-block; margin-right: 6px; }
+  .api-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .api-dot.pending { background: var(--amber); }
+  .api-label { font-size: 11px; color: var(--text2); }
+
+  /* ── Main ── */
+  .main { flex: 1; min-width: 0; }
+  .topbar { padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+  .page-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .topbar-right { display: flex; gap: 8px; align-items: center; }
+  .badge-gcal { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 5px 12px; border-radius: 20px; background: rgba(91,191,255,0.1); border: 1px solid rgba(91,191,255,0.25); color: var(--blue); }
+  .badge-api-wait { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 5px 12px; border-radius: 20px; background: rgba(255,190,71,0.1); border: 1px solid rgba(255,190,71,0.25); color: var(--amber); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .btn-accent { background: var(--accent); color: #0c0d0f; }
+  .btn-accent:hover { background: var(--accent2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+
+  .content { padding: 24px 28px; }
+
+  /* ── Stats ── */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 18px; }
+  .stat-label { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .stat-val { font-family: 'DM Mono', monospace; font-size: 30px; font-weight: 400; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .stat-hi { border-color: rgba(212,240,74,0.25); }
+  .stat-hi .stat-val { color: var(--accent); }
+  .stat-warn .stat-val { color: var(--amber); }
+
+  /* ── 2-col ── */
+  .two-col { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+
+  /* ── Wochenplan ── */
+  .week-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+  .card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; }
+  .week-row { padding: 14px 20px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 90px 1fr auto; gap: 16px; align-items: start; }
+  .week-row:last-child { border-bottom: none; }
+  .week-day { font-size: 12px; font-weight: 500; color: var(--text3); padding-top: 2px; }
+  .week-day.post-day { color: var(--accent); }
+  .week-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .week-content { }
+  .week-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .tag-vorschau { color: var(--amber); }
+  .tag-resultat { color: var(--green); }
+  .tag-spiel { color: var(--purple); }
+  .tag-event { color: var(--blue); }
+  .week-games { display: flex; flex-direction: column; gap: 4px; }
+  .week-game { font-size: 13px; color: var(--text); }
+  .week-game span { color: var(--text2); font-size: 12px; margin-left: 6px; }
+  .week-status { display: flex; align-items: center; }
+  .status-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .status-offen { background: rgba(255,190,71,0.12); color: var(--amber); border: 1px solid rgba(255,190,71,0.25); }
+  .status-erledigt { background: rgba(77,214,140,0.1); color: var(--green); border: 1px solid rgba(77,214,140,0.2); }
+  .status-fehlt { background: rgba(255,107,107,0.1); color: var(--red); border: 1px solid rgba(255,107,107,0.2); }
+
+  /* ── Rechte Spalte: nächste Posts ── */
+  .posts-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+  .post-item { padding: 16px 18px; border-bottom: 1px solid var(--border); transition: background 0.12s; }
+  .post-item:last-child { border-bottom: none; }
+  .post-item:hover { background: rgba(255,255,255,0.02); }
+  .post-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .post-type-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .post-type-label.vorschau { color: var(--amber); }
+  .post-type-label.resultat { color: var(--green); }
+  .post-date { font-size: 11px; color: var(--text3); }
+  .post-teams { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+  .post-team-row { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+  .post-team-row::before { content: ''; width: 3px; height: 3px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .post-footer { display: flex; align-items: center; justify-content: space-between; }
+  .gcal-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--blue); }
+  .post-actions { display: flex; gap: 5px; }
+  .mini-btn { font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border2); background: transparent; color: var(--text2); transition: all 0.12s; }
+  .mini-btn:hover { color: var(--text); }
+  .mini-btn.primary { background: rgba(212,240,74,0.1); border-color: rgba(212,240,74,0.3); color: var(--accent); }
+  .mini-btn.warn { background: rgba(255,107,107,0.1); border-color: rgba(255,107,107,0.25); color: var(--red); }
+
+  /* ── Alle Spiele Wochenende Block ── */
+  .weekend-block { padding: 10px 20px 14px; border-bottom: 1px solid var(--border); }
+  .weekend-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+  .game-row { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .game-row:last-child { border-bottom: none; }
+  .game-team-name { font-size: 11px; color: var(--text3); font-weight: 500; }
+  .game-matchup { font-size: 13px; color: var(--text); }
+  .game-matchup em { font-style: normal; color: var(--text2); font-size: 11px; }
+  .game-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); text-align: right; }
+  .game-result { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--accent); text-align: right; }
+
+  /* ── Modal ── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r-lg); padding: 26px; width: 100%; max-width: 500px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+  .form-grid { display: grid; gap: 14px; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-label { display: block; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+  .form-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--accent); }
+  .info-box { background: rgba(91,191,255,0.08); border: 1px solid rgba(91,191,255,0.2); border-radius: 8px; padding: 12px 14px; font-size: 12px; color: var(--blue); line-height: 1.7; }
+  .info-box strong { display: block; margin-bottom: 3px; font-weight: 600; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<script>
+  // ── Konfiguration ──
+  const CONFIG = {
+    SUPABASE_URL: 'https://kpskzbqrfvihxfynwvpv.supabase.co',
+    SUPABASE_KEY: 'sb_publishable_eyDYEuo2aQKLLWX_0c8n-g_AttYd0La',
+    SWISS_UH_API_KEY: '',                      // nach API-Key-Anfrage eintragen
+    SWISS_UH_CLUB_ID: 692,                     // UHC Jonschwil Vipers
+    GCAL_VIPERS_ID: '5320809ae59397fe852db643253723db16d2292d8b38179e85d35af082623f8e@group.calendar.google.com',
+  };
+
+  // ── Demo-Daten (werden durch echte API-Daten ersetzt sobald Key vorhanden) ──
+  const TEAMS = [
+    { id: 1, name: 'Vipers 1. Liga Damen',  liga: '1. Liga Gruppe 3' },
+    { id: 2, name: 'Vipers 1. Liga Herren', liga: '1. Liga Gruppe 2' },
+    { id: 3, name: 'Junioren U18',           liga: 'Junioren A' },
+    { id: 4, name: 'Junioren U15',           liga: 'Junioren B' },
+    { id: 5, name: 'Junioren U13',           liga: 'Junioren C' },
+  ];
+
+  // Woche 4.–11. April 2025
+  const THIS_WEEKEND = [
+    { team: 'Vipers 1. Liga Damen',  gegner: 'Zug United Damen', datum: 'Sa 5. Apr', zeit: '17:00', heim: true,  resultat: null },
+    { team: 'Vipers 1. Liga Herren', gegner: 'Chur-Araschgen',   datum: 'Sa 5. Apr', zeit: '19:30', heim: true,  resultat: null },
+    { team: 'Junioren U18',          gegner: 'UHV Grabs',        datum: 'So 6. Apr', zeit: '10:00', heim: false, resultat: null },
+    { team: 'Junioren U15',          gegner: 'Bütschwil',        datum: 'So 6. Apr', zeit: '11:30', heim: true,  resultat: null },
+  ];
+
+  const LAST_WEEKEND = [
+    { team: 'Vipers 1. Liga Damen',  gegner: 'Luzern United',    datum: 'Sa 29. Mär', heim: true,  resultat: '8:4' },
+    { team: 'Vipers 1. Liga Herren', gegner: 'Wil-Flawil',       datum: 'Sa 29. Mär', heim: false, resultat: '5:7' },
+    { team: 'Junioren U18',          gegner: 'SV Wil',           datum: 'So 30. Mär', heim: true,  resultat: '6:3' },
+    { team: 'Junioren U15',          gegner: 'Bronschhofen',     datum: 'So 30. Mär', heim: false, resultat: null, fehlt: true },
+  ];
+</script>
+
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 18 18" fill="none">
+          <path d="M9 2L16 6V12L9 16L2 12V6L9 2Z" fill="#0c0d0f"/>
+          <path d="M6 9L8.5 11.5L12.5 7" stroke="#0c0d0f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-name">UHC Jonschwil</div>
+        <div class="logo-sub">VIPERS</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-sec">Übersicht</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="1.5" x2="5" y2="4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="11" y1="1.5" x2="11" y2="4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/></svg>
+        Kalender
+      </a>
+
+      <div class="nav-sec">Spielbetrieb</div>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7L8 10L11 5L14 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Social Media
+        <span class="nav-badge">1</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5.5V8L10 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Spielplan
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M4 12V6M8 12V4M12 12V8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Scorer
+      </a>
+
+      <div class="nav-sec">Verein</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 13c0-2.2 2-4 4.5-4s4.5 1.8 4.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11 9c1.8 0.3 3 1.6 3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Teams
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 8H11M5 5.5H11M5 10.5H8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Events
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12V4l6-2 6 2v8l-6 2-6-2Z" stroke="currentColor" stroke-width="1.3"/></svg>
+        Finanzen
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M7 6.5L10.5 8.5L7 10.5V6.5Z" fill="currentColor"/></svg>
+        Video & Training
+      </a>
+    </nav>
+
+    <!-- API Status -->
+    <div style="padding: 0 8px 12px;">
+      <div class="api-status">
+        <div style="display:flex;align-items:center;margin-bottom:6px">
+          <span class="api-dot connected"></span>
+          <span class="api-label">Google Calendar</span>
+        </div>
+        <div style="display:flex;align-items:center;margin-bottom:6px">
+          <span class="api-dot connected"></span>
+          <span class="api-label">Supabase DB</span>
+        </div>
+        <div style="display:flex;align-items:center">
+          <span class="api-dot pending"></span>
+          <span class="api-label">Swiss Unihockey API <span style="color:var(--amber);font-size:10px">(ausstehend)</span></span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Social Media Planer</div>
+        <div class="page-sub">UHC Jonschwil Vipers · Saison 2024/25 · 1 Post/Woche pro Typ</div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge-gcal">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/></svg>
+          Google Cal. verbunden
+        </span>
+        <span class="badge-api-wait">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Swiss UH API ausstehend
+        </span>
+        <button class="btn btn-ghost" onclick="document.getElementById('newGameModal').classList.add('open')">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Spiel erfassen
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat stat-hi">
+          <div class="stat-label">Nächster Post</div>
+          <div class="stat-val">Fr</div>
+          <div class="stat-sub">4. Apr · 12:00 Uhr</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Teams diese Woche</div>
+          <div class="stat-val">4</div>
+          <div class="stat-sub">spielen am Wochenende</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Posts geplant</div>
+          <div class="stat-val">2</div>
+          <div class="stat-sub">Vorschau Fr + Resultat Mi</div>
+        </div>
+        <div class="stat stat-warn">
+          <div class="stat-label">Fehlende Resultate</div>
+          <div class="stat-val">1</div>
+          <div class="stat-sub">Junioren U15 ausstehend</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+
+        <!-- Wochenplan -->
+        <div class="week-card">
+          <div class="card-header">
+            <span class="card-title">Woche 31. März – 9. April 2025</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px">‹ Vorherige</button>
+              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px">Nächste ›</button>
+            </div>
+          </div>
+
+          <!-- Fr: Vorschau-Post -->
+          <div class="week-row">
+            <div>
+              <div class="week-day post-day">Freitag</div>
+              <div class="week-date">4. April · 12:00</div>
+            </div>
+            <div>
+              <div class="week-tag tag-vorschau">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 5.5L11 8L6.5 10.5V5.5Z" fill="currentColor"/></svg>
+                Vorschau-Post · alle Teams
+              </div>
+              <div class="week-games" id="vorschau-games"></div>
+            </div>
+            <div class="week-status">
+              <span class="status-pill status-offen">Offen</span>
+            </div>
+          </div>
+
+          <!-- Sa: Spiele -->
+          <div class="week-row">
+            <div>
+              <div class="week-day">Samstag</div>
+              <div class="week-date">5. April</div>
+            </div>
+            <div>
+              <div class="week-tag tag-spiel">Spieltag</div>
+              <div class="week-games">
+                <div class="week-game">Vipers 1. Liga Damen vs. Zug United <span>17:00</span></div>
+                <div class="week-game">Vipers 1. Liga Herren vs. Chur-Araschgen <span>19:30</span></div>
+              </div>
+            </div>
+            <div></div>
+          </div>
+
+          <!-- So: Spiele -->
+          <div class="week-row">
+            <div>
+              <div class="week-day">Sonntag</div>
+              <div class="week-date">6. April</div>
+            </div>
+            <div>
+              <div class="week-tag tag-spiel">Spieltag</div>
+              <div class="week-games">
+                <div class="week-game">Junioren U18 @ UHV Grabs <span>10:00</span></div>
+                <div class="week-game">Junioren U15 vs. Bütschwil <span>11:30</span></div>
+              </div>
+            </div>
+            <div></div>
+          </div>
+
+          <!-- Mi: Resultat-Post -->
+          <div class="week-row">
+            <div>
+              <div class="week-day post-day">Mittwoch</div>
+              <div class="week-date">9. April · 12:00</div>
+            </div>
+            <div>
+              <div class="week-tag tag-resultat">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Resultat-Post · alle Teams
+              </div>
+              <div class="week-games" id="resultat-games"></div>
+            </div>
+            <div class="week-status">
+              <span class="status-pill status-fehlt">1 fehlt</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Rechts: nächste 2 Posts -->
+        <div>
+          <div class="posts-card">
+            <div class="card-header">
+              <span class="card-title">Nächste Posts</span>
+              <span style="font-size:11px;color:var(--text3)">2 offen</span>
+            </div>
+
+            <!-- Vorschau Post -->
+            <div class="post-item">
+              <div class="post-header">
+                <span class="post-type-label vorschau">📸 Vorschau-Post</span>
+                <span class="post-date">Fr. 4. Apr · 12:00</span>
+              </div>
+              <div class="post-teams" id="post-vorschau-teams"></div>
+              <div style="margin:8px 0;font-size:11px;color:var(--text3)">Instagram · Facebook · TikTok</div>
+              <div class="post-footer">
+                <span class="gcal-chip">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/></svg>
+                  In Google Cal. ✓
+                </span>
+                <div class="post-actions">
+                  <button class="mini-btn" onclick="openCanva()">Canva öffnen</button>
+                  <button class="mini-btn primary" onclick="markPosted(this)">Gepostet ✓</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resultat Post -->
+            <div class="post-item">
+              <div class="post-header">
+                <span class="post-type-label resultat">🏆 Resultat-Post</span>
+                <span class="post-date">Mi. 9. Apr · 12:00</span>
+              </div>
+              <div class="post-teams" id="post-resultat-teams"></div>
+              <div style="margin:8px 0;">
+                <span style="font-size:11px;color:var(--red);font-weight:500">⚠ Junioren U15: Resultat fehlt</span>
+              </div>
+              <div class="post-footer">
+                <span class="gcal-chip">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/></svg>
+                  In Google Cal. ✓
+                </span>
+                <div class="post-actions">
+                  <button class="mini-btn warn" onclick="openResultModal()">Resultat nachtragen</button>
+                  <button class="mini-btn" onclick="openCanva()">Canva öffnen</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info Swiss UH API -->
+            <div style="padding:14px 18px;background:rgba(255,190,71,0.05);border-top:1px solid var(--border)">
+              <div style="font-size:11px;color:var(--amber);font-weight:600;margin-bottom:4px">Swiss Unihockey API · ausstehend</div>
+              <div style="font-size:11px;color:var(--text3);line-height:1.6">Sobald der API-Key eingetragen ist, werden Spielplan und Resultate automatisch aus der Swiss Unihockey Datenbank (Verein #692) geladen.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neues Spiel -->
+<div class="overlay" id="newGameModal">
+  <div class="modal">
+    <div class="modal-title">Neues Spiel erfassen</div>
+    <div class="form-grid">
+      <div>
+        <label class="form-label">Team</label>
+        <select class="form-input" id="f-team">
+          <option>Vipers 1. Liga Damen</option>
+          <option>Vipers 1. Liga Herren</option>
+          <option>Junioren U18</option>
+          <option>Junioren U15</option>
+          <option>Junioren U13</option>
+        </select>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Gegner</label>
+          <input class="form-input" type="text" id="f-gegner" placeholder="z.B. Zug United">
+        </div>
+        <div>
+          <label class="form-label">Heim / Auswärts</label>
+          <select class="form-input"><option>Heimspiel</option><option>Auswärtsspiel</option></select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Spieltag</label>
+          <input class="form-input" type="date" id="f-datum">
+        </div>
+        <div>
+          <label class="form-label">Anstoss</label>
+          <input class="form-input" type="time" value="17:00">
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Wettbewerb</label>
+        <select class="form-input"><option>1. Liga</option><option>NLB</option><option>Cup</option><option>Friendly</option></select>
+      </div>
+      <div class="info-box">
+        <strong>Automatisch generiert:</strong>
+        Das Spiel wird dem wöchentlichen Vorschau-Post (Fr. 12:00) und Resultat-Post (Mi. 12:00) hinzugefügt. Beide Termine sind bereits im Kalender "UHC Jonschwil Vipers" eingetragen.
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('newGameModal')">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveGame()">Spiel speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Resultat nachtragen -->
+<div class="overlay" id="resultModal">
+  <div class="modal">
+    <div class="modal-title">Resultat nachtragen</div>
+    <div class="form-grid">
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;font-size:13px;color:var(--text2)">
+        Junioren U15 vs. Bütschwil · So. 6. April
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Tore UHC Jonschwil</label>
+          <input class="form-input" type="number" min="0" placeholder="0" id="r-heim">
+        </div>
+        <div>
+          <label class="form-label">Tore Gegner</label>
+          <input class="form-input" type="number" min="0" placeholder="0" id="r-gast">
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Bemerkung (optional)</label>
+        <input class="form-input" type="text" placeholder="z.B. Nach Verlängerung">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('resultModal')">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveResult()">Resultat speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Supabase Live-Anbindung ──
+  let db = null;
+  async function initDB() {
+    try {
+      const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+      db = mod.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+      console.log('Supabase verbunden:', CONFIG.SUPABASE_URL);
+      await loadGamesFromDB();
+    } catch(e) { console.warn('DB nicht erreichbar, Demo-Daten aktiv:', e); renderGames(); }
+  }
+
+  async function loadGamesFromDB() {
+    if (!db) { renderGames(); return; }
+    const today = new Date();
+    const dow = today.getDay();
+    const thisMon = new Date(today); thisMon.setDate(today.getDate() - ((dow+6)%7));
+    const thisSun = new Date(thisMon); thisSun.setDate(thisMon.getDate()+6);
+    const lastMon = new Date(thisMon); lastMon.setDate(thisMon.getDate()-7);
+    const lastSun = new Date(thisMon); lastSun.setDate(thisMon.getDate()-1);
+    const fmt = d => d.toISOString().split('T')[0];
+    const [res1, res2] = await Promise.all([
+      db.from('games').select('*, teams(name)').gte('datum',fmt(thisMon)).lte('datum',fmt(thisSun)).order('datum').order('anstoss'),
+      db.from('games').select('*, teams(name)').gte('datum',fmt(lastMon)).lte('datum',fmt(lastSun)).order('datum')
+    ]);
+    if (res1.data && res1.data.length > 0) {
+      THIS_WEEKEND.length = 0;
+      res1.data.forEach(function(g) {
+        THIS_WEEKEND.push({
+          team: (g.teams && g.teams.name) || 'Team',
+          gegner: g.gegner,
+          datum: new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{weekday:'short',day:'numeric',month:'short'}),
+          zeit: g.anstoss ? g.anstoss.slice(0,5) : '',
+          heim: g.heimspiel,
+          resultat: g.resultat_heim != null ? g.resultat_heim+':'+g.resultat_gast : null
+        });
+      });
+    }
+    if (res2.data && res2.data.length > 0) {
+      LAST_WEEKEND.length = 0;
+      res2.data.forEach(function(g) {
+        LAST_WEEKEND.push({
+          team: (g.teams && g.teams.name) || 'Team',
+          gegner: g.gegner,
+          datum: new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{weekday:'short',day:'numeric',month:'short'}),
+          heim: g.heimspiel,
+          resultat: g.resultat_heim != null ? g.resultat_heim+':'+g.resultat_gast : null,
+          fehlt: g.resultat_heim == null,
+          dbId: g.id
+        });
+      });
+    }
+    renderGames();
+  }
+
+  async function saveGameToDB(gameData) {
+    if (!db) return null;
+    const res = await db.from('games').insert([gameData]).select().single();
+    if (res.error) { console.error(res.error); return null; }
+    return res.data;
+  }
+
+  async function updateResultInDB(dbId, heim, gast) {
+    if (!db || !dbId) return;
+    await db.from('games').update({ resultat_heim: parseInt(heim), resultat_gast: parseInt(gast) }).eq('id', dbId);
+  }
+
+  // ── DOM rendern ──
+  function renderGames() {
+    // Vorschau-Spiele im Wochenplan
+    const vg = document.getElementById('vorschau-games');
+    vg.innerHTML = THIS_WEEKEND.map(g =>
+      `<div class="week-game">${g.team}: <strong style="color:var(--text)">${g.heim ? 'vs.' : '@'} ${g.gegner}</strong> <span>${g.datum} · ${g.zeit}</span></div>`
+    ).join('');
+
+    // Resultate im Wochenplan
+    const rg = document.getElementById('resultat-games');
+    rg.innerHTML = LAST_WEEKEND.map(g => {
+      if (g.fehlt) return `<div class="week-game" style="color:var(--red)">${g.team}: <span style="color:var(--red)">Resultat fehlt</span></div>`;
+      const won = g.resultat && parseInt(g.resultat) > parseInt(g.resultat.split(':')[1]);
+      return `<div class="week-game">${g.team} vs. ${g.gegner}: <strong style="color:${g.resultat ? 'var(--accent)' : 'var(--text3)'}">${g.resultat || '–'}</strong></div>`;
+    }).join('');
+
+    // Post-Vorschau rechts
+    document.getElementById('post-vorschau-teams').innerHTML = THIS_WEEKEND.map(g =>
+      `<div class="post-team-row">${g.team} · ${g.heim ? 'vs.' : '@'} ${g.gegner} · ${g.datum}</div>`
+    ).join('');
+
+    // Post-Resultat rechts
+    document.getElementById('post-resultat-teams').innerHTML = LAST_WEEKEND.map(g =>
+      `<div class="post-team-row">${g.team}: ${g.fehlt ? '<span style="color:var(--red)">ausstehend</span>' : `<span style="color:var(--accent)">${g.resultat}</span>`}</div>`
+    ).join('');
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function openResultModal() { document.getElementById('resultModal').classList.add('open'); }
+  function openCanva() { alert('Öffnet den Canva-Design-Link für diesen Post.\n\n(Wird mit dem Canva-Link aus der Datenbank verknüpft sobald du ihn hinterlegst.)'); }
+
+  function markPosted(btn) {
+    btn.textContent = '✓ Erledigt';
+    btn.style.background = 'rgba(77,214,140,0.1)';
+    btn.style.borderColor = 'rgba(77,214,140,0.25)';
+    btn.style.color = 'var(--green)';
+    btn.disabled = true;
+  }
+
+  async function saveGame() {
+    const gegner = document.getElementById('f-gegner').value;
+    const datum  = document.getElementById('f-datum').value;
+    const teamEl = document.getElementById('f-team');
+    if (!gegner || !datum) { alert('Bitte Gegner und Datum eintragen.'); return; }
+    const btn = event.target; btn.textContent = 'Speichern...'; btn.disabled = true;
+    const row = await saveGameToDB({ gegner, datum, anstoss: '17:00', heimspiel: true, notizen: '' });
+    btn.textContent = 'Spiel speichern'; btn.disabled = false;
+    if (row) {
+      alert('Gespeichert! Das Spiel gegen ' + gegner + ' wurde in Supabase eingetragen.');
+      await loadGamesFromDB();
+    } else {
+      alert('Spiel gegen ' + gegner + ' gespeichert (Demo-Modus, keine DB-Verbindung).');
+    }
+    closeModal('newGameModal');
+  }
+
+  async function saveResult() {
+    const h = document.getElementById('r-heim').value;
+    const g = document.getElementById('r-gast').value;
+    if (h === '' || g === '') { alert('Bitte beide Werte eintragen.'); return; }
+    const missing = LAST_WEEKEND.find(function(x){ return x.fehlt; });
+    if (missing) {
+      await updateResultInDB(missing.dbId, h, g);
+      missing.resultat = h + ':' + g;
+      missing.fehlt = false;
+    }
+    renderGames();
+    closeModal('resultModal');
+    const badge = document.querySelector('.nav-badge');
+    if (badge) badge.textContent = '0';
+  }
+
+  // Close on backdrop click
+  document.querySelectorAll('.overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+
+  // Start: DB verbinden und Daten laden
+  initDB();
+</script>
+</body>
+</html>
