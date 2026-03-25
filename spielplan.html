@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spielplan & Teams — UHC Jonschwil Vipers</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--bg4:#232429;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+    --text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;
+    --accent:#d4f04a;--accent2:#b8d93a;
+    --purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;
+    --r:10px;--r-lg:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .shell{display:flex;min-height:100vh}
+
+  /* Sidebar */
+  .sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+  .logo-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+  .logo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.1em}
+  .nav{padding:10px 8px;flex:1}
+  .nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+  .nav-item:hover{background:var(--bg3);color:var(--text)}
+  .nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+  .nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+  .nav-item.active svg{opacity:1}
+
+  /* Main */
+  .main{flex:1;min-width:0}
+  .topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .page-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
+  .page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+  .btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .btn-accent{background:var(--accent);color:#0c0d0f}
+  .btn-accent:hover{background:var(--accent2)}
+  .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+  .btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,.22)}
+  .btn-danger{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.25)}
+  .btn-danger:hover{background:rgba(255,107,107,.2)}
+
+  .content{padding:24px 28px}
+
+  /* Tab nav */
+  .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0}
+  .tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+  /* Team selector */
+  .team-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .team-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:transparent;transition:all .12s;font-family:'DM Sans',sans-serif}
+  .team-pill:hover{border-color:var(--border);color:var(--text)}
+  .team-pill.active{background:rgba(212,240,74,.1);border-color:rgba(212,240,74,.4);color:var(--accent)}
+
+  /* Spielplan Tabelle */
+  .table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+  .table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .table-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
+  table{width:100%;border-collapse:collapse}
+  th{padding:10px 20px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+  td{padding:12px 20px;font-size:13px;border-bottom:1px solid var(--border)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .badge{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px}
+  .badge-home{background:rgba(77,214,140,.12);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+  .badge-away{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+  .badge-cup{background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)}
+  .result-win{color:var(--green);font-family:'DM Mono',monospace;font-weight:500}
+  .result-loss{color:var(--red);font-family:'DM Mono',monospace;font-weight:500}
+  .result-open{color:var(--text3);font-size:11px}
+  .row-actions{display:flex;gap:6px;opacity:0;transition:opacity .15s}
+  tr:hover .row-actions{opacity:1}
+  .icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+  .icon-btn:hover{color:var(--text);border-color:var(--border)}
+  .icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+
+  /* Teams Grid */
+  .teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .team-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:border-color .15s}
+  .team-card:hover{border-color:var(--border2)}
+  .team-card-header{padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+  .team-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:600}
+  .team-liga{font-size:11px;color:var(--text3);margin-top:2px}
+  .team-body{padding:14px 18px}
+  .team-info-row{display:flex;align-items:start;gap:10px;margin-bottom:10px;font-size:13px}
+  .team-info-row:last-child{margin-bottom:0}
+  .info-icon{width:16px;height:16px;flex-shrink:0;color:var(--text3);margin-top:1px}
+  .info-label{color:var(--text2)}
+  .info-val{color:var(--text);margin-left:auto;text-align:right;font-size:12px}
+  .team-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .team-stat{text-align:center}
+  .team-stat-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:400;color:var(--text)}
+  .team-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+  .team-card-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;gap:6px}
+
+  /* Spieler Liste */
+  .player-row{display:grid;grid-template-columns:40px 1fr 80px 80px auto;gap:12px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--border)}
+  .player-row:last-child{border-bottom:none}
+  .player-row:hover{background:rgba(255,255,255,.02)}
+  .player-num{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--text3)}
+  .player-name{font-size:13px;font-weight:500}
+  .player-pos{font-size:11px;color:var(--text3);margin-top:2px}
+  .pos-badge{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg3);color:var(--text2);font-weight:500}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+  .modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:20px}
+  .form-grid{display:grid;gap:14px}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+  .form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+  .form-input:focus{border-color:var(--accent)}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+  /* Empty state */
+  .empty{text-align:center;padding:60px 20px;color:var(--text3)}
+  .empty-title{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:8px}
+  .empty-sub{font-size:13px;margin-bottom:20px}
+
+  /* Loading */
+  .loading{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<script>
+const CONFIG = {
+  SUPABASE_URL: 'https://kpskzbqrfvihxfynwvpv.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_eyDYEuo2aQKLLWX_0c8n-g_AttYd0La',
+  GCAL_VIPERS_ID: '5320809ae59397fe852db643253723db16d2292d8b38179e85d35af082623f8e@group.calendar.google.com',
+};
+
+let db = null;
+let teams = [];
+let games = [];
+let players = [];
+let activeTeamId = 'all';
+let activeTab = 'spielplan';
+let editingGame = null;
+let editingPlayer = null;
+
+async function initDB() {
+  const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+  db = mod.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+  await loadAll();
+}
+
+async function loadAll() {
+  showLoading();
+  const [t, g] = await Promise.all([
+    db.from('teams').select('*').eq('aktiv', true).order('name'),
+    db.from('games').select('*, teams(name,liga)').order('datum').order('anstoss')
+  ]);
+  teams = t.data || [];
+  games = g.data || [];
+  render();
+}
+
+async function loadPlayers(teamId) {
+  if (!db) return;
+  const { data } = await db.from('players').select('*').eq('team_id', teamId).eq('aktiv', true).order('nummer');
+  players = data || [];
+  renderPlayers();
+}
+
+// ── Render ──
+function showLoading() {
+  document.getElementById('main-content').innerHTML = '<div class="loading">Lade Daten...</div>';
+}
+
+function render() {
+  if (activeTab === 'spielplan') renderSpielplan();
+  else if (activeTab === 'teams') renderTeams();
+}
+
+function renderSpielplan() {
+  const filtered = activeTeamId === 'all' ? games : games.filter(g => g.team_id === activeTeamId);
+  const upcoming = filtered.filter(g => !g.resultat_heim && !g.resultat_gast);
+  const past = filtered.filter(g => g.resultat_heim != null || g.resultat_gast != null);
+
+  let html = '';
+
+  // Kommende Spiele
+  html += `<div class="table-card" style="margin-bottom:16px">
+    <div class="table-header">
+      <span class="table-title">Kommende Spiele</span>
+      <span style="font-size:11px;color:var(--text3)">${upcoming.length} Spiele</span>
+    </div>`;
+
+  if (upcoming.length === 0) {
+    html += '<div class="empty"><div class="empty-title">Keine kommenden Spiele</div><div class="empty-sub">Erfasse das nächste Spiel mit dem Button oben rechts</div></div>';
+  } else {
+    html += '<table><thead><tr><th>Datum</th><th>Team</th><th>Gegner</th><th>Ort</th><th>Liga</th><th>Anstoss</th><th></th></tr></thead><tbody>';
+    upcoming.forEach(g => {
+      const datum = new Date(g.datum + 'T12:00:00').toLocaleDateString('de-CH', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+      html += `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${datum}</td>
+        <td style="color:var(--text2);font-size:12px">${g.teams?.name || '–'}</td>
+        <td><strong>${g.heimspiel ? 'vs.' : '@'} ${g.gegner}</strong></td>
+        <td><span class="badge ${g.heimspiel ? 'badge-home' : 'badge-away'}">${g.heimspiel ? 'Heim' : 'Auswärts'}</span></td>
+        <td style="color:var(--text2);font-size:12px">${g.liga || '–'}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${g.anstoss?.slice(0,5) || '–'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" onclick="openResultModal('${g.id}','${g.gegner}')" title="Resultat eintragen">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="icon-btn" onclick="openEditGame('${g.id}')" title="Bearbeiten">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3L5 14H2v-3L11 2Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="icon-btn del" onclick="deleteGame('${g.id}')" title="Löschen">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  // Vergangene Spiele / Resultate
+  if (past.length > 0) {
+    html += `<div class="table-card">
+      <div class="table-header">
+        <span class="table-title">Resultate</span>
+        <span style="font-size:11px;color:var(--text3)">${past.length} Spiele</span>
+      </div>
+      <table><thead><tr><th>Datum</th><th>Team</th><th>Gegner</th><th>Resultat</th><th>Ort</th><th></th></tr></thead><tbody>`;
+    [...past].reverse().forEach(g => {
+      const datum = new Date(g.datum + 'T12:00:00').toLocaleDateString('de-CH', {weekday:'short', day:'numeric', month:'short'});
+      const won = g.heimspiel
+        ? (g.resultat_heim > g.resultat_gast)
+        : (g.resultat_gast > g.resultat_heim);
+      const res = `${g.resultat_heim}:${g.resultat_gast}`;
+      html += `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${datum}</td>
+        <td style="color:var(--text2);font-size:12px">${g.teams?.name || '–'}</td>
+        <td>${g.heimspiel ? 'vs.' : '@'} ${g.gegner}</td>
+        <td><span class="${won ? 'result-win' : 'result-loss'}">${res}</span></td>
+        <td><span class="badge ${g.heimspiel ? 'badge-home' : 'badge-away'}">${g.heimspiel ? 'Heim' : 'Ausw.'}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" onclick="openEditGame('${g.id}')" title="Bearbeiten">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3L5 14H2v-3L11 2Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="icon-btn del" onclick="deleteGame('${g.id}')" title="Löschen">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderTeams() {
+  if (teams.length === 0) {
+    document.getElementById('main-content').innerHTML = '<div class="empty"><div class="empty-title">Keine Teams gefunden</div><div class="empty-sub">Füge das erste Team hinzu</div></div>';
+    return;
+  }
+  const teamGames = (teamId) => games.filter(g => g.team_id === teamId);
+  const wins = (teamId) => games.filter(g => g.team_id === teamId && g.resultat_heim != null && (g.heimspiel ? g.resultat_heim > g.resultat_gast : g.resultat_gast > g.resultat_heim)).length;
+  const losses = (teamId) => games.filter(g => g.team_id === teamId && g.resultat_heim != null && (g.heimspiel ? g.resultat_heim < g.resultat_gast : g.resultat_gast < g.resultat_heim)).length;
+
+  let html = '<div class="teams-grid">';
+  teams.forEach(t => {
+    const tg = teamGames(t.id);
+    html += `<div class="team-card">
+      <div class="team-card-header">
+        <div>
+          <div class="team-name">${t.name}</div>
+          <div class="team-liga">${t.liga || '–'}</div>
+        </div>
+        <button class="icon-btn" onclick="openEditTeam('${t.id}')">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3L5 14H2v-3L11 2Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="team-body">
+        <div class="team-info-row">
+          <svg class="info-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span class="info-label">Training</span>
+          <span class="info-val">${t.trainingszeiten || '–'}</span>
+        </div>
+        <div class="team-info-row">
+          <svg class="info-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2C5.79 2 4 3.79 4 6c0 3 4 8 4 8s4-5 4-8c0-2.21-1.79-4-4-4Z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="6" r="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+          <span class="info-label">Trainingsort</span>
+          <span class="info-val">${t.trainingsort || '–'}</span>
+        </div>
+        <div class="team-stats">
+          <div class="team-stat">
+            <div class="team-stat-val">${tg.length}</div>
+            <div class="team-stat-label">Spiele</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-val" style="color:var(--green)">${wins(t.id)}</div>
+            <div class="team-stat-label">Siege</div>
+          </div>
+          <div class="team-stat">
+            <div class="team-stat-val" style="color:var(--red)">${losses(t.id)}</div>
+            <div class="team-stat-label">Niederlagen</div>
+          </div>
+        </div>
+      </div>
+      <div class="team-card-footer">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:12px;padding:6px 10px" onclick="showPlayers('${t.id}','${t.name}')">Spielerliste</button>
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:12px;padding:6px 10px" onclick="filterByTeam('${t.id}')">Spielplan</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderPlayers() {
+  const modal = document.getElementById('playersModal');
+  const list = document.getElementById('players-list');
+  if (players.length === 0) {
+    list.innerHTML = '<div class="empty" style="padding:30px"><div class="empty-title">Keine Spieler erfasst</div><div class="empty-sub">Füge Spieler über den Button hinzu</div></div>';
+    return;
+  }
+  list.innerHTML = players.map(p => `
+    <div class="player-row">
+      <div class="player-num">#${p.nummer || '–'}</div>
+      <div>
+        <div class="player-name">${p.vorname} ${p.nachname}</div>
+        <div class="player-pos">${p.position || ''}</div>
+      </div>
+      <div><span class="pos-badge">${p.position || '–'}</span></div>
+      <div style="font-size:11px;color:var(--text3)">${p.geburtsdatum ? new Date(p.geburtsdatum).getFullYear() : '–'}</div>
+      <div style="display:flex;gap:5px">
+        <button class="icon-btn del" onclick="deletePlayer('${p.id}')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Tab & Filter ──
+function setTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  const addBtn = document.getElementById('add-btn');
+  if (tab === 'spielplan') { addBtn.textContent = '+ Spiel erfassen'; addBtn.onclick = () => openNewGame(); }
+  else { addBtn.textContent = '+ Team hinzufügen'; addBtn.onclick = () => openNewTeam(); }
+  render();
+}
+
+function setTeamFilter(teamId) {
+  activeTeamId = teamId;
+  document.querySelectorAll('.team-pill').forEach(p => p.classList.toggle('active', p.dataset.team === teamId));
+  if (activeTab === 'spielplan') renderSpielplan();
+}
+
+function filterByTeam(teamId) {
+  setTab('spielplan');
+  setTeamFilter(teamId);
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'spielplan'));
+  document.querySelectorAll('.team-pill').forEach(p => p.classList.toggle('active', p.dataset.team === teamId));
+}
+
+// ── Modals ──
+function openNewGame() {
+  editingGame = null;
+  document.getElementById('game-modal-title').textContent = 'Neues Spiel erfassen';
+  document.getElementById('gf-team').value = '';
+  document.getElementById('gf-gegner').value = '';
+  document.getElementById('gf-datum').value = '';
+  document.getElementById('gf-anstoss').value = '17:00';
+  document.getElementById('gf-heim').value = 'true';
+  document.getElementById('gf-liga').value = '';
+  document.getElementById('gf-ort').value = '';
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('gameModal').classList.add('open');
+}
+
+function openEditGame(id) {
+  const g = games.find(x => x.id === id);
+  if (!g) return;
+  editingGame = g;
+  document.getElementById('game-modal-title').textContent = 'Spiel bearbeiten';
+  document.getElementById('gf-team').value = g.team_id || '';
+  document.getElementById('gf-gegner').value = g.gegner || '';
+  document.getElementById('gf-datum').value = g.datum || '';
+  document.getElementById('gf-anstoss').value = g.anstoss?.slice(0,5) || '17:00';
+  document.getElementById('gf-heim').value = String(g.heimspiel);
+  document.getElementById('gf-liga').value = g.liga || '';
+  document.getElementById('gf-ort').value = g.ort || '';
+  document.getElementById('result-section').style.display = 'grid';
+  document.getElementById('gf-heim-score').value = g.resultat_heim ?? '';
+  document.getElementById('gf-gast-score').value = g.resultat_gast ?? '';
+  document.getElementById('gameModal').classList.add('open');
+}
+
+function openResultModal(id, gegner) {
+  const g = games.find(x => x.id === id);
+  if (!g) return;
+  editingGame = g;
+  document.getElementById('result-gegner').textContent = `Resultat: ${g.teams?.name || ''} vs. ${gegner}`;
+  document.getElementById('rf-heim').value = '';
+  document.getElementById('rf-gast').value = '';
+  document.getElementById('resultModal').classList.add('open');
+}
+
+function openNewTeam() {
+  document.getElementById('tf-name').value = '';
+  document.getElementById('tf-liga').value = '';
+  document.getElementById('tf-training').value = '';
+  document.getElementById('tf-ort').value = '';
+  document.getElementById('teamModal').classList.add('open');
+}
+
+function openEditTeam(id) {
+  const t = teams.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tf-name').value = t.name || '';
+  document.getElementById('tf-liga').value = t.liga || '';
+  document.getElementById('tf-training').value = t.trainingszeiten || '';
+  document.getElementById('tf-ort').value = t.trainingsort || '';
+  document.getElementById('teamModal').dataset.editId = id;
+  document.getElementById('teamModal').classList.add('open');
+}
+
+function showPlayers(teamId, teamName) {
+  document.getElementById('players-modal-title').textContent = teamName + ' — Spielerliste';
+  document.getElementById('players-modal-team-id').value = teamId;
+  document.getElementById('playersModal').classList.add('open');
+  loadPlayers(teamId);
+}
+
+function closeModal(id) {
+  const m = document.getElementById(id);
+  m.classList.remove('open');
+  delete m.dataset.editId;
+}
+
+// ── CRUD ──
+async function saveGame() {
+  const data = {
+    team_id: document.getElementById('gf-team').value || null,
+    gegner: document.getElementById('gf-gegner').value,
+    datum: document.getElementById('gf-datum').value,
+    anstoss: document.getElementById('gf-anstoss').value,
+    heimspiel: document.getElementById('gf-heim').value === 'true',
+    liga: document.getElementById('gf-liga').value || null,
+    ort: document.getElementById('gf-ort').value || null,
+  };
+  const rh = document.getElementById('gf-heim-score').value;
+  const rg = document.getElementById('gf-gast-score').value;
+  if (rh !== '' && rg !== '') { data.resultat_heim = parseInt(rh); data.resultat_gast = parseInt(rg); }
+
+  if (!data.gegner || !data.datum) { alert('Bitte Gegner und Datum eintragen.'); return; }
+
+  if (editingGame) {
+    await db.from('games').update(data).eq('id', editingGame.id);
+  } else {
+    await db.from('games').insert([data]);
+  }
+  closeModal('gameModal');
+  await loadAll();
+}
+
+async function saveResult() {
+  const h = document.getElementById('rf-heim').value;
+  const g = document.getElementById('rf-gast').value;
+  if (h === '' || g === '') { alert('Bitte beide Werte eintragen.'); return; }
+  await db.from('games').update({ resultat_heim: parseInt(h), resultat_gast: parseInt(g) }).eq('id', editingGame.id);
+  closeModal('resultModal');
+  await loadAll();
+}
+
+async function deleteGame(id) {
+  if (!confirm('Spiel wirklich löschen?')) return;
+  await db.from('games').delete().eq('id', id);
+  await loadAll();
+}
+
+async function saveTeam() {
+  const modal = document.getElementById('teamModal');
+  const data = {
+    name: document.getElementById('tf-name').value,
+    liga: document.getElementById('tf-liga').value || null,
+    trainingszeiten: document.getElementById('tf-training').value || null,
+    trainingsort: document.getElementById('tf-ort').value || null,
+  };
+  if (!data.name) { alert('Bitte Teamname eintragen.'); return; }
+  if (modal.dataset.editId) {
+    await db.from('teams').update(data).eq('id', modal.dataset.editId);
+  } else {
+    await db.from('teams').insert([data]);
+  }
+  closeModal('teamModal');
+  await loadAll();
+}
+
+async function savePlayer() {
+  const teamId = document.getElementById('players-modal-team-id').value;
+  const data = {
+    team_id: teamId,
+    vorname: document.getElementById('pf-vorname').value,
+    nachname: document.getElementById('pf-nachname').value,
+    nummer: parseInt(document.getElementById('pf-nummer').value) || null,
+    position: document.getElementById('pf-position').value || null,
+    geburtsdatum: document.getElementById('pf-geburt').value || null,
+  };
+  if (!data.vorname || !data.nachname) { alert('Bitte Vor- und Nachname eintragen.'); return; }
+  await db.from('players').insert([data]);
+  document.getElementById('pf-vorname').value = '';
+  document.getElementById('pf-nachname').value = '';
+  document.getElementById('pf-nummer').value = '';
+  document.getElementById('pf-position').value = '';
+  document.getElementById('pf-geburt').value = '';
+  closeModal('addPlayerModal');
+  await loadPlayers(teamId);
+}
+
+async function deletePlayer(id) {
+  if (!confirm('Spieler wirklich entfernen?')) return;
+  const teamId = document.getElementById('players-modal-team-id').value;
+  await db.from('players').update({ aktiv: false }).eq('id', id);
+  await loadPlayers(teamId);
+}
+
+// Close overlays on backdrop click
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('overlay')) e.target.classList.remove('open');
+});
+
+// Start
+initDB().catch(e => {
+  console.error(e);
+  document.getElementById('main-content').innerHTML = '<div class="empty"><div class="empty-title">Verbindungsfehler</div><div class="empty-sub">Supabase nicht erreichbar. Überprüfe die Config.</div></div>';
+});
+</script>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L16 6V12L9 16L2 12V6L9 2Z" fill="#0c0d0f"/></svg>
+      </div>
+      <div>
+        <div class="logo-name">UHC Jonschwil</div>
+        <div class="logo-sub">VIPERS</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-sec">Übersicht</div>
+      <a class="nav-item" href="index.html">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+        Dashboard
+      </a>
+      <div class="nav-sec">Spielbetrieb</div>
+      <a class="nav-item" href="index.html">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7L8 10L11 5L14 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Social Media
+      </a>
+      <a class="nav-item active" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5.5V8L10 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Spielplan & Teams
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M4 12V6M8 12V4M12 12V8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Scorer
+      </a>
+      <div class="nav-sec">Verein</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 8H11M5 5.5H11M5 10.5H8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Events
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12V4l6-2 6 2v8l-6 2-6-2Z" stroke="currentColor" stroke-width="1.3"/></svg>
+        Finanzen
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Spielplan & Teams</div>
+        <div class="page-sub">UHC Jonschwil Vipers · Saison 2024/25</div>
+      </div>
+      <button class="btn btn-accent" id="add-btn" onclick="openNewGame()">+ Spiel erfassen</button>
+    </div>
+
+    <div class="content">
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" data-tab="spielplan" onclick="setTab('spielplan')">Spielplan</div>
+        <div class="tab" data-tab="teams" onclick="setTab('teams')">Teams & Spieler</div>
+      </div>
+
+      <!-- Team Filter -->
+      <div class="team-pills" id="team-pills">
+        <button class="team-pill active" data-team="all" onclick="setTeamFilter('all')">Alle Teams</button>
+      </div>
+
+      <!-- Content -->
+      <div id="main-content"><div class="loading">Verbinde mit Datenbank...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Spiel erfassen/bearbeiten -->
+<div class="overlay" id="gameModal">
+  <div class="modal">
+    <div class="modal-title" id="game-modal-title">Neues Spiel erfassen</div>
+    <div class="form-grid">
+      <div>
+        <label class="form-label">Team</label>
+        <select class="form-input" id="gf-team"></select>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Gegner</label>
+          <input class="form-input" type="text" id="gf-gegner" placeholder="z.B. Zug United">
+        </div>
+        <div>
+          <label class="form-label">Heim / Auswärts</label>
+          <select class="form-input" id="gf-heim">
+            <option value="true">Heimspiel</option>
+            <option value="false">Auswärtsspiel</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div>
+          <label class="form-label">Datum</label>
+          <input class="form-input" type="date" id="gf-datum">
+        </div>
+        <div>
+          <label class="form-label">Anstoss</label>
+          <input class="form-input" type="time" id="gf-anstoss" value="17:00">
+        </div>
+        <div>
+          <label class="form-label">Liga</label>
+          <input class="form-input" type="text" id="gf-liga" placeholder="1. Liga">
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Ort (optional)</label>
+        <input class="form-input" type="text" id="gf-ort" placeholder="Sporthalle Jonschwil">
+      </div>
+      <div class="form-row-2" id="result-section" style="display:none">
+        <div>
+          <label class="form-label">Tore Heim</label>
+          <input class="form-input" type="number" id="gf-heim-score" min="0" placeholder="0">
+        </div>
+        <div>
+          <label class="form-label">Tore Gast</label>
+          <input class="form-input" type="number" id="gf-gast-score" min="0" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('gameModal')">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveGame()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Resultat eintragen -->
+<div class="overlay" id="resultModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title">Resultat eintragen</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="result-gegner"></div>
+    <div class="form-grid">
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Tore UHC Jonschwil</label>
+          <input class="form-input" type="number" id="rf-heim" min="0" placeholder="0" style="font-size:24px;text-align:center;padding:12px">
+        </div>
+        <div>
+          <label class="form-label">Tore Gegner</label>
+          <input class="form-input" type="number" id="rf-gast" min="0" placeholder="0" style="font-size:24px;text-align:center;padding:12px">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('resultModal')">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveResult()">Resultat speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Team bearbeiten -->
+<div class="overlay" id="teamModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Team</div>
+    <div class="form-grid">
+      <div>
+        <label class="form-label">Teamname</label>
+        <input class="form-input" type="text" id="tf-name" placeholder="UHC Jonschwil Vipers 1. Liga">
+      </div>
+      <div>
+        <label class="form-label">Liga</label>
+        <input class="form-input" type="text" id="tf-liga" placeholder="1. Liga Gruppe 3">
+      </div>
+      <div>
+        <label class="form-label">Trainingszeiten</label>
+        <input class="form-input" type="text" id="tf-training" placeholder="Di + Do 20:00–21:30">
+      </div>
+      <div>
+        <label class="form-label">Trainingsort</label>
+        <input class="form-input" type="text" id="tf-ort" placeholder="Sporthalle Jonschwil">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('teamModal')">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveTeam()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Spielerliste -->
+<div class="overlay" id="playersModal">
+  <div class="modal" style="max-width:600px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="modal-title" style="margin-bottom:0" id="players-modal-title">Spielerliste</div>
+      <button class="btn btn-accent" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('addPlayerModal').classList.add('open')">+ Spieler</button>
+    </div>
+    <input type="hidden" id="players-modal-team-id">
+    <div id="players-list"><div class="loading">Lade Spieler...</div></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('playersModal')">Schliessen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Spieler hinzufügen -->
+<div class="overlay" id="addPlayerModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">Spieler hinzufügen</div>
+    <div class="form-grid">
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Vorname</label>
+          <input class="form-input" type="text" id="pf-vorname">
+        </div>
+        <div>
+          <label class="form-label">Nachname</label>
+          <input class="form-input" type="text" id="pf-nachname">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div>
+          <label class="form-label">Nummer</label>
+          <input class="form-input" type="number" id="pf-nummer" min="1" max="99">
+        </div>
+        <div>
+          <label class="form-label">Position</label>
+          <select class="form-input" id="pf-position">
+            <option value="">–</option>
+            <option>Torhüter</option>
+            <option>Verteidiger</option>
+            <option>Stürmer</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Jahrgang</label>
+          <input class="form-input" type="date" id="pf-geburt">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addPlayerModal')">Abbrechen</button>
+      <button class="btn btn-accent" onclick="savePlayer()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Team-Pills und Select nach DB-Load befüllen
+const origLoadAll = loadAll;
+async function loadAll() {
+  showLoading();
+  const [t, g] = await Promise.all([
+    db.from('teams').select('*').eq('aktiv', true).order('name'),
+    db.from('games').select('*, teams(name,liga)').order('datum').order('anstoss')
+  ]);
+  teams = t.data || [];
+  games = g.data || [];
+
+  // Team-Pills
+  const pills = document.getElementById('team-pills');
+  pills.innerHTML = '<button class="team-pill active" data-team="all" onclick="setTeamFilter(\'all\')">Alle Teams</button>';
+  teams.forEach(t => {
+    pills.innerHTML += `<button class="team-pill" data-team="${t.id}" onclick="setTeamFilter('${t.id}')">${t.name.replace('UHC Jonschwil ','')}</button>`;
+  });
+  if (activeTeamId !== 'all') {
+    document.querySelectorAll('.team-pill').forEach(p => p.classList.toggle('active', p.dataset.team === activeTeamId));
+  }
+
+  // Team-Select im Spiel-Modal
+  const sel = document.getElementById('gf-team');
+  sel.innerHTML = '<option value="">– Team wählen –</option>';
+  teams.forEach(t => sel.innerHTML += `<option value="${t.id}">${t.name}</option>`);
+
+  render();
+}
+// Überschreibe globale loadAll
+window.loadAll = loadAll;
+initDB();
+</script>
+</body>
+</html>
