@@ -202,6 +202,86 @@ function renderAusweise(){
   }).join("")+"</div>";
 }
 
+function renderFreigaben(){
+  const cont=document.getElementById("main-content");
+  // Mitglieder mit pending login_status oder ausstehender Rollenzuweisung
+  const ausstehend=mitglieder.filter(m=>
+    m.login_status==="pending"||m.login_status==="invited"||!m.rolle
+  );
+  const aktiv=mitglieder.filter(m=>m.login_status==="active"&&m.rolle);
+  if(!ausstehend.length&&!aktiv.length){
+    cont.innerHTML="<div class='empty'><div class='empty-title'>Keine ausstehenden Freigaben</div><div style='font-size:13px;color:var(--text3);margin-top:6px'>Alle Mitglieder sind korrekt zugewiesen.</div></div>";
+    return;
+  }
+  let html="";
+  if(ausstehend.length){
+    html+="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px'>Ausstehend ("+ausstehend.length+")</div>";
+    html+="<div class='card' style='margin-bottom:20px'><table><thead><tr><th>Name</th><th>E-Mail</th><th>Rolle</th><th>Status</th><th>Aktion</th></tr></thead><tbody>";
+    html+=ausstehend.map(m=>{
+      const st=m.login_status||"pending";
+      const stLabel=st==="invited"?"Eingeladen, wartet auf Registrierung":"Erfasst, noch nicht eingeladen";
+      const stColor=st==="invited"?"var(--amber)":"var(--text3)";
+      return "<tr>"
+        +"<td><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div></td>"
+        +"<td style='font-size:12px;color:var(--text2)'>"+(m.email||"<span style='color:var(--text3)'>Keine E-Mail</span>")+"</td>"
+        +"<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||"–")+"</span></td>"
+        +"<td><span style='font-size:11px;color:"+stColor+"'>"+stLabel+"</span></td>"
+        +"<td><div style='display:flex;gap:6px;flex-wrap:wrap'>"
+        +(m.email?"<button onclick='sendInviteFromFreigaben(""+m.id+"",""+m.email+"",""+m.vorname+" "+m.nachname+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(91,191,255,.3);background:rgba(91,191,255,.08);color:var(--blue);cursor:pointer;font-family:"DM Sans",sans-serif'>Einladen</button>":"")
+        +"<button onclick='setRolle(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:"DM Sans",sans-serif'>Rolle ändern</button>"
+        +"<button onclick='approveMitglied(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(77,214,140,.3);background:rgba(77,214,140,.08);color:var(--green);cursor:pointer;font-family:"DM Sans",sans-serif'>✓ Freigeben</button>"
+        +"</div></td></tr>";
+    }).join("")+"</tbody></table></div>";
+  }
+  if(aktiv.length){
+    html+="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px'>Aktive Mitglieder ("+aktiv.length+")</div>";
+    html+="<div class='card'><table><thead><tr><th>Name</th><th>Rolle</th><th>Teams</th><th>Login-Status</th><th>Aktion</th></tr></thead><tbody>";
+    html+=aktiv.map(m=>{
+      const teamNames=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace(/UHC Jonschwil |United Toggenburg /gi,"")).filter(Boolean);
+      return "<tr>"
+        +"<td><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div><div style='font-size:11px;color:var(--text3)'>"+(m.email||"")+"</div></td>"
+        +"<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||"–")+"</span></td>"
+        +"<td style='font-size:12px;color:var(--text2)'>"+(teamNames.join(", ")||"–")+"</td>"
+        +"<td><span style='font-size:11px;color:var(--green)'>✓ Aktiv</span></td>"
+        +"<td><div style='display:flex;gap:6px'>"
+        +"<button onclick='setRolle(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:"DM Sans",sans-serif'>Rolle ändern</button>"
+        +"<button onclick='deaktivieren(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,107,107,.25);background:rgba(255,107,107,.06);color:var(--red);cursor:pointer;font-family:"DM Sans",sans-serif'>Deaktivieren</button>"
+        +"</div></td></tr>";
+    }).join("")+"</tbody></table></div>";
+  }
+  cont.innerHTML=html;
+  // Badge aktualisieren
+  const badge=document.getElementById("freigaben-badge");
+  if(badge){if(ausstehend.length>0){badge.style.display="inline";badge.textContent=ausstehend.length;}else{badge.style.display="none";}}
+}
+
+async function approveMitglied(id){
+  await db.from("user_profiles").update({login_status:"active",aktiv:true}).eq("id",id);
+  const m=mitglieder.find(x=>x.id===id);if(m){m.login_status="active";m.aktiv=true;}
+  renderFreigaben();updateStats();
+}
+async function deaktivieren(id){
+  if(!confirm("Mitglied deaktivieren?"))return;
+  await db.from("user_profiles").update({aktiv:false}).eq("id",id);
+  const m=mitglieder.find(x=>x.id===id);if(m)m.aktiv=false;
+  renderFreigaben();updateStats();
+}
+async function setRolle(id){
+  const m=mitglieder.find(x=>x.id===id);if(!m)return;
+  const rollen=["admin","trainer","spieler","eltern"];
+  const aktuelle=m.rolle||"spieler";
+  const neu=prompt("Neue Rolle für "+m.vorname+" "+m.nachname+"\n(admin/trainer/spieler/eltern):",aktuelle);
+  if(!neu||!rollen.includes(neu))return;
+  await db.from("user_profiles").update({rolle:neu}).eq("id",id);
+  m.rolle=neu;
+  renderFreigaben();updateStats();
+}
+function sendInviteFromFreigaben(id,email,name){
+  const parts=name.split(" ");
+  showInviteInfo(parts[0],parts.slice(1).join(" "),email,"");
+  db.from("user_profiles").update({login_status:"invited"}).eq("id",id);
+}
+
 function setTab(tab,el){activeTab=tab;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");render();}
 function setFilter(rolle,el){filterRolle=rolle;document.querySelectorAll(".filter-pill").forEach(p=>p.classList.remove("active"));el.classList.add("active");render();}
 function onSearch(v){searchQ=v;render();}

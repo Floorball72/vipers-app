@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teams — Vereinsplattform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px}
+/* Teams Grid */
+.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:all .15s}
+.team-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.team-card-top{padding:18px 20px;display:flex;align-items:center;gap:14px}
+.team-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:"Syne",sans-serif;font-size:16px;font-weight:700;flex-shrink:0}
+.team-name{font-size:15px;font-weight:600;margin-bottom:3px}
+.team-liga{font-size:12px;color:var(--text2)}
+.team-stats-row{padding:10px 20px;border-top:1px solid var(--border);display:flex;gap:0}
+.team-stat{flex:1;text-align:center;padding:6px 0}
+.team-stat+.team-stat{border-left:1px solid var(--border)}
+.team-stat-val{font-family:"DM Mono",monospace;font-size:18px;font-weight:400}
+.team-stat-label{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+.team-card-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:6px}
+/* Detail Ansicht */
+.detail-view{display:none}
+.detail-view.open{display:block}
+.teams-list-view.hidden{display:none}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);cursor:pointer;background:none;border:none;font-family:"DM Sans",sans-serif;padding:0;margin-bottom:20px;transition:color .12s}
+.back-btn:hover{color:var(--text)}
+.detail-header{display:flex;align-items:center;gap:16px;margin-bottom:24px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 24px}
+.detail-icon{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:"Syne",sans-serif;font-size:20px;font-weight:700;flex-shrink:0}
+.detail-name{font-family:"Syne",sans-serif;font-size:24px;font-weight:700}
+.detail-meta{font-size:13px;color:var(--text2);margin-top:4px}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;text-align:center}
+.stat-val{font-family:"DM Mono",monospace;font-size:26px;font-weight:400}
+.stat-label{font-size:10px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:"Syne",sans-serif;font-size:14px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+td{padding:10px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.bar-bg{height:5px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:4px}
+.bar-fill{height:100%;border-radius:2px;background:var(--green);transition:width .4s}
+.player-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.player-item:last-child{border-bottom:none}
+.player-item:hover{background:rgba(255,255,255,.02)}
+.player-avatar{width:32px;height:32px;border-radius:50%;background:rgba(91,191,255,.12);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0}
+.player-nr{font-family:"DM Mono",monospace;font-size:11px;color:var(--text3);width:24px;text-align:center}
+.assign-check{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;margin-bottom:18px}
+.form-grid{display:grid;gap:12px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.icon-btn:hover{color:var(--text)}.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+const CONFIG = APP_CONFIG;
+let db=null, CLUB_ID="uhc-jonschwil";
+let teams=[], players=[], games=[], scorer=[], anwesenheit=[];
+let activeTeamId=null, editTeamId=null;
+
+const TEAM_COLORS=["#d4f04a","#5bbfff","#9b8fff","#4dd68c","#ffbe47","#ff6b6b","#f0a4f4"];
+
+async function initDB(){
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  await loadAll();
+}
+async function loadAll(){
+  const[t,p,g,s]=await Promise.all([
+    db.from("teams").select("*").eq("club_id",CLUB_ID).order("name"),
+    db.from("players").select("*").eq("club_id",CLUB_ID).eq("aktiv",true).order("nachname"),
+    db.from("games").select("*").eq("club_id",CLUB_ID).order("datum"),
+    db.from("scorer").select("*").eq("club_id",CLUB_ID),
+  ]);
+  teams=t.data||[]; players=p.data||[]; games=g.data||[]; scorer=s.data||[];
+  if(activeTeamId) renderDetail(activeTeamId);
+  else renderGrid();
+}
+
+// ── Teams Übersicht ──────────────────────────────────────────
+function renderGrid(){
+  activeTeamId=null;
+  document.getElementById("detail-view").classList.remove("open");
+  document.getElementById("list-view").classList.remove("hidden");
+  document.getElementById("page-title").textContent="Teams";
+  document.getElementById("page-sub").textContent=APP_CONFIG.ACTIVE_CLUB.name+" · "+teams.length+" Teams";
+
+  const cont=document.getElementById("teams-grid");
+  if(!teams.length){
+    cont.innerHTML="<div style='grid-column:1/-1;text-align:center;padding:60px;color:var(--text3)'><div style='font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px'>Noch keine Teams</div><button class='btn btn-accent' onclick='openTeamModal()'>+ Team erstellen</button></div>";
+    return;
+  }
+  cont.innerHTML=teams.map((t,i)=>{
+    const color=TEAM_COLORS[i%TEAM_COLORS.length];
+    const teamPlayers=players.filter(p=>p.team_id===t.id);
+    const teamGames=games.filter(g=>g.team_id===t.id&&g.resultat_heim!=null);
+    const short=t.name.replace(/UHC Jonschwil |United Toggenburg /gi,"").split(" ").map(w=>w[0]).join("").slice(0,3).toUpperCase();
+    return `<div class="team-card" onclick="renderDetail('${t.id}')">
+      <div class="team-card-top">
+        <div class="team-icon" style="background:${color}22;color:${color}">${short}</div>
+        <div>
+          <div class="team-name">${t.name.replace(/UHC Jonschwil |United Toggenburg /gi,"")}</div>
+          <div class="team-liga">${t.liga||"–"} · Saison ${t.saison||"2024/25"}</div>
+        </div>
+      </div>
+      <div class="team-stats-row">
+        <div class="team-stat"><div class="team-stat-val">${teamPlayers.length}</div><div class="team-stat-label">Spieler</div></div>
+        <div class="team-stat"><div class="team-stat-val">${teamGames.length}</div><div class="team-stat-label">Spiele</div></div>
+        <div class="team-stat" style="color:${color}"><div class="team-stat-val" style="color:${color}">${getWins(t.id)}</div><div class="team-stat-label">Siege</div></div>
+      </div>
+      <div class="team-card-footer" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:12px;padding:5px" onclick="openTeamModal('${t.id}')">Bearbeiten</button>
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:12px;padding:5px" onclick="openAssignModal('${t.id}')">Spieler zuweisen</button>
+        <button class="icon-btn del" onclick="deleteTeam('${t.id}')" title="Team löschen"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function getWins(teamId){
+  return games.filter(g=>g.team_id===teamId&&g.resultat_heim!=null&&(g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim)).length;
+}
+function getAvg(teamId,field){
+  const played=games.filter(g=>g.team_id===teamId&&g.resultat_heim!=null);
+  if(!played.length)return 0;
+  return +(played.reduce((s,g)=>s+parseFloat(g[field]||0),0)/played.length).toFixed(1);
+}
+
+// ── Team Detail ──────────────────────────────────────────────
+function renderDetail(teamId){
+  activeTeamId=teamId;
+  const t=teams.find(x=>x.id===teamId);if(!t)return;
+  document.getElementById("list-view").classList.add("hidden");
+  const dv=document.getElementById("detail-view");
+  dv.classList.add("open");
+  const i=teams.indexOf(t);
+  const color=TEAM_COLORS[i%TEAM_COLORS.length];
+  const short=t.name.replace(/UHC Jonschwil |United Toggenburg /gi,"").split(" ").map(w=>w[0]).join("").slice(0,3).toUpperCase();
+  const teamPlayers=players.filter(p=>p.team_id===teamId).sort((a,b)=>(a.nummer||99)-(b.nummer||99));
+  const played=games.filter(g=>g.team_id===teamId&&g.resultat_heim!=null);
+  const wins=getWins(teamId);
+  const losses=played.filter(g=>g.heimspiel?g.resultat_heim<g.resultat_gast:g.resultat_gast<g.resultat_heim).length;
+  const avgFor=getAvg(teamId,t.id&&played.length?( played[0]?.heimspiel?"resultat_heim":"resultat_gast"):"resultat_heim");
+  const avgFor2=played.length?+(played.reduce((s,g)=>s+(g.heimspiel?g.resultat_heim:g.resultat_gast),0)/played.length).toFixed(1):0;
+  const avgAgainst=played.length?+(played.reduce((s,g)=>s+(g.heimspiel?g.resultat_gast:g.resultat_heim),0)/played.length).toFixed(1):0;
+  const teamScorer={};
+  scorer.filter(s=>teamPlayers.find(p=>p.id===s.player_id)).forEach(s=>{
+    if(!teamScorer[s.player_id])teamScorer[s.player_id]={name:"",tore:0,assists:0,strafmin:0};
+    const p=teamPlayers.find(x=>x.id===s.player_id);
+    teamScorer[s.player_id].name=(p?.vorname||"")+" "+(p?.nachname||"");
+    teamScorer[s.player_id].tore+=s.tore||0;
+    teamScorer[s.player_id].assists+=s.assists||0;
+    teamScorer[s.player_id].strafmin+=s.strafminuten||0;
+  });
+  const topScorer=Object.values(teamScorer).sort((a,b)=>(b.tore+b.assists)-(a.tore+a.assists)).slice(0,5);
+  document.getElementById("page-title").textContent=t.name.replace(/UHC Jonschwil |United Toggenburg /gi,"");
+  document.getElementById("page-sub").textContent=t.liga+" · "+t.saison;
+  dv.innerHTML=`
+    <button class="back-btn" onclick="renderGrid()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Alle Teams
+    </button>
+    <div class="detail-header">
+      <div class="detail-icon" style="background:${color}22;color:${color}">${short}</div>
+      <div style="flex:1">
+        <div class="detail-name">${t.name}</div>
+        <div class="detail-meta">${t.liga||"–"} · ${t.saison||"2024/25"}${t.trainingszeiten?" · "+t.trainingszeiten:""}${t.trainingsort?" · "+t.trainingsort:""}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="openTeamModal('${t.id}')">Bearbeiten</button>
+        <button class="btn btn-accent" onclick="openAssignModal('${t.id}')">+ Spieler</button>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-val">${teamPlayers.length}</div><div class="stat-label">Spieler</div></div>
+      <div class="stat"><div class="stat-val">${played.length}</div><div class="stat-label">Spiele</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--green)">${wins}</div><div class="stat-label">Siege</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--accent)">${avgFor2}</div><div class="stat-label">Tore/Spiel</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--red)">${avgAgainst}</div><div class="stat-label">Gegentore/Sp.</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Spieler (${teamPlayers.length})</span></div>
+        ${teamPlayers.length===0?'<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">Noch keine Spieler zugewiesen.<br><button class="btn btn-accent" style="margin-top:12px;font-size:12px" onclick="openAssignModal(\''+t.id+'\')">Spieler zuweisen</button></div>':
+        teamPlayers.map(p=>`<div class="player-item" onclick="location.href='spieler.html?id=${p.id}'">
+          <span class="player-nr">#${p.nummer||"–"}</span>
+          <div class="player-avatar" style="background:${color}18;color:${color}">${(p.vorname[0]||"")+(p.nachname[0]||"")}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500">${p.vorname} ${p.nachname}</div>
+            <div style="font-size:11px;color:var(--text3)">${p.position||"–"}${p.trikot_shirt?" · Shirt: "+p.trikot_shirt:""}</div>
+          </div>
+          <button onclick="event.stopPropagation();removePlayer('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;border-radius:4px;line-height:1" title="Entfernen">×</button>
+        </div>`).join("")}
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><span class="card-title">Top Scorer</span></div>
+          ${topScorer.length===0?'<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Keine Scorer-Daten</div>':
+          '<table><thead><tr><th>Spieler</th><th style="text-align:right;color:var(--amber)">T</th><th style="text-align:right;color:var(--blue)">A</th><th style="text-align:right">Pkt</th></tr></thead><tbody>'+
+          topScorer.map(s=>`<tr><td style="font-size:13px;font-weight:500">${s.name}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--amber)">${s.tore}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--blue)">${s.assists}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px"><strong>${s.tore+s.assists}</strong></td></tr>`).join("")+
+          '</tbody></table>'}
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Letzte Resultate</span></div>
+          ${played.length===0?'<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Keine Resultate</div>':
+          [...played].reverse().slice(0,5).map(g=>{
+            const won=g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim;
+            const d=new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid var(--border)">
+              <div style="font-size:12px;color:var(--text2)">${d} · ${g.heimspiel?"vs.":"@"} ${g.gegner}</div>
+              <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:${won?"var(--green)":"var(--red)"}">${g.resultat_heim}:${g.resultat_gast}</span>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Team Modal ───────────────────────────────────────────────
+function openTeamModal(id){
+  editTeamId=id||null;
+  if(id){
+    const t=teams.find(x=>x.id===id);if(!t)return;
+    document.getElementById("tf-name").value=t.name||"";
+    document.getElementById("tf-liga").value=t.liga||"";
+    document.getElementById("tf-saison").value=t.saison||"2024/25";
+    document.getElementById("tf-trainingszeiten").value=t.trainingszeiten||"";
+    document.getElementById("tf-trainingsort").value=t.trainingsort||"";
+    document.getElementById("tf-aktiv").value=String(t.aktiv!==false);
+    document.getElementById("teamModal-title").textContent="Team bearbeiten";
+  } else {
+    ["tf-name","tf-liga","tf-trainingszeiten","tf-trainingsort"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("tf-saison").value="2024/25";
+    document.getElementById("tf-aktiv").value="true";
+    document.getElementById("teamModal-title").textContent="Neues Team erstellen";
+  }
+  document.getElementById("teamModal").classList.add("open");
+}
+function closeTeamModal(){document.getElementById("teamModal").classList.remove("open");}
+async function saveTeam(){
+  const name=document.getElementById("tf-name").value.trim();
+  if(!name){alert("Bitte Teamname eingeben.");return;}
+  const data={
+    club_id:CLUB_ID, name,
+    liga:document.getElementById("tf-liga").value||null,
+    saison:document.getElementById("tf-saison").value||"2024/25",
+    trainingszeiten:document.getElementById("tf-trainingszeiten").value||null,
+    trainingsort:document.getElementById("tf-trainingsort").value||null,
+    aktiv:document.getElementById("tf-aktiv").value==="true",
+  };
+  if(editTeamId){await db.from("teams").update(data).eq("id",editTeamId);}
+  else{await db.from("teams").insert([data]);}
+  closeTeamModal();await loadAll();
+}
+async function deleteTeam(id){
+  if(!confirm("Team wirklich löschen? Alle zugeordneten Spieler werden vom Team getrennt."))return;
+  await db.from("players").update({team_id:null}).eq("team_id",id);
+  await db.from("teams").delete().eq("id",id);
+  await loadAll();
+}
+
+// ── Spieler zuweisen Modal ───────────────────────────────────
+let assignTeamId=null;
+function openAssignModal(teamId){
+  assignTeamId=teamId;
+  const t=teams.find(x=>x.id===teamId);
+  document.getElementById("assign-title").textContent="Spieler zuweisen — "+(t?.name||"Team");
+  const cont=document.getElementById("assign-player-list");
+  // Spieler ohne Team oder in diesem Team anzeigen
+  const available=players.filter(p=>!p.team_id||p.team_id===teamId);
+  const allPlayers=players.sort((a,b)=>{
+    if(a.team_id===teamId&&b.team_id!==teamId)return-1;
+    if(b.team_id===teamId&&a.team_id!==teamId)return 1;
+    return(a.nachname||"").localeCompare(b.nachname||"");
+  });
+  cont.innerHTML=allPlayers.length===0
+    ?'<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Keine Spieler vorhanden. Zuerst unter Mitglieder Spieler erfassen.</div>'
+    :allPlayers.map(p=>{
+      const inTeam=p.team_id===teamId;
+      const otherTeam=p.team_id&&!inTeam?teams.find(t=>t.id===p.team_id):null;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+        <input type="checkbox" class="assign-check" value="${p.id}" ${inTeam?"checked":""}>
+        <div class="player-avatar">${(p.vorname[0]||"")+(p.nachname[0]||"")}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${p.vorname} ${p.nachname}${p.nummer?" <span style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>#"+p.nummer+"</span>":""}</div>
+          ${otherTeam?`<div style="font-size:11px;color:var(--amber)">Aktuell: ${otherTeam.name.replace(/UHC Jonschwil |United Toggenburg /gi,"")}</div>`:""}
+        </div>
+        ${inTeam?`<span style="font-size:10px;color:var(--green);padding:2px 7px;border-radius:20px;background:rgba(77,214,140,.1);border:1px solid rgba(77,214,140,.2)">In diesem Team</span>`:""}
+      </div>`;
+    }).join("");
+  document.getElementById("assignModal").classList.add("open");
+}
+function closeAssignModal(){document.getElementById("assignModal").classList.remove("open");}
+async function saveAssignments(){
+  const checked=Array.from(document.querySelectorAll("#assign-player-list input:checked")).map(cb=>cb.value);
+  const unchecked=Array.from(document.querySelectorAll("#assign-player-list input:not(:checked)")).map(cb=>cb.value);
+  // Zugewiesene hinzufügen
+  for(const pid of checked){await db.from("players").update({team_id:assignTeamId}).eq("id",pid);}
+  // Entfernte: team_id auf null setzen (nur wenn sie in diesem Team waren)
+  for(const pid of unchecked){
+    const p=players.find(x=>x.id===pid);
+    if(p&&p.team_id===assignTeamId)await db.from("players").update({team_id:null}).eq("id",pid);
+  }
+  closeAssignModal();await loadAll();
+}
+async function removePlayer(playerId){
+  if(!confirm("Spieler aus dem Team entfernen?"))return;
+  await db.from("players").update({team_id:null}).eq("id",playerId);
+  await loadAll();
+}
+
+document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
+initDB().catch(console.error);
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="page-title">Teams</div>
+        <div class="page-sub" id="page-sub">Vereinsplattform</div>
+      </div>
+      <button class="btn btn-accent" onclick="openTeamModal()">+ Team erstellen</button>
+    </div>
+    <div class="content">
+      <div id="list-view">
+        <div class="teams-grid" id="teams-grid">
+          <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">Lade...</div>
+        </div>
+      </div>
+      <div id="detail-view"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Team erstellen/bearbeiten -->
+<div class="overlay" id="teamModal">
+  <div class="modal">
+    <div class="modal-title" id="teamModal-title">Team erstellen</div>
+    <div class="form-grid">
+      <div><label class="form-label">Teamname</label><input class="form-input" type="text" id="tf-name" placeholder="z.B. UHC Jonschwil Vipers 1. Liga"></div>
+      <div class="form-row-2">
+        <div><label class="form-label">Liga</label><input class="form-input" type="text" id="tf-liga" placeholder="z.B. 1. Liga Gruppe 3"></div>
+        <div><label class="form-label">Saison</label><input class="form-input" type="text" id="tf-saison" placeholder="2024/25"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Trainingszeiten</label><input class="form-input" type="text" id="tf-trainingszeiten" placeholder="Di+Do 20:00"></div>
+        <div><label class="form-label">Trainingsort</label><input class="form-input" type="text" id="tf-trainingsort" placeholder="Sporthalle Jonschwil"></div>
+      </div>
+      <div><label class="form-label">Status</label>
+        <select class="form-input" id="tf-aktiv">
+          <option value="true">Aktiv</option><option value="false">Inaktiv</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeTeamModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveTeam()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Spieler zuweisen -->
+<div class="overlay" id="assignModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" id="assign-title">Spieler zuweisen</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Wähle die Spieler für dieses Team. Spieler können nur einem Team gleichzeitig angehören.</div>
+    <div id="assign-player-list" style="max-height:400px;overflow-y:auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAssignModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveAssignments()">Zuweisung speichern</button>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script><script>renderNav("teams");</script>
+</body></html>
