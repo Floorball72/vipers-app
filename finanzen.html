@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finanzen — Vereinsplattform</title>
+<title>Finanzen — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -130,8 +130,8 @@ async function initDB() {
 async function loadAll() {
   const { data } = await db.from("finanzen").select("*").eq("club_id", CLUB_ID).order("datum", { ascending: false });
   buchungen = data || [];
-  // Konten aus buchungen ableiten (eindeutige Kontonamen)
-  const namen = [...new Set(buchungen.map(b => b.konto || "Allgemein"))].sort();
+  // Konten aus buchungen ableiten — "Allgemein" immer vorhanden
+  const namen = [...new Set(["Allgemein", ...buchungen.map(b => b.konto || "Allgemein")])].sort((a,b)=>a==="Allgemein"?-1:b==="Allgemein"?1:a.localeCompare(b));
   konten = namen.map((n, i) => ({
     name: n,
     color: KONTO_COLORS[i % KONTO_COLORS.length],
@@ -316,15 +316,16 @@ function openModal(typ) {
   document.getElementById("bf-betrag").value = "";
   document.getElementById("bf-beschreibung").value = "";
   document.getElementById("bf-datum").value = new Date().toISOString().split("T")[0];
-  // Konto-Select befüllen
+  // Konto-Select befüllen (immer mind. Allgemein)
   const sel = document.getElementById("bf-konto");
-  sel.innerHTML = konten.map(k => `<option value="${k.name}" ${k.name === kName ? "selected" : ""}>${k.name}</option>`).join("");
-  if (!sel.value) sel.innerHTML = `<option value="Allgemein">Allgemein</option>` + sel.innerHTML;
+  const allKontenNames = konten.length ? konten : [{ name: "Allgemein" }];
+  sel.innerHTML = allKontenNames.map(k => `<option value="${k.name}" ${k.name === kName ? "selected" : ""}>${k.name}</option>`).join("");
+  if (!sel.innerHTML) sel.innerHTML = `<option value="Allgemein">Allgemein</option>`;
   // Kategorie-Select
   const kSel = document.getElementById("bf-kategorie");
   kSel.value = "";
   document.getElementById("buchungModal").classList.add("open");
-  setTimeout(() => UPLOAD.render("beleg-upload", {
+  setTimeout(() => typeof UPLOAD!=="undefined" && UPLOAD.render("beleg-upload", {
     label: "Beleg hochladen (PDF oder Bild)",
     folder: "belege",
     onSuccess: (u) => { belegUrl = u; }

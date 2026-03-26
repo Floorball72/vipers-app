@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Anwesenheit — UHC Jonschwil Vipers</title>
+<title>Anwesenheit — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -273,7 +273,7 @@ initDB().catch(console.error);
   <div id="nav-placeholder"></div>
   <div class="main">
     <div class="topbar">
-      <div><div class="page-title">Anwesenheit</div><div class="page-sub">UHC Jonschwil Vipers &middot; Training, Spiele & Events</div></div>
+      <div><div class="page-title">Anwesenheit</div><div class="page-sub"><span id="club-name-sub"></span> · Training, Spiele & Events</div></div>
     </div>
     <div class="content">
       <!-- Controls (Admin/Trainer) -->
@@ -331,5 +331,6 @@ initDB().catch(console.error);
     </div>
   </div>
 </div>
+<script>document.addEventListener("DOMContentLoaded",()=>{const el=document.getElementById("club-name-sub");if(el)el.textContent=APP_CONFIG.ACTIVE_CLUB.name;});</script>
 <script src="nav.js"></script><script>renderNav("anwesenheit");</script>
 </body></html>

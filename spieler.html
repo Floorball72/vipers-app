@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spieler Profil — UHC Jonschwil Vipers</title>
+<title>Spieler Profil — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -64,8 +64,8 @@ async function initDB(){
   CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
   if(!playerId){location.href='spielplan.html';return;}
   const[p,s]=await Promise.all([
-    db.from('players').select('*,teams(name,liga).eq('club_id',CLUB_ID)').eq('id',playerId).single(),
-    db.from('scorer').select('*,games(datum,gegner,heimspiel).eq('club_id',CLUB_ID)').eq('player_id',playerId).order('games(datum)',{ascending:false}),
+    db.from('players').select('*,teams(name,liga)').eq('club_id',CLUB_ID).eq('id',playerId).single(),
+    db.from('scorer').select('*,games(datum,gegner,heimspiel)').eq('club_id',CLUB_ID).eq('player_id',playerId).order('games(datum)',{ascending:false}),
   ]);
   player=p.data;entries=s.data||[];
   render();

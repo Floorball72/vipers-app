@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training & Video — Vereinsplattform</title>
+<title>Training & Video — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -293,7 +293,7 @@ async function saveTraining(){
     trainer:document.getElementById("tf-trainer").value||null,
   };
   if(editTrainingId){await db.from("trainingseinheiten").update(data).eq("id",editTrainingId);}
-  else{await db.from("trainingseinheiten").insert([data]);}
+  else{await db.from("trainingseinheiten").insert([{club_id:CLUB_ID,...data}]);}
   document.getElementById("trainingModal").classList.remove("open");
   await loadAll();
 }
@@ -342,7 +342,7 @@ async function saveVideo(){
     erstellt_von:document.getElementById("vf-trainer").value||null,
   };
   if(editVideoId){await db.from("videoanalysen").update(data).eq("id",editVideoId);}
-  else{await db.from("videoanalysen").insert([data]);}
+  else{await db.from("videoanalysen").insert([{club_id:CLUB_ID,...data}]);}
   document.getElementById("videoModal").classList.remove("open");
   await loadAll();
 }

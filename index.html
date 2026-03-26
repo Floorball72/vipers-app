@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UHC Jonschwil Vipers — Vereinsplattform</title>
+<title>Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -202,7 +202,7 @@ const CONFIG = APP_CONFIG;
     <div class="topbar">
       <div>
         <div class="page-title">Social Media Planer</div>
-        <div class="page-sub">UHC Jonschwil Vipers · Saison 2024/25 · 1 Post/Woche pro Typ</div>
+        <div class="page-sub">APP_CONFIG.ACTIVE_CLUB.name+' ·' Saison 2024/25 · 1 Post/Woche pro Typ</div>
       </div>
       <div class="topbar-right">
         <span class="badge-gcal">
@@ -214,10 +214,6 @@ const CONFIG = APP_CONFIG;
           Swiss UH API ausstehend
         </span>
         <button class="btn btn-ghost" style="font-size:12px" onclick="document.getElementById('manualPostModal').classList.add('open')">+ Manueller Post</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('newGameModal').classList.add('open')">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Spiel erfassen
-        </button>
       </div>
     </div>
 
@@ -391,57 +387,6 @@ const CONFIG = APP_CONFIG;
   </div>
 </div>
 
-<!-- Modal: Neues Spiel -->
-<div class="overlay" id="newGameModal">
-  <div class="modal">
-    <div class="modal-title">Neues Spiel erfassen</div>
-    <div class="form-grid">
-      <div>
-        <label class="form-label">Team</label>
-        <select class="form-input" id="f-team">
-          <option>Vipers 1. Liga Damen</option>
-          <option>Vipers 1. Liga Herren</option>
-          <option>Junioren U18</option>
-          <option>Junioren U15</option>
-          <option>Junioren U13</option>
-        </select>
-      </div>
-      <div class="form-row-2">
-        <div>
-          <label class="form-label">Gegner</label>
-          <input class="form-input" type="text" id="f-gegner" placeholder="z.B. Zug United">
-        </div>
-        <div>
-          <label class="form-label">Heim / Auswärts</label>
-          <select class="form-input"><option>Heimspiel</option><option>Auswärtsspiel</option></select>
-        </div>
-      </div>
-      <div class="form-row-2">
-        <div>
-          <label class="form-label">Spieltag</label>
-          <input class="form-input" type="date" id="f-datum">
-        </div>
-        <div>
-          <label class="form-label">Anstoss</label>
-          <input class="form-input" type="time" value="17:00">
-        </div>
-      </div>
-      <div>
-        <label class="form-label">Wettbewerb</label>
-        <select class="form-input"><option>1. Liga</option><option>NLB</option><option>Cup</option><option>Friendly</option></select>
-      </div>
-      <div class="info-box">
-        <strong>Automatisch generiert:</strong>
-        Das Spiel wird dem wöchentlichen Vorschau-Post (Fr. 12:00) und Resultat-Post (Mi. 12:00) hinzugefügt. Beide Termine sind bereits im Kalender "UHC Jonschwil Vipers" eingetragen.
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('newGameModal')">Abbrechen</button>
-      <button class="btn btn-accent" onclick="saveGame()">Spiel speichern</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal: Resultat nachtragen -->
 <div class="overlay" id="resultModal">
   <div class="modal">
@@ -485,57 +430,7 @@ const CONFIG = APP_CONFIG;
     } catch(e) { console.warn('DB nicht erreichbar, Demo-Daten aktiv:', e); renderGames(); }
   }
 
-  async function loadGamesFromDB() {
-    if (!db) { renderGames(); return; }
-    const today = new Date();
-    const dow = today.getDay();
-    const thisMon = new Date(today); thisMon.setDate(today.getDate() - ((dow+6)%7));
-    const thisSun = new Date(thisMon); thisSun.setDate(thisMon.getDate()+6);
-    const lastMon = new Date(thisMon); lastMon.setDate(thisMon.getDate()-7);
-    const lastSun = new Date(thisMon); lastSun.setDate(thisMon.getDate()-1);
-    const fmt = d => d.toISOString().split('T')[0];
-    const [res1, res2] = await Promise.all([
-      db.from('games').select('*, teams(name).eq('club_id',CLUB_ID)').gte('datum',fmt(thisMon)).lte('datum',fmt(thisSun)).order('datum').order('anstoss'),
-      db.from('games').select('*, teams(name).eq('club_id',CLUB_ID)').gte('datum',fmt(lastMon)).lte('datum',fmt(lastSun)).order('datum')
-    ]);
-    if (res1.data && res1.data.length > 0) {
-      THIS_WEEKEND.length = 0;
-      res1.data.forEach(function(g) {
-        THIS_WEEKEND.push({
-          team: (g.teams && g.teams.name) || 'Team',
-          gegner: g.gegner,
-          datum: new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{weekday:'short',day:'numeric',month:'short'}),
-          zeit: g.anstoss ? g.anstoss.slice(0,5) : '',
-          heim: g.heimspiel,
-          resultat: g.resultat_heim != null ? g.resultat_heim+':'+g.resultat_gast : null
-        });
-      });
-    }
-    if (res2.data && res2.data.length > 0) {
-      LAST_WEEKEND.length = 0;
-      res2.data.forEach(function(g) {
-        LAST_WEEKEND.push({
-          team: (g.teams && g.teams.name) || 'Team',
-          gegner: g.gegner,
-          datum: new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{weekday:'short',day:'numeric',month:'short'}),
-          heim: g.heimspiel,
-          resultat: g.resultat_heim != null ? g.resultat_heim+':'+g.resultat_gast : null,
-          fehlt: g.resultat_heim == null,
-          dbId: g.id
-        });
-      });
-    }
-    renderGames();
-  }
-
-  async function saveGameToDB(gameData) {
-    if (!db) return null;
-    const res = await db.from('games').insert([gameData]).select().single();
-    if (res.error) { console.error(res.error); return null; }
-    return res.data;
-  }
-
-  async function updateResultInDB(dbId, heim, gast) {
+      async function updateResultInDB(dbId, heim, gast) {
     if (!db || !dbId) return;
     await db.from('games').update({ resultat_heim: parseInt(heim), resultat_gast: parseInt(gast) }).eq('id', dbId);
   }
@@ -579,40 +474,7 @@ const CONFIG = APP_CONFIG;
     btn.disabled = true;
   }
 
-  async function saveGame() {
-    const gegner = document.getElementById('f-gegner').value;
-    const datum  = document.getElementById('f-datum').value;
-    const teamEl = document.getElementById('f-team');
-    if (!gegner || !datum) { alert('Bitte Gegner und Datum eintragen.'); return; }
-    const btn = event.target; btn.textContent = 'Speichern...'; btn.disabled = true;
-    const row = await saveGameToDB({ gegner, datum, anstoss: '17:00', heimspiel: true, notizen: '' });
-    btn.textContent = 'Spiel speichern'; btn.disabled = false;
-    if (row) {
-      alert('Gespeichert! Das Spiel gegen ' + gegner + ' wurde in Supabase eingetragen.');
-      await loadGamesFromDB();
-    } else {
-      alert('Spiel gegen ' + gegner + ' gespeichert (Demo-Modus, keine DB-Verbindung).');
-    }
-    closeModal('newGameModal');
-  }
-
-  async function saveResult() {
-    const h = document.getElementById('r-heim').value;
-    const g = document.getElementById('r-gast').value;
-    if (h === '' || g === '') { alert('Bitte beide Werte eintragen.'); return; }
-    const missing = LAST_WEEKEND.find(function(x){ return x.fehlt; });
-    if (missing) {
-      await updateResultInDB(missing.dbId, h, g);
-      missing.resultat = h + ':' + g;
-      missing.fehlt = false;
-    }
-    renderGames();
-    closeModal('resultModal');
-    const badge = document.querySelector('.nav-badge');
-    if (badge) badge.textContent = '0';
-  }
-
-  // Close on backdrop click
+      // Close on backdrop click
   document.querySelectorAll('.overlay').forEach(el => {
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
   });

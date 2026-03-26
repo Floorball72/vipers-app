@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Newsfeed — UHC Jonschwil Vipers</title>
+<title>Newsfeed — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -189,7 +189,7 @@ async function saveNews(){
   }
   const data={titel,inhalt:document.getElementById("nf-inhalt").value||null,typ:document.getElementById("nf-typ").value,zielgruppe,team_ids:forAll?null:teamIds,gepinnt:document.getElementById("nf-pinned").checked,erstellt_am:new Date().toISOString()};
   if(editId){await db.from("news").update(data).eq("id",editId);}
-  else{await db.from("news").insert([data]);}
+  else{await db.from("news").insert([{club_id:CLUB_ID,...data}]);}
   closeModal();await initDB();
 }
 async function togglePin(id,pinned){await db.from("news").update({gepinnt:!pinned}).eq("id",id);await initDB();}
@@ -202,7 +202,7 @@ initDB().catch(console.error);
   <div id="nav-placeholder"></div>
   <div class="main">
     <div class="topbar">
-      <div><div class="page-title">Newsfeed</div><div class="page-sub">UHC Jonschwil Vipers &middot; Ankuendigungen & Mitteilungen</div></div>
+      <div><div class="page-title">Newsfeed</div><div class="page-sub"><span id="club-name-sub"></span> · Ankuendigungen & Mitteilungen</div></div>
       <button class="btn btn-accent" id="add-btn" onclick="openModal()">+ Beitrag verfassen</button>
     </div>
     <div class="content"><div id="news-list"><div style="text-align:center;padding:40px;color:var(--text3)">Lade...</div></div></div>
@@ -238,5 +238,6 @@ initDB().catch(console.error);
     </div>
   </div>
 </div>
+<script>document.addEventListener("DOMContentLoaded",()=>{const el=document.getElementById("club-name-sub");if(el)el.textContent=APP_CONFIG.ACTIVE_CLUB.name;});</script>
 <script src="nav.js"></script><script>renderNav("news");</script>
 </body></html>

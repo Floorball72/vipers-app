@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mein Profil — UHC Jonschwil Vipers</title>
+<title>Mein Profil — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -70,7 +70,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 <script>
 // Config aus config.js
 const CONFIG = APP_CONFIG;
-let db=null,authClient=null,currentUser=null,linkedPlayer=null,allPlayers=[];
+let db=null,CLUB_ID="uhc-jonschwil",authClient=null,currentUser=null,linkedPlayer=null,allPlayers=[];
 const roleColors={admin:"var(--accent)",trainer:"var(--purple)",spieler:"var(--blue)",eltern:"var(--green)"};
 const roleLabels={admin:"Admin",trainer:"Trainer",spieler:"Spieler",eltern:"Eltern"};
 const roleBadges={admin:"role-admin",trainer:"role-trainer",spieler:"role-spieler",eltern:"role-eltern"};
@@ -93,12 +93,12 @@ async function init(){
   }
 
   // Alle Spieler laden (für Verknüpfung)
-  const{data:players}=await db.from("players").select("id,vorname,nachname,nummer,teams(name)").eq("aktiv",true).order("nachname");
+  const{data:players}=await db.from("players").select("id,vorname,nachname,nummer,teams(name)").eq("club_id",CLUB_ID).eq("aktiv",true).order("nachname");
   allPlayers=players||[];
 
   // Verknüpfter Spieler
   if(currentUser.rolle==="spieler"){
-    const{data:linked}=await db.from("players").select("*,teams(name)").eq("user_id",currentUser.id).single();
+    const{data:linked}=await db.from("players").select("*,teams(name)").eq("club_id",CLUB_ID).eq("user_id",currentUser.id).single();
     linkedPlayer=linked;
   }
 

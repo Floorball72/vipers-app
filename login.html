@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Anmelden — UHC Jonschwil Vipers</title>
+<title>Anmelden — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -105,7 +105,7 @@ async function init() {
   }
 
   // Spieler laden für Verknüpfung
-  const { data } = await db.from('players').select('id,vorname,nachname,nummer,teams(name)').eq('aktiv', true).order('nachname');
+  const { data } = await db.from('players').select('id,vorname,nachname,nummer,teams(name)').eq('club_id',APP_CONFIG.ACTIVE_CLUB.club_id).eq('aktiv',true).order('nachname');
   allPlayers = data || [];
 }
 
@@ -351,7 +351,6 @@ async function submitRequest() {
   const email = document.getElementById('req-email').value.trim();
   const rolle = document.getElementById('req-rolle').value;
   if (!vn || !nn || !email) { showAlert('req-alert','error','Bitte alle Pflichtfelder ausfüllen.'); return; }
-  const { error } = await db.from('role_requests').insert([{
     vorname: vn, nachname: nn, email, gewuenschte_rolle: rolle,
     begruendung: document.getElementById('req-begruendung').value || null,
     status: 'ausstehend'
@@ -387,8 +386,8 @@ init().catch(console.error);
         <path d="M10 14L13 17L19 11" stroke="#0c0d0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <div class="logo-title">UHC Jonschwil Vipers</div>
-    <div class="logo-sub">Vereinsplattform</div>
+    <div class="logo-title" id="login-title">Vereinsplattform</div>
+    <div class="logo-sub" id="login-club-name">Vereinsplattform</div>
   </div>
 
   <div class="card">

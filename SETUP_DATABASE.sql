@@ -39,21 +39,7 @@ create table clubs (
 
 -- Demo-Daten Vereine
 insert into clubs (club_id, name, short_name, swiss_uh_id, primary_color) values
-  ('uhc-jonschwil',    'UHC Jonschwil Vipers', 'Vipers',     692, '#d4f04a'),
-  ('united-toggenburg','United Toggenburg',    'United TG',  771, '#5bbfff');
-
--- ── 3. User-Profile ────────────────────────────────────────
-create table user_profiles (
-  id            uuid primary key references auth.users(id) on delete cascade,
-  vorname       text not null,
-  nachname      text not null,
-  email         text,
-  telefon       text,
-  geburtsdatum  date,
-  foto_url      text,
-  aktiv         boolean default true,
-  created_at    timestamptz default now()
-);
+  ('uhc-jonschwil', 'UHC Jonschwil Vipers', 'Vipers', 692, '#d4f04a');
 
 -- ── 4. User ↔ Verein Zuordnung (pro Verein eigene Rolle) ──
 create table user_club_memberships (
@@ -395,14 +381,7 @@ insert into teams (club_id, name, liga, trainingszeiten, trainingsort) values
   ('uhc-jonschwil','UHC Jonschwil Junioren U18',   'Junioren A',  'Sa 10:00',  'Sporthalle Jonschwil'),
   ('uhc-jonschwil','UHC Jonschwil Junioren U15',   'Junioren B',  'Sa 08:30',  'Sporthalle Jonschwil');
 
--- United Toggenburg Teams
-insert into teams (club_id, name, liga, trainingszeiten, trainingsort) values
-  ('united-toggenburg','United Toggenburg 1. Liga', '1. Liga','Di+Fr 20:00','Toggenburg'),
-  ('united-toggenburg','United Toggenburg Damen',   'Damen NLA','Mo+Mi 19:00','Toggenburg'),
-  ('united-toggenburg','United Toggenburg U18',     'Junioren A','Sa 10:00', 'Toggenburg');
-
 -- Demo-News pro Verein
 insert into news (club_id, titel, inhalt, typ, gepinnt) values
-  ('uhc-jonschwil',    'Willkommen bei UHC Jonschwil Vipers!','Alle Infos hier.','info',true),
-  ('united-toggenburg','Willkommen bei United Toggenburg!',  'Alle Infos hier.','info',true);
--- ============================================================
+  ('uhc-jonschwil',    'Willkommen bei UHC Jonschwil Vipers!','Alle Infos hier.','info',true);
+  -- ============================================================

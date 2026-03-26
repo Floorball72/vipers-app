@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Team Statistiken — UHC Jonschwil Vipers</title>
+<title>Team Statistiken — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -75,7 +75,7 @@ async function initDB(){
   const[t,g,s,p]=await Promise.all([
     db.from('teams').select('*').eq('club_id',CLUB_ID).eq('id',teamId).single(),
     db.from('games').select('*').eq('club_id',CLUB_ID).eq('team_id',teamId).order('datum'),
-    db.from('scorer').select('*,players(vorname,nachname,nummer).eq('club_id',CLUB_ID)').eq('saison','2024/25'),
+    db.from('scorer').select('*,players(vorname,nachname,nummer)').eq('club_id',CLUB_ID).eq('saison','2024/25'),
     db.from('players').select('*').eq('club_id',CLUB_ID).eq('team_id',teamId).eq('aktiv',true).order('nummer'),
   ]);
   team=t.data;games=g.data||[];scorer=s.data||[];players=p.data||[];

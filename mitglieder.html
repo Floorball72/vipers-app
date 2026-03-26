@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mitglieder — UHC Jonschwil Vipers</title>
+<title>Mitglieder — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -131,6 +131,7 @@ function render(){
   if(activeTab==="liste")renderListe();
   else if(activeTab==="rollen")renderRollen();
   else if(activeTab==="ausweise")renderAusweise();
+  else if(activeTab==="freigaben")renderFreigaben();
 }
 
 function renderListe(){
@@ -482,7 +483,7 @@ initDB().catch(console.error);
   <div id="nav-placeholder"></div>
   <div class="main">
     <div class="topbar">
-      <div><div class="page-title">Mitglieder & Rollen</div><div class="page-sub">UHC Jonschwil Vipers · Verwaltung aller Mitglieder</div></div>
+      <div><div class="page-title">Mitglieder & Rollen</div><div class="page-sub">APP_CONFIG.ACTIVE_CLUB.name+' ·' Verwaltung aller Mitglieder</div></div>
       <button class="btn btn-accent" onclick="openModal()">+ Mitglied hinzufügen</button>
     </div>
     <div class="content">

@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teams — Vereinsplattform</title>
+<title>Teams — Stackflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 a{text-decoration:none}
@@ -291,7 +291,7 @@ async function saveTeam(){
     aktiv:document.getElementById("tf-aktiv").value==="true",
   };
   if(editTeamId){await db.from("teams").update(data).eq("id",editTeamId);}
-  else{await db.from("teams").insert([data]);}
+  else{await db.from("teams").insert([{club_id:CLUB_ID,...data}]);}
   closeTeamModal();await loadAll();
 }
 async function deleteTeam(id){
