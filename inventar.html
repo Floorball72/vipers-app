@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventar — UHC Jonschwil Vipers</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.stat-val{font-family:"DM Mono",monospace;font-size:26px;font-weight:400}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.inv-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;transition:border-color .15s}
+.inv-card:hover{border-color:var(--border2)}
+.inv-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.inv-meta{font-size:12px;color:var(--text2);margin-bottom:10px}
+.zustand-badge{display:inline-flex;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:8px}
+.zustand-neu{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.zustand-gut{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+.zustand-gebr{background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)}
+.zustand-def{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.avail-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px}
+.avail-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s}
+.inv-footer{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.icon-btn:hover{color:var(--text)}.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:26px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;margin-bottom:20px}
+.form-grid{display:grid;gap:14px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script>
+const CONFIG={SUPABASE_URL:"https://kpskzbqrfvihxfynwvpv.supabase.co",SUPABASE_KEY:"sb_publishable_eyDYEuo2aQKLLWX_0c8n-g_AttYd0La"};
+let db=null,inventar=[],editId=null;
+const CHF=n=>n!=null?"CHF "+parseFloat(n).toFixed(0):"–";
+
+async function initDB(){
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_KEY);
+  const{data}=await db.from("inventar").select("*").order("kategorie").order("name");
+  inventar=data||[];render();updateStats();
+}
+function updateStats(){
+  document.getElementById("s-total").textContent=inventar.length;
+  document.getElementById("s-verf").textContent=inventar.reduce((s,i)=>s+i.anzahl_verfuegbar,0);
+  document.getElementById("s-ausgeliehen").textContent=inventar.reduce((s,i)=>s+(i.anzahl_total-i.anzahl_verfuegbar),0);
+  const defekt=inventar.filter(i=>i.zustand==="defekt").length;
+  document.getElementById("s-defekt").textContent=defekt;
+}
+function render(){
+  const cont=document.getElementById("main-content");
+  if(!inventar.length){cont.innerHTML="<div style='text-align:center;padding:60px;color:var(--text3)'><div style='font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px'>Noch kein Inventar erfasst</div><button class='btn btn-accent' onclick='openModal()'>+ Erstes Objekt erfassen</button></div>";return;}
+  const cats=[...new Set(inventar.map(i=>i.kategorie||"Sonstiges"))].sort();
+  cont.innerHTML=cats.map(cat=>{
+    const items=inventar.filter(i=>(i.kategorie||"Sonstiges")===cat);
+    return "<div style='margin-bottom:20px'><div style='font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px'>"+cat+"</div>"+
+    "<div class='inv-grid'>"+items.map(item=>{
+      const pct=item.anzahl_total?Math.round(item.anzahl_verfuegbar/item.anzahl_total*100):0;
+      const zustandCls={neu:"zustand-neu",gut:"zustand-gut",gebraucht:"zustand-gebr",defekt:"zustand-def"}[item.zustand]||"zustand-gut";
+      const zustandLabel={neu:"Neu",gut:"Gut",gebraucht:"Gebraucht",defekt:"Defekt"}[item.zustand]||item.zustand;
+      return "<div class='inv-card'><div class='zustand-badge "+zustandCls+"'>"+zustandLabel+"</div>"+
+        "<div class='inv-name'>"+item.name+"</div>"+
+        "<div class='inv-meta'>"+(item.lagerort?"Lager: "+item.lagerort:"")+(item.anschaffungspreis?" &middot; "+CHF(item.anschaffungspreis):"")+"</div>"+
+        "<div style='display:flex;align-items:center;justify-content:space-between'><span style='font-size:12px;color:var(--text2)'>"+item.anzahl_verfuegbar+"/"+item.anzahl_total+" verfuegbar</span><span style='font-family:\"DM Mono\",monospace;font-size:13px;color:"+(pct>50?"var(--green)":pct>20?"var(--amber)":"var(--red)")+"'>"+pct+"%</span></div>"+
+        "<div class='avail-bar'><div class='avail-fill' style='width:"+pct+"%;background:"+(pct>50?"var(--green)":pct>20?"var(--amber)":"var(--red)")+"'></div></div>"+
+        "<div class='inv-footer'>"+
+        "<button class='btn btn-ghost' style='flex:1;font-size:11px;padding:5px;justify-content:center' onclick='ausleihen(\""+item.id+"\",\""+item.name+"\")'>Ausleihen</button>"+
+        "<button class='icon-btn' onclick='openEdit(\""+item.id+"\")' title='Bearbeiten'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M11 2l3 3L5 14H2v-3L11 2Z' stroke='currentColor' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"+
+        "<button class='icon-btn del' onclick='deleteItem(\""+item.id+"\")' title='Loeschen'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"+
+        "</div></div>";
+    }).join("")+"</div></div>";
+  }).join("");
+}
+function openModal(){editId=null;["if-name","if-kategorie","if-lagerort","if-preis"].forEach(id=>document.getElementById(id).value="");document.getElementById("if-total").value="1";document.getElementById("if-verf").value="1";document.getElementById("if-zustand").value="gut";document.getElementById("inventarModal").classList.add("open");}
+function openEdit(id){const item=inventar.find(x=>x.id===id);if(!item)return;editId=id;document.getElementById("if-name").value=item.name||"";document.getElementById("if-kategorie").value=item.kategorie||"";document.getElementById("if-lagerort").value=item.lagerort||"";document.getElementById("if-total").value=item.anzahl_total||1;document.getElementById("if-verf").value=item.anzahl_verfuegbar||1;document.getElementById("if-zustand").value=item.zustand||"gut";document.getElementById("if-preis").value=item.anschaffungspreis||"";document.getElementById("inventarModal").classList.add("open");}
+function closeModal(){document.getElementById("inventarModal").classList.remove("open");editId=null;}
+async function saveItem(){
+  const data={name:document.getElementById("if-name").value,kategorie:document.getElementById("if-kategorie").value||"Sonstiges",lagerort:document.getElementById("if-lagerort").value||null,anzahl_total:parseInt(document.getElementById("if-total").value)||1,anzahl_verfuegbar:parseInt(document.getElementById("if-verf").value)||1,zustand:document.getElementById("if-zustand").value,anschaffungspreis:parseFloat(document.getElementById("if-preis").value)||null};
+  if(!data.name){alert("Bitte Name eingeben.");return;}
+  if(editId){await db.from("inventar").update(data).eq("id",editId);}else{await db.from("inventar").insert([data]);}
+  closeModal();const{data:d}=await db.from("inventar").select("*").order("kategorie").order("name");inventar=d||[];render();updateStats();
+}
+async function deleteItem(id){if(!confirm("Objekt loeschen?"))return;await db.from("inventar").delete().eq("id",id);inventar=inventar.filter(i=>i.id!==id);render();updateStats();}
+async function ausleihen(id,name){
+  const item=inventar.find(x=>x.id===id);
+  if(item.anzahl_verfuegbar<=0){alert("Kein Exemplar verfuegbar!");return;}
+  if(!confirm(name+" ausleihen?"))return;
+  await db.from("inventar").update({anzahl_verfuegbar:item.anzahl_verfuegbar-1}).eq("id",id);
+  item.anzahl_verfuegbar--;render();updateStats();
+}
+document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
+initDB().catch(console.error);
+</script>
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="page-title">Inventar</div><div class="page-sub">UHC Jonschwil Vipers &middot; Material, Trikots & Ausleihe</div></div>
+      <button class="btn btn-accent" onclick="openModal()">+ Objekt erfassen</button>
+    </div>
+    <div class="content">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Total Objekte</div><div class="stat-val" id="s-total">--</div></div>
+        <div class="stat"><div class="stat-label">Verfuegbar</div><div class="stat-val" style="color:var(--green)" id="s-verf">--</div></div>
+        <div class="stat"><div class="stat-label">Ausgeliehen</div><div class="stat-val" style="color:var(--amber)" id="s-ausgeliehen">--</div></div>
+        <div class="stat"><div class="stat-label">Defekt</div><div class="stat-val" style="color:var(--red)" id="s-defekt">--</div></div>
+      </div>
+      <div id="main-content"><div style="text-align:center;padding:40px;color:var(--text3)">Lade...</div></div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="inventarModal">
+  <div class="modal">
+    <div class="modal-title">Objekt erfassen</div>
+    <div class="form-grid">
+      <div class="form-row-2"><div><label class="form-label">Name</label><input class="form-input" type="text" id="if-name" placeholder="z.B. Spielball"></div><div><label class="form-label">Kategorie</label><select class="form-input" id="if-kategorie"><option>Baelle</option><option>Trikots</option><option>Ausruestung</option><option>Hygiene</option><option>Sonstiges</option></select></div></div>
+      <div class="form-row-3"><div><label class="form-label">Anzahl total</label><input class="form-input" type="number" id="if-total" min="1" value="1"></div><div><label class="form-label">Verfuegbar</label><input class="form-input" type="number" id="if-verf" min="0" value="1"></div><div><label class="form-label">Zustand</label><select class="form-input" id="if-zustand"><option value="neu">Neu</option><option value="gut" selected>Gut</option><option value="gebraucht">Gebraucht</option><option value="defekt">Defekt</option></select></div></div>
+      <div class="form-row-2"><div><label class="form-label">Lagerort</label><input class="form-input" type="text" id="if-lagerort" placeholder="z.B. Geraetekammer"></div><div><label class="form-label">Preis (CHF)</label><input class="form-input" type="number" id="if-preis" step="0.50"></div></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button><button class="btn btn-accent" onclick="saveItem()">Speichern</button></div>
+  </div>
+</div>
+<script src="nav.js"></script><script>renderNav("inventar");</script>
+</body></html>

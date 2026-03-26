@@ -15,6 +15,13 @@ const NAV_ITEMS = [
   { label: 'Training',         href: 'training.html',   icon: '<circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>', id: 'training' },
   { label: 'Video & Training',  href: 'training.html',   icon: '<rect x="2" y="3" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M7 6.5L10.5 8.5L7 10.5V6.5Z" fill="currentColor"/>', id: 'video' },
   { label: 'Kameraplanung',      href: 'kamera.html',     icon: '<circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M2 6h7l2-2h2l2 2v6l-2 2h-2l-2-2H2V6Z" stroke="currentColor" stroke-width="1.3"/>', id: 'kamera' },
+  { section: 'Mitglieder' },
+  { label: 'Mitglieder & Rollen', href: 'mitglieder.html',  icon: '<circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 13c0-2.2 2-4 4.5-4s4.5 1.8 4.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M11 9c1.8.3 3 1.6 3 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>', id: 'mitglieder' },
+  { label: 'Newsfeed',            href: 'news.html',        icon: '<path d="M2 4h12v2H2zM2 8h9v2H2zM2 12h7v2H2z" fill="currentColor" opacity=".7"/>', id: 'news' },
+  { label: 'Anwesenheit',         href: 'anwesenheit.html', icon: '<path d="M2 3h12v10H2zM5 7l2 2 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>', id: 'anwesenheit' },
+  { section: 'Finanzen & Sponsoring' },
+  { label: 'Sponsoring',          href: 'sponsoring.html',  icon: '<path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5l3.5-.5L8 2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>', id: 'sponsoring' },
+  { label: 'Inventar',            href: 'inventar.html',    icon: '<rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>', id: 'inventar' },
 ];
 
 function renderNav(activeId) {
