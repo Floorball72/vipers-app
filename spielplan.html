@@ -553,46 +553,7 @@ initDB().catch(e => {
 
 <div class="shell">
   <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="logo">
-      <div class="logo-mark">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L16 6V12L9 16L2 12V6L9 2Z" fill="#0c0d0f"/></svg>
-      </div>
-      <div>
-        <div class="logo-name">UHC Jonschwil</div>
-        <div class="logo-sub">VIPERS</div>
-      </div>
-    </div>
-    <nav class="nav">
-      <div class="nav-sec">Übersicht</div>
-      <a class="nav-item" href="index.html">
-        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
-        Dashboard
-      </a>
-      <div class="nav-sec">Spielbetrieb</div>
-      <a class="nav-item" href="index.html">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7L8 10L11 5L14 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Social Media
-      </a>
-      <a class="nav-item active" href="#">
-        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5.5V8L10 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        Spielplan & Teams
-      </a>
-      <a class="nav-item" href="#">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M4 12V6M8 12V4M12 12V8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        Scorer
-      </a>
-      <div class="nav-sec">Verein</div>
-      <a class="nav-item" href="#">
-        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 8H11M5 5.5H11M5 10.5H8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        Events
-      </a>
-      <a class="nav-item" href="#">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12V4l6-2 6 2v8l-6 2-6-2Z" stroke="currentColor" stroke-width="1.3"/></svg>
-        Finanzen
-      </a>
-    </nav>
-  </aside>
+  <div id="nav-placeholder"></div>
 
   <!-- Main -->
   <div class="main">
@@ -823,5 +784,7 @@ async function loadAll() {
 window.loadAll = loadAll;
 initDB();
 </script>
+<script src="nav.js"></script>
+<script>renderNav('spielplan');</script>
 </body>
 </html>

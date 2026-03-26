@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events — UHC Jonschwil Vipers</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--bg4:#232429;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .shell{display:flex;min-height:100vh}
+  .sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+  .logo-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+  .logo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.1em}
+  .nav{padding:10px 8px;flex:1}
+  .nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+  .nav-item:hover{background:var(--bg3);color:var(--text)}
+  .nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+  .nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+  .nav-item.active svg{opacity:1}
+  .main{flex:1;min-width:0}
+  .topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .page-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
+  .page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+  .btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+  .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+  .content{padding:24px 28px}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+  .stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+  .stat-val{font-family:'DM Mono',monospace;font-size:30px;font-weight:400}
+  .stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+  .stat-hi{border-color:rgba(212,240,74,.25)}.stat-hi .stat-val{color:var(--accent)}
+  .events-list{display:grid;gap:12px}
+  .event-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;display:grid;grid-template-columns:64px 1fr auto;gap:16px;align-items:center;transition:border-color .15s}
+  .event-card:hover{border-color:var(--border2)}
+  .event-date-box{background:var(--bg3);border-radius:8px;padding:8px;text-align:center}
+  .event-date-day{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;line-height:1;color:var(--text)}
+  .event-date-mon{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+  .event-title{font-size:15px;font-weight:500;margin-bottom:4px}
+  .event-meta{font-size:12px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap}
+  .event-meta span{display:flex;align-items:center;gap:4px}
+  .typ-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .typ-cup{background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)}
+  .typ-turnier{background:rgba(155,143,255,.1);color:var(--purple);border:1px solid rgba(155,143,255,.2)}
+  .typ-gv{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+  .typ-event{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+  .typ-training{background:rgba(212,240,74,.1);color:var(--accent);border:1px solid rgba(212,240,74,.2)}
+  .event-actions{display:flex;gap:6px}
+  .icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+  .icon-btn:hover{color:var(--text)}.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+  .gcal-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--blue)}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+  .modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:20px}
+  .form-grid{display:grid;gap:14px}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+  .form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+  .form-input:focus{border-color:var(--accent)}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+  .info-box{background:rgba(91,191,255,.08);border:1px solid rgba(91,191,255,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);line-height:1.6}
+  .empty{text-align:center;padding:60px 20px;color:var(--text3)}
+  .empty-title{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:8px}
+  .empty-sub{font-size:13px;margin-bottom:20px}
+  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script>
+const CONFIG={SUPABASE_URL:'https://kpskzbqrfvihxfynwvpv.supabase.co',SUPABASE_KEY:'sb_publishable_eyDYEuo2aQKLLWX_0c8n-g_AttYd0La',GCAL_ID:'5320809ae59397fe852db643253723db16d2292d8b38179e85d35af082623f8e@group.calendar.google.com'};
+let db=null,events=[];
+async function initDB(){const mod=await import('https://esm.sh/@supabase/supabase-js@2');db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_KEY);await loadEvents();}
+async function loadEvents(){const{data}=await db.from('events').select('*').order('datum');events=data||[];renderEvents();updateStats();}
+const TYP_LABELS={'cup':'Cup','turnier':'Turnier','gv':'Generalversammlung','event':'Event','training':'Training'};
+const TYP_MONATE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+function renderEvents(){
+  const cont=document.getElementById('events-container');
+  const heute=new Date().toISOString().split('T')[0];
+  const upcoming=events.filter(e=>e.datum>=heute);
+  const past=events.filter(e=>e.datum<heute);
+  if(events.length===0){cont.innerHTML='<div class="empty"><div class="empty-title">Noch keine Events</div><div class="empty-sub">Erfasse den nächsten Vereinsanlass</div><button class="btn btn-accent" onclick="openModal()">+ Event erstellen</button></div>';return;}
+  let html='';
+  if(upcoming.length>0){html+='<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Kommende Events</div><div class="events-list" style="margin-bottom:24px">';
+  upcoming.forEach(e=>{html+=eventCard(e);});html+='</div>';}
+  if(past.length>0){html+='<div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Vergangene Events</div><div class="events-list" style="opacity:.6">';
+  [...past].reverse().forEach(e=>{html+=eventCard(e);});html+='</div>';}
+  cont.innerHTML=html;
+}
+function eventCard(e){
+  const d=new Date(e.datum+'T12:00:00');
+  const day=d.getDate();const mon=TYP_MONATE[d.getMonth()];
+  const typLabel=TYP_LABELS[e.typ]||e.typ;
+  const typClass='typ-'+(e.typ||'event');
+  return `<div class="event-card">
+    <div class="event-date-box"><div class="event-date-day">${day}</div><div class="event-date-mon">${mon}</div></div>
+    <div>
+      <div class="typ-badge ${typClass}">${typLabel}</div>
+      <div class="event-title">${e.titel}</div>
+      <div class="event-meta">
+        ${e.uhrzeit?`<span><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${e.uhrzeit.slice(0,5)} Uhr</span>`:''}
+        ${e.ort?`<span><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2C5.79 2 4 3.79 4 6c0 3 4 8 4 8s4-5 4-8c0-2.21-1.79-4-4-4Z" stroke="currentColor" stroke-width="1.3"/></svg>${e.ort}</span>`:''}
+        ${e.beschreibung?`<span style="color:var(--text3)">${e.beschreibung.substring(0,60)}${e.beschreibung.length>60?'…':''}</span>`:''}
+        ${e.google_cal_id?`<span class="gcal-tag"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/></svg>Im Kalender</span>`:''}
+      </div>
+    </div>
+    <div class="event-actions">
+      <button class="icon-btn" onclick="openEdit('${e.id}')" title="Bearbeiten"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3L5 14H2v-3L11 2Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="icon-btn del" onclick="deleteEvent('${e.id}')" title="Löschen"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>`;
+}
+function updateStats(){
+  const heute=new Date().toISOString().split('T')[0];
+  const upcoming=events.filter(e=>e.datum>=heute);
+  const next=upcoming[0];
+  document.getElementById('stat-total').textContent=events.length;
+  document.getElementById('stat-upcoming').textContent=upcoming.length;
+  document.getElementById('stat-next').textContent=next?new Date(next.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'}):'–';
+  document.getElementById('stat-gcal').textContent=events.filter(e=>e.google_cal_id).length;
+}
+let editId=null;
+function openModal(){editId=null;clearForm();document.getElementById('eventModal').classList.add('open');}
+function openEdit(id){
+  const e=events.find(x=>x.id===id);if(!e)return;editId=id;
+  document.getElementById('ef-titel').value=e.titel||'';
+  document.getElementById('ef-typ').value=e.typ||'event';
+  document.getElementById('ef-datum').value=e.datum||'';
+  document.getElementById('ef-uhrzeit').value=e.uhrzeit?.slice(0,5)||'';
+  document.getElementById('ef-ort').value=e.ort||'';
+  document.getElementById('ef-beschreibung').value=e.beschreibung||'';
+  document.getElementById('ef-teams').value=(e.teams||[]).join(', ');
+  document.getElementById('eventModal').classList.add('open');
+}
+function clearForm(){['ef-titel','ef-ort','ef-beschreibung','ef-teams'].forEach(id=>document.getElementById(id).value='');document.getElementById('ef-typ').value='event';document.getElementById('ef-datum').value='';document.getElementById('ef-uhrzeit').value='';}
+function closeModal(){document.getElementById('eventModal').classList.remove('open');}
+async function saveEvent(){
+  const titel=document.getElementById('ef-titel').value;
+  const datum=document.getElementById('ef-datum').value;
+  if(!titel||!datum){alert('Titel und Datum sind Pflichtfelder.');return;}
+  const teamsStr=document.getElementById('ef-teams').value;
+  const data={
+    titel,datum,
+    typ:document.getElementById('ef-typ').value,
+    uhrzeit:document.getElementById('ef-uhrzeit').value||null,
+    ort:document.getElementById('ef-ort').value||null,
+    beschreibung:document.getElementById('ef-beschreibung').value||null,
+    teams:teamsStr?teamsStr.split(',').map(s=>s.trim()).filter(Boolean):null,
+  };
+  let savedEvent=null;
+  if(editId){await db.from('events').update(data).eq('id',editId);}
+  else{const res=await db.from('events').insert([data]).select().single();savedEvent=res.data;}
+  closeModal();
+  await loadEvents();
+  if(savedEvent&&document.getElementById('ef-gcal').checked){
+    await addToGoogleCal(savedEvent);
+  }
+}
+async function addToGoogleCal(e){
+  // Placeholder - wird via Supabase Edge Function aufgerufen sobald OAuth eingerichtet
+  alert('Google Calendar Sync: Event "'+e.titel+'" am '+e.datum+' wurde gespeichert.\n\nKalender-Sync wird automatisch aktiv sobald der OAuth-Flow eingerichtet ist (nächster Schritt).');
+}
+async function deleteEvent(id){
+  if(!confirm('Event wirklich löschen?'))return;
+  await db.from('events').delete().eq('id',id);
+  await loadEvents();
+}
+document.addEventListener('click',e=>{if(e.target.classList.contains('overlay'))e.target.classList.remove('open');});
+initDB().catch(()=>{document.getElementById('events-container').innerHTML='<div class="empty"><div class="empty-title">Verbindungsfehler</div></div>';});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Events</div>
+        <div class="page-sub">UHC Jonschwil Vipers · Cup, GV, Turniere, Anlässe</div>
+      </div>
+      <button class="btn btn-accent" onclick="openModal()">+ Event erstellen</button>
+    </div>
+    <div class="content">
+      <div class="stat-grid">
+        <div class="stat stat-hi"><div class="stat-label">Total Events</div><div class="stat-val" id="stat-total">–</div></div>
+        <div class="stat"><div class="stat-label">Kommende</div><div class="stat-val" id="stat-upcoming">–</div></div>
+        <div class="stat"><div class="stat-label">Nächster</div><div class="stat-val" style="font-size:18px;padding-top:6px" id="stat-next">–</div></div>
+        <div class="stat"><div class="stat-label">Im Google Cal.</div><div class="stat-val" id="stat-gcal">–</div></div>
+      </div>
+      <div id="events-container"><div class="empty"><div class="empty-title">Lade Events...</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Event -->
+<div class="overlay" id="eventModal">
+  <div class="modal">
+    <div class="modal-title">Event erfassen</div>
+    <div class="form-grid">
+      <div><label class="form-label">Titel</label><input class="form-input" type="text" id="ef-titel" placeholder="z.B. Cup-Heimspiel, Generalversammlung"></div>
+      <div class="form-row-2">
+        <div><label class="form-label">Typ</label>
+          <select class="form-input" id="ef-typ">
+            <option value="event">Event</option><option value="cup">Cup</option><option value="turnier">Turnier</option><option value="gv">Generalversammlung</option><option value="training">Training</option>
+          </select>
+        </div>
+        <div><label class="form-label">Datum</label><input class="form-input" type="date" id="ef-datum"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Uhrzeit</label><input class="form-input" type="time" id="ef-uhrzeit"></div>
+        <div><label class="form-label">Ort</label><input class="form-input" type="text" id="ef-ort" placeholder="Sporthalle Jonschwil"></div>
+      </div>
+      <div><label class="form-label">Beschreibung</label><textarea class="form-input" id="ef-beschreibung" rows="2" placeholder="Weitere Infos zum Event..."></textarea></div>
+      <div><label class="form-label">Teams (kommagetrennt, leer = alle)</label><input class="form-input" type="text" id="ef-teams" placeholder="Vipers 1. Liga, Junioren U18"></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(91,191,255,.08);border:1px solid rgba(91,191,255,.2);border-radius:8px">
+        <input type="checkbox" id="ef-gcal" checked style="width:16px;height:16px;cursor:pointer">
+        <label for="ef-gcal" style="font-size:13px;color:var(--blue);cursor:pointer">In Google Calendar "UHC Jonschwil Vipers" eintragen</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveEvent()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script>
+<script>renderNav('events');</script>
+</body>
+</html>
