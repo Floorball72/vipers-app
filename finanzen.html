@@ -91,7 +91,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <script>
 // Config aus config.js
 const CONFIG = APP_CONFIG;
-let db=null,buchungen=[],filterTyp='all';
+let db=null,buchungen=[],filterTyp='all',belegUrl=null;
 
 async function initDB(){
   const mod=await import('https://esm.sh/@supabase/supabase-js@2');
@@ -161,13 +161,19 @@ function setFilter(typ,el){
 
 let editId=null;
 function openModal(typ){
-  editId=null;
+  editId=null; belegUrl=null;
   document.getElementById('bf-typ').value=typ||'ausgabe';
   document.getElementById('bf-betrag').value='';
   document.getElementById('bf-beschreibung').value='';
   document.getElementById('bf-kategorie').value='';
   document.getElementById('bf-datum').value=new Date().toISOString().split('T')[0];
   document.getElementById('buchungModal').classList.add('open');
+  // Upload-Widget initialisieren (nach DOM-Update)
+  setTimeout(() => UPLOAD.render('beleg-upload', {
+    label: 'Beleg hochladen (PDF oder Bild)',
+    folder: 'belege',
+    onSuccess: (url) => { belegUrl = url; }
+  }), 50);
 }
 function closeModal(){document.getElementById('buchungModal').classList.remove('open');}
 
@@ -180,6 +186,7 @@ async function saveBuchung(){
     beschreibung:document.getElementById('bf-beschreibung').value||null,
     kategorie:document.getElementById('bf-kategorie').value||null,
     datum:document.getElementById('bf-datum').value,
+    beleg_url: belegUrl || null,
   };
   await db.from('finanzen').insert([data]);
   closeModal();
@@ -239,10 +246,7 @@ initDB().catch(()=>{document.getElementById('buchungen-tbody').innerHTML='<tr><t
           <div class="card">
             <div class="card-header"><span class="card-title">Beleg hochladen</span></div>
             <div style="padding:14px">
-              <div class="upload-area" onclick="alert('Datei-Upload wird in der nächsten Version via Supabase Storage aktiviert.')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="display:block;margin:0 auto 8px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                PDF oder Bild hochladen<br><span style="font-size:11px">Belege werden in Supabase Storage gespeichert</span>
-              </div>
+              <div id="quick-upload-area"></div>
             </div>
           </div>
         </div>
@@ -276,6 +280,10 @@ initDB().catch(()=>{document.getElementById('buchungen-tbody').innerHTML='<tr><t
         </div>
         <div><label class="form-label">Datum</label><input class="form-input" type="date" id="bf-datum"></div>
       </div>
+      <div>
+        <label class="form-label">Beleg (optional)</label>
+        <div id="beleg-upload"></div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
@@ -284,7 +292,24 @@ initDB().catch(()=>{document.getElementById('buchungen-tbody').innerHTML='<tr><t
   </div>
 </div>
 
-<script src="nav.js"></script>
-<script>renderNav('finanzen');</script>
+<script src="upload.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  UPLOAD.render('quick-upload-area', {
+    label: 'Beleg ohne Buchung hochladen',
+    folder: 'belege',
+    onSuccess: (url) => {
+      if (url) {
+        openModal('ausgabe');
+        setTimeout(() => {
+          belegUrl = url;
+          UPLOAD.render('beleg-upload', {folder:'belege',existingUrl:url,onSuccess:(u)=>{belegUrl=u;}});
+        }, 100);
+      }
+    }
+  });
+});
+</script>
+<script src="nav.js"></script><script>renderNav('finanzen');</script>
 </body>
 </html>

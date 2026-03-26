@@ -110,11 +110,13 @@ async function init() {
 }
 
 async function loadUserAndRedirect(user) {
+  // Profil laden - falls noch keines existiert trotzdem weiterleiten
   const { data: profile } = await db.from('user_profiles').select('*').eq('id', user.id).single();
-  if (profile) {
-    localStorage.setItem('vipers_user', JSON.stringify({...profile, email: user.email}));
-    window.location.href = 'dashboard.html';
-  }
+  const userData = profile
+    ? {...profile, email: user.email}
+    : { id: user.id, email: user.email, vorname: user.user_metadata?.vorname || '', nachname: user.user_metadata?.nachname || '', rolle: 'spieler' };
+  localStorage.setItem('vipers_user', JSON.stringify(userData));
+  window.location.href = 'dashboard.html';
 }
 
 // ── Tabs ──
@@ -152,7 +154,8 @@ async function doLogin() {
     return;
   }
   showAlert('l-alert', 'success', 'Anmeldung erfolgreich! Weiterleitung...');
-  await loadUserAndRedirect(data.user);
+  // Kurz warten damit der Alert sichtbar ist, dann weiterleiten
+  setTimeout(async () => { await loadUserAndRedirect(data.user); }, 300);
 }
 
 // ── Passwort vergessen ──

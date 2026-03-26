@@ -68,7 +68,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 <script>
 // Config aus config.js
 const CONFIG = APP_CONFIG;
-let db=null,inventar=[],editId=null;
+let db=null,inventar=[],editId=null,fotoUrl=null;
 const CHF=n=>n!=null?"CHF "+parseFloat(n).toFixed(0):"–";
 
 async function initDB(){
@@ -108,11 +108,11 @@ function render(){
     }).join("")+"</div></div>";
   }).join("");
 }
-function openModal(){editId=null;["if-name","if-kategorie","if-lagerort","if-preis"].forEach(id=>document.getElementById(id).value="");document.getElementById("if-total").value="1";document.getElementById("if-verf").value="1";document.getElementById("if-zustand").value="gut";document.getElementById("inventarModal").classList.add("open");}
+function openModal(){editId=null;["if-name","if-kategorie","if-lagerort","if-preis"].forEach(id=>document.getElementById(id).value="");document.getElementById("if-total").value="1";document.getElementById("if-verf").value="1";document.getElementById("if-zustand").value="gut";fotoUrl=null;document.getElementById("inventarModal").classList.add("open");setTimeout(()=>UPLOAD.render("inv-foto-upload",{label:"Foto hochladen",folder:"inventar",onSuccess:(u)=>{fotoUrl=u;}}),50);}
 function openEdit(id){const item=inventar.find(x=>x.id===id);if(!item)return;editId=id;document.getElementById("if-name").value=item.name||"";document.getElementById("if-kategorie").value=item.kategorie||"";document.getElementById("if-lagerort").value=item.lagerort||"";document.getElementById("if-total").value=item.anzahl_total||1;document.getElementById("if-verf").value=item.anzahl_verfuegbar||1;document.getElementById("if-zustand").value=item.zustand||"gut";document.getElementById("if-preis").value=item.anschaffungspreis||"";document.getElementById("inventarModal").classList.add("open");}
 function closeModal(){document.getElementById("inventarModal").classList.remove("open");editId=null;}
 async function saveItem(){
-  const data={name:document.getElementById("if-name").value,kategorie:document.getElementById("if-kategorie").value||"Sonstiges",lagerort:document.getElementById("if-lagerort").value||null,anzahl_total:parseInt(document.getElementById("if-total").value)||1,anzahl_verfuegbar:parseInt(document.getElementById("if-verf").value)||1,zustand:document.getElementById("if-zustand").value,anschaffungspreis:parseFloat(document.getElementById("if-preis").value)||null};
+  const data={name:document.getElementById("if-name").value,kategorie:document.getElementById("if-kategorie").value||"Sonstiges",lagerort:document.getElementById("if-lagerort").value||null,anzahl_total:parseInt(document.getElementById("if-total").value)||1,anzahl_verfuegbar:parseInt(document.getElementById("if-verf").value)||1,zustand:document.getElementById("if-zustand").value,anschaffungspreis:parseFloat(document.getElementById("if-preis").value)||null,foto_url:fotoUrl||null};
   if(!data.name){alert("Bitte Name eingeben.");return;}
   if(editId){await db.from("inventar").update(data).eq("id",editId);}else{await db.from("inventar").insert([data]);}
   closeModal();const{data:d}=await db.from("inventar").select("*").order("kategorie").order("name");inventar=d||[];render();updateStats();
@@ -153,9 +153,11 @@ initDB().catch(console.error);
       <div class="form-row-2"><div><label class="form-label">Name</label><input class="form-input" type="text" id="if-name" placeholder="z.B. Spielball"></div><div><label class="form-label">Kategorie</label><select class="form-input" id="if-kategorie"><option>Baelle</option><option>Trikots</option><option>Ausruestung</option><option>Hygiene</option><option>Sonstiges</option></select></div></div>
       <div class="form-row-3"><div><label class="form-label">Anzahl total</label><input class="form-input" type="number" id="if-total" min="1" value="1"></div><div><label class="form-label">Verfuegbar</label><input class="form-input" type="number" id="if-verf" min="0" value="1"></div><div><label class="form-label">Zustand</label><select class="form-input" id="if-zustand"><option value="neu">Neu</option><option value="gut" selected>Gut</option><option value="gebraucht">Gebraucht</option><option value="defekt">Defekt</option></select></div></div>
       <div class="form-row-2"><div><label class="form-label">Lagerort</label><input class="form-input" type="text" id="if-lagerort" placeholder="z.B. Geraetekammer"></div><div><label class="form-label">Preis (CHF)</label><input class="form-input" type="number" id="if-preis" step="0.50"></div></div>
+    <div><label class="form-label">Foto (optional)</label><div id="inv-foto-upload"></div></div>
     </div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button><button class="btn btn-accent" onclick="saveItem()">Speichern</button></div>
   </div>
 </div>
+<script src="upload.js"></script>
 <script src="nav.js"></script><script>renderNav("inventar");</script>
 </body></html>

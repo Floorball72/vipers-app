@@ -75,7 +75,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 <script>
 // Config aus config.js
 const CONFIG = APP_CONFIG;
-let db=null,sponsoren=[],leistungen=[],editId=null,detailId=null;
+let db=null,sponsoren=[],leistungen=[],editId=null,detailId=null,logoUrl=null;
 const CHF=n=>n!=null?"CHF "+parseFloat(n).toLocaleString("de-CH",{minimumFractionDigits:0}):"–";
 
 async function initDB(){
@@ -130,12 +130,12 @@ function render(){
   }).join("");
 }
 
-function openModal(){editId=null;["sf-firma","sf-kontakt","sf-email","sf-telefon","sf-website","sf-betrag"].forEach(id=>document.getElementById(id).value="");document.getElementById("sf-kat").value="Partner";document.getElementById("sf-status").value="aktiv";document.getElementById("sf-start").value="";document.getElementById("sf-ende").value="";document.getElementById("sponsorModal").classList.add("open");}
+function openModal(){editId=null;["sf-firma","sf-kontakt","sf-email","sf-telefon","sf-website","sf-betrag"].forEach(id=>document.getElementById(id).value="");document.getElementById("sf-kat").value="Partner";document.getElementById("sf-status").value="aktiv";document.getElementById("sf-start").value="";document.getElementById("sf-ende").value="";logoUrl=null;document.getElementById("sponsorModal").classList.add("open");setTimeout(()=>UPLOAD.render("logo-upload",{label:"Logo hochladen (PNG/JPG)",folder:"logos",onSuccess:(u)=>{logoUrl=u;}}),50);}
 function openEdit(id){const s=sponsoren.find(x=>x.id===id);if(!s)return;editId=id;document.getElementById("sf-firma").value=s.firmenname||"";document.getElementById("sf-kontakt").value=s.kontaktperson||"";document.getElementById("sf-email").value=s.email||"";document.getElementById("sf-telefon").value=s.telefon||"";document.getElementById("sf-website").value=s.website||"";document.getElementById("sf-betrag").value=s.betrag_jahr||"";document.getElementById("sf-kat").value=s.kategorie||"Partner";document.getElementById("sf-status").value=s.status||"aktiv";document.getElementById("sf-start").value=s.vertrag_start||"";document.getElementById("sf-ende").value=s.vertrag_ende||"";document.getElementById("sponsorModal").classList.add("open");}
 function openDetail(id){openEdit(id);}
 function closeModal(){document.getElementById("sponsorModal").classList.remove("open");editId=null;}
 async function saveSponsor(){
-  const data={firmenname:document.getElementById("sf-firma").value,kontaktperson:document.getElementById("sf-kontakt").value||null,email:document.getElementById("sf-email").value||null,telefon:document.getElementById("sf-telefon").value||null,website:document.getElementById("sf-website").value||null,betrag_jahr:parseFloat(document.getElementById("sf-betrag").value)||null,kategorie:document.getElementById("sf-kat").value,status:document.getElementById("sf-status").value,vertrag_start:document.getElementById("sf-start").value||null,vertrag_ende:document.getElementById("sf-ende").value||null};
+  const data={firmenname:document.getElementById("sf-firma").value,logo_url:logoUrl||null,kontaktperson:document.getElementById("sf-kontakt").value||null,email:document.getElementById("sf-email").value||null,telefon:document.getElementById("sf-telefon").value||null,website:document.getElementById("sf-website").value||null,betrag_jahr:parseFloat(document.getElementById("sf-betrag").value)||null,kategorie:document.getElementById("sf-kat").value,status:document.getElementById("sf-status").value,vertrag_start:document.getElementById("sf-start").value||null,vertrag_ende:document.getElementById("sf-ende").value||null};
   if(!data.firmenname){alert("Bitte Firmenname eingeben.");return;}
   if(editId){await db.from("sponsoren").update(data).eq("id",editId);}else{await db.from("sponsoren").insert([data]);}
   closeModal();await loadAll();
@@ -187,6 +187,10 @@ initDB().catch(console.error);
         <div><label class="form-label">Telefon</label><input class="form-input" type="tel" id="sf-telefon"></div>
         <div><label class="form-label">Website</label><input class="form-input" type="url" id="sf-website" placeholder="https://"></div>
       </div>
+      <div>
+        <label class="form-label">Logo (optional)</label>
+        <div id="logo-upload"></div>
+      </div>
       <div class="form-row-2">
         <div><label class="form-label">Betrag/Jahr (CHF)</label><input class="form-input" type="number" id="sf-betrag" min="0" step="100"></div>
         <div><label class="form-label">Status</label><select class="form-input" id="sf-status"><option value="aktiv">Aktiv</option><option value="verhandlung">In Verhandlung</option><option value="inaktiv">Inaktiv</option></select></div>
@@ -203,5 +207,6 @@ initDB().catch(console.error);
   </div>
 </div>
 
+<script src="upload.js"></script>
 <script src="nav.js"></script><script>renderNav("sponsoring");</script>
 </body></html>
