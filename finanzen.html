@@ -3,203 +3,374 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finanzen — UHC Jonschwil Vipers</title>
+<title>Finanzen — Vereinsplattform</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
-  *{box-sizing:border-box;margin:0;padding:0}
-  a{text-decoration:none}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-  .shell{display:flex;min-height:100vh}
-  .sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-  .logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-  .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
-  .logo-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.2}
-  .logo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.1em}
-  .nav{padding:10px 8px;flex:1}
-  .nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
-  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
-  .nav-item:hover{background:var(--bg3);color:var(--text)}
-  .nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
-  .nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
-  .nav-item.active svg{opacity:1}
-  .main{flex:1;min-width:0}
-  .topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-  .page-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
-  .page-sub{font-size:12px;color:var(--text3);margin-top:2px}
-  .btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s}
-  .btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
-  .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
-  .content{padding:24px 28px}
-  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-  .stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
-  .stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
-  .stat-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:400}
-  .stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
-  .stat-hi .stat-val{color:var(--accent)}
-  .stat-green .stat-val{color:var(--green)}
-  .stat-red .stat-val{color:var(--red)}
-  .two-col{display:grid;grid-template-columns:1fr 300px;gap:16px}
-  .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
-  .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-  .card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
-  table{width:100%;border-collapse:collapse}
-  th{padding:10px 20px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
-  td{padding:11px 20px;font-size:13px;border-bottom:1px solid var(--border)}
-  tr:last-child td{border-bottom:none}
-  tr:hover td{background:rgba(255,255,255,.02)}
-  .amount-plus{color:var(--green);font-family:'DM Mono',monospace;font-weight:500}
-  .amount-minus{color:var(--red);font-family:'DM Mono',monospace;font-weight:500}
-  .badge{display:inline-flex;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
-  .badge-ein{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
-  .badge-aus{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
-  .row-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s}
-  tr:hover .row-actions{opacity:1}
-  .icon-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
-  .icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
-  /* Kategorien Chart */
-  .kat-row{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-  .kat-row:last-child{border-bottom:none}
-  .kat-bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
-  .kat-bar{height:100%;border-radius:3px;transition:width .4s}
-  .kat-bar.ein{background:var(--green)}
-  .kat-bar.aus{background:var(--red)}
-  /* Filter */
-  .filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-  .filter-pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:transparent;transition:all .12s;font-family:'DM Sans',sans-serif}
-  .filter-pill:hover{border-color:var(--border);color:var(--text)}
-  .filter-pill.active{background:rgba(212,240,74,.1);border-color:rgba(212,240,74,.4);color:var(--accent)}
-  /* Upload */
-  .upload-area{border:1px dashed var(--border2);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .15s;font-size:12px;color:var(--text3)}
-  .upload-area:hover{border-color:var(--accent);color:var(--accent)}
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
-  .overlay.open{display:flex}
-  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:26px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
-  .modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:20px}
-  .form-grid{display:grid;gap:14px}
-  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-  .form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
-  .form-input:focus{border-color:var(--accent)}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
-  .empty{text-align:center;padding:40px 20px;color:var(--text3)}
-  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:20px 28px}
+
+/* ── Konten-Tabs ── */
+.konto-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.konto-tab{display:flex;align-items:center;gap:8px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;white-space:nowrap}
+.konto-tab:hover{color:var(--text)}
+.konto-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.konto-tab-dot{width:8px;height:8px;border-radius:50%}
+.konto-tab-saldo{font-family:"DM Mono",monospace;font-size:11px;padding:1px 7px;border-radius:20px;margin-left:2px}
+.konto-tab-saldo.pos{background:rgba(77,214,140,.12);color:var(--green)}
+.konto-tab-saldo.neg{background:rgba(255,107,107,.1);color:var(--red)}
+.konto-tab-saldo.neu{background:var(--bg3);color:var(--text3);cursor:pointer}
+.konto-tab-saldo.neu:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── Konto-Header ── */
+.konto-header{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.stat-val{font-family:"DM Mono",monospace;font-size:24px;font-weight:400}
+
+/* ── Layout ── */
+.main-layout{display:grid;grid-template-columns:1fr 280px;gap:16px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-family:"Syne",sans-serif;font-size:14px;font-weight:600}
+
+/* ── Filter ── */
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.filter-pill{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:transparent;transition:all .12s;font-family:"DM Sans",sans-serif}
+.filter-pill:hover{color:var(--text)}
+.filter-pill.active{background:rgba(212,240,74,.1);border-color:rgba(212,240,74,.4);color:var(--accent)}
+
+/* ── Tabelle ── */
+table{width:100%;border-collapse:collapse}
+th{padding:9px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+th.r{text-align:right}
+td{padding:10px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+td.r{text-align:right}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.amt-plus{color:var(--green);font-family:"DM Mono",monospace;font-weight:500}
+.amt-minus{color:var(--red);font-family:"DM Mono",monospace;font-weight:500}
+.badge-ein{display:inline-flex;font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.badge-aus{display:inline-flex;font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.row-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s}
+tr:hover .row-actions{opacity:1}
+.icon-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.icon-btn:hover{color:var(--text)}
+.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+
+/* ── Sidebar-Karten ── */
+.kat-row{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.kat-row:last-child{border-bottom:none}
+.kat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.kat-bar-bg{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.kat-bar{height:100%;border-radius:2px;transition:width .4s}
+.konto-uebersicht-row{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .12s}
+.konto-uebersicht-row:last-child{border-bottom:none}
+.konto-uebersicht-row:hover{background:rgba(255,255,255,.02)}
+
+/* ── Modals ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;margin-bottom:18px}
+.form-grid{display:grid;gap:12px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.info-box{background:rgba(91,191,255,.07);border:1px solid rgba(91,191,255,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);line-height:1.5}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 </style>
 </head>
 <body>
 <script src="config.js"></script>
 <script>
-// Config aus config.js
 const CONFIG = APP_CONFIG;
-let db=null,CLUB_ID="uhc-jonschwil",buchungen=[],filterTyp='all',belegUrl=null;
+let db = null, CLUB_ID = "uhc-jonschwil";
+let buchungen = [], konten = [], filterTyp = "all", activeKonto = "__alle__", belegUrl = null;
 
-async function initDB(){
-  const mod=await import('https://esm.sh/@supabase/supabase-js@2');
-  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
-  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
-  await loadBuchungen();
+// ── Vordefinierte Konten (erweiterbar) ──
+// "konto" Feld in finanzen-Tabelle speichert den Kontonamen
+// Wird aus buchungen dynamisch ergänzt
+
+const KONTO_COLORS = [
+  "#d4f04a","#5bbfff","#9b8fff","#4dd68c","#ffbe47","#ff6b6b","#f0a4f4","#5bd9d9"
+];
+
+async function initDB() {
+  const mod = await import("https://esm.sh/@supabase/supabase-js@2");
+  db = mod.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID = APP_CONFIG.ACTIVE_CLUB.club_id;
+  await loadAll();
 }
-async function loadBuchungen(){
-  const{data}=await db.from('finanzen').select('*').eq('club_id',CLUB_ID).order('datum',{ascending:false});
-  buchungen=data||[];
+
+async function loadAll() {
+  const { data } = await db.from("finanzen").select("*").eq("club_id", CLUB_ID).order("datum", { ascending: false });
+  buchungen = data || [];
+  // Konten aus buchungen ableiten (eindeutige Kontonamen)
+  const namen = [...new Set(buchungen.map(b => b.konto || "Allgemein"))].sort();
+  konten = namen.map((n, i) => ({
+    name: n,
+    color: KONTO_COLORS[i % KONTO_COLORS.length],
+  }));
+  renderTabs();
   render();
 }
 
-function CHF(n){return 'CHF '+parseFloat(n).toLocaleString('de-CH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function CHF(n) {
+  return "CHF " + parseFloat(n || 0).toLocaleString("de-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-function render(){
-  const filtered=filterTyp==='all'?buchungen:buchungen.filter(b=>b.typ===filterTyp);
-  const einnahmen=buchungen.filter(b=>b.typ==='einnahme').reduce((s,b)=>s+parseFloat(b.betrag),0);
-  const ausgaben=buchungen.filter(b=>b.typ==='ausgabe').reduce((s,b)=>s+parseFloat(b.betrag),0);
-  const saldo=einnahmen-ausgaben;
+function getBuchungen(konto, typ) {
+  let b = buchungen;
+  if (konto && konto !== "__alle__") b = b.filter(x => (x.konto || "Allgemein") === konto);
+  if (typ && typ !== "all") b = b.filter(x => x.typ === typ);
+  return b;
+}
 
-  document.getElementById('stat-saldo').textContent=CHF(saldo);
-  document.getElementById('stat-saldo').style.color=saldo>=0?'var(--green)':'var(--red)';
-  document.getElementById('stat-ein').textContent=CHF(einnahmen);
-  document.getElementById('stat-aus').textContent=CHF(ausgaben);
-  document.getElementById('stat-count').textContent=buchungen.length;
+function getSaldo(konto) {
+  const b = getBuchungen(konto);
+  const ein = b.filter(x => x.typ === "einnahme").reduce((s, x) => s + parseFloat(x.betrag), 0);
+  const aus = b.filter(x => x.typ === "ausgabe").reduce((s, x) => s + parseFloat(x.betrag), 0);
+  return ein - aus;
+}
+
+function renderTabs() {
+  const cont = document.getElementById("konto-tabs");
+  // Gesamtkonto immer zuerst
+  const gesamtSaldo = getSaldo(null);
+  const gesamtPos = gesamtSaldo >= 0;
+  let html = `<div class="konto-tab${activeKonto === "__alle__" ? " active" : ""}" onclick="setKonto("__alle__")">
+    <span class="konto-tab-dot" style="background:var(--accent)"></span>
+    Gesamt
+    <span class="konto-tab-saldo ${gesamtPos ? "pos" : "neg"}">${CHF(gesamtSaldo)}</span>
+  </div>`;
+
+  konten.forEach(k => {
+    const saldo = getSaldo(k.name);
+    const pos = saldo >= 0;
+    html += `<div class="konto-tab${activeKonto === k.name ? " active" : ""}" onclick="setKonto('${k.name.replace(/'/g, "\\'")}')" title="${k.name}">
+      <span class="konto-tab-dot" style="background:${k.color}"></span>
+      ${k.name}
+      <span class="konto-tab-saldo ${pos ? "pos" : "neg"}">${CHF(saldo)}</span>
+    </div>`;
+  });
+
+  // + Neues Konto Button
+  html += `<div class="konto-tab" onclick="openNeuesKonto()" style="color:var(--text3)">
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+    Konto
+  </div>`;
+
+  cont.innerHTML = html;
+}
+
+function setKonto(name) {
+  activeKonto = name;
+  filterTyp = "all";
+  document.querySelectorAll(".filter-pill").forEach(p => p.classList.toggle("active", p.dataset.typ === "all"));
+  renderTabs();
+  render();
+}
+
+function render() {
+  const isGesamt = activeKonto === "__alle__";
+  const kName = isGesamt ? null : activeKonto;
+  const kObj = isGesamt ? null : konten.find(k => k.name === activeKonto);
+  const filtered = getBuchungen(kName, filterTyp);
+  const allInKonto = getBuchungen(kName);
+  const ein = allInKonto.filter(b => b.typ === "einnahme").reduce((s, b) => s + parseFloat(b.betrag), 0);
+  const aus = allInKonto.filter(b => b.typ === "ausgabe").reduce((s, b) => s + parseFloat(b.betrag), 0);
+  const saldo = ein - aus;
+
+  // Topbar
+  document.getElementById("page-title").textContent = isGesamt ? "Finanzen — Gesamt" : "Finanzen — " + activeKonto;
+  document.getElementById("page-sub").textContent = APP_CONFIG.ACTIVE_CLUB.name + (isGesamt ? " · Alle Konten" : " · Konto: " + activeKonto);
+
+  // Stats
+  document.getElementById("stat-saldo").textContent = CHF(saldo);
+  document.getElementById("stat-saldo").style.color = saldo >= 0 ? "var(--green)" : "var(--red)";
+  document.getElementById("stat-ein").textContent = CHF(ein);
+  document.getElementById("stat-aus").textContent = CHF(aus);
+  document.getElementById("stat-count").textContent = allInKonto.length;
 
   // Tabelle
-  const tbody=document.getElementById('buchungen-tbody');
-  if(filtered.length===0){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Keine Buchungen</td></tr>';
+  const tbody = document.getElementById("buchungen-tbody");
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">Keine Buchungen in diesem Konto</td></tr>`;
   } else {
-    tbody.innerHTML=filtered.map(b=>{
-      const d=new Date(b.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short',year:'2-digit'});
-      const plus=b.typ==='einnahme';
+    tbody.innerHTML = filtered.map(b => {
+      const d = new Date(b.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "2-digit" });
+      const plus = b.typ === "einnahme";
+      const konto = b.konto || "Allgemein";
+      const kObj2 = konten.find(k => k.name === konto);
       return `<tr>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${d}</td>
-        <td><span class="badge ${plus?'badge-ein':'badge-aus'}">${plus?'Einnahme':'Ausgabe'}</span></td>
-        <td>${b.beschreibung||'–'}</td>
-        <td style="color:var(--text2);font-size:12px">${b.kategorie||'–'}</td>
-        <td class="${plus?'amount-plus':'amount-minus'}">${plus?'+':'–'}${CHF(b.betrag)}</td>
+        <td><span class="badge-${plus ? "ein" : "aus"}">${plus ? "Einnahme" : "Ausgabe"}</span></td>
+        <td style="font-weight:500">${b.beschreibung || "–"}</td>
+        <td style="font-size:12px;color:var(--text2)">${b.kategorie || "–"}</td>
+        ${isGesamt ? `<td><span style="font-size:11px;padding:1px 7px;border-radius:20px;background:${kObj2?.color || "var(--border2)"}22;color:${kObj2?.color || "var(--text3)"};">${konto}</span></td>` : "<td></td>"}
+        <td class="r ${plus ? "amt-plus" : "amt-minus"}">${plus ? "+" : "–"}${CHF(b.betrag)}</td>
         <td><div class="row-actions">
-          ${b.beleg_url?`<a href="${b.beleg_url}" target="_blank" class="icon-btn" title="Beleg öffnen"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3H3v10h10V10M10 2h4v4M14 2L8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>`:''}
-          <button class="icon-btn del" onclick="deleteBuchung('${b.id}')"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+          ${b.beleg_url ? `<a href="${b.beleg_url}" target="_blank" class="icon-btn" title="Beleg"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3H3v10h10V10M10 2h4v4M14 2L8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>` : ""}
+          <button class="icon-btn del" onclick="deleteBuchung('${b.id}')" title="Löschen"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
         </div></td>
       </tr>`;
-    }).join('');
+    }).join("");
   }
 
-  // Kategorien
-  const katMap={};
-  filtered.forEach(b=>{const k=b.kategorie||'Sonstiges';katMap[k]=(katMap[k]||0)+parseFloat(b.betrag);});
-  const maxKat=Math.max(...Object.values(katMap),1);
-  document.getElementById('kategorien').innerHTML=Object.entries(katMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`
-    <div class="kat-row">
-      <div style="font-size:12px;color:var(--text2);width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${k}</div>
-      <div class="kat-bar-bg"><div class="kat-bar aus" style="width:${Math.round(v/maxKat*100)}%"></div></div>
-      <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);width:90px;text-align:right">${CHF(v)}</div>
-    </div>`).join('');
+  // Seitenleiste: Kategorien
+  renderKategorien(kName);
+
+  // Seitenleiste: Konten-Übersicht (nur bei Gesamt)
+  const kontenOv = document.getElementById("konten-uebersicht");
+  if (isGesamt) {
+    kontenOv.innerHTML = konten.length === 0
+      ? `<div style="padding:14px;font-size:12px;color:var(--text3)">Noch keine Konten erstellt.</div>`
+      : konten.map(k => {
+          const s = getSaldo(k.name);
+          const b = getBuchungen(k.name);
+          return `<div class="konto-uebersicht-row" onclick="setKonto('${k.name.replace(/'/g, "\\'")}')">
+            <div style="display:flex;align-items:center;gap:8px;flex:1">
+              <span class="konto-tab-dot" style="background:${k.color}"></span>
+              <span style="font-size:13px;font-weight:500">${k.name}</span>
+              <span style="font-size:11px;color:var(--text3)">(${b.length})</span>
+            </div>
+            <span style="font-family:'DM Mono',monospace;font-size:13px;color:${s >= 0 ? "var(--green)" : "var(--red)"}">${CHF(s)}</span>
+          </div>`;
+        }).join("");
+    document.getElementById("konten-card").style.display = "";
+  } else {
+    document.getElementById("konten-card").style.display = "none";
+  }
 }
 
-function setFilter(typ,el){
-  filterTyp=typ;
-  document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
+function renderKategorien(konto) {
+  const b = getBuchungen(konto).filter(x => x.typ === "ausgabe");
+  const cats = {};
+  b.forEach(x => { const k = x.kategorie || "Sonstiges"; cats[k] = (cats[k] || 0) + parseFloat(x.betrag); });
+  const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const max = sorted[0]?.[1] || 1;
+  const COLORS = ["var(--red)","var(--amber)","var(--purple)","var(--blue)","var(--green)"];
+  document.getElementById("kategorien").innerHTML = sorted.length === 0
+    ? `<div style="padding:14px;font-size:12px;color:var(--text3)">Keine Ausgaben.</div>`
+    : sorted.map(([name, val], i) =>
+        `<div class="kat-row">
+          <span class="kat-dot" style="background:${COLORS[i % COLORS.length]}"></span>
+          <span style="font-size:12px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</span>
+          <div class="kat-bar-bg"><div class="kat-bar" style="width:${Math.round(val / max * 100)}%;background:${COLORS[i % COLORS.length]}"></div></div>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);min-width:70px;text-align:right">${CHF(val)}</span>
+        </div>`
+      ).join("");
+}
+
+function setFilter(typ, el) {
+  filterTyp = typ;
+  document.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+  el.classList.add("active");
   render();
 }
 
-let editId=null;
-function openModal(typ){
-  editId=null; belegUrl=null;
-  document.getElementById('bf-typ').value=typ||'ausgabe';
-  document.getElementById('bf-betrag').value='';
-  document.getElementById('bf-beschreibung').value='';
-  document.getElementById('bf-kategorie').value='';
-  document.getElementById('bf-datum').value=new Date().toISOString().split('T')[0];
-  document.getElementById('buchungModal').classList.add('open');
-  // Upload-Widget initialisieren (nach DOM-Update)
-  setTimeout(() => UPLOAD.render('beleg-upload', {
-    label: 'Beleg hochladen (PDF oder Bild)',
-    folder: 'belege',
-    onSuccess: (url) => { belegUrl = url; }
+// ── Modal: Buchung erfassen ──
+function openModal(typ) {
+  belegUrl = null;
+  const kName = activeKonto === "__alle__" ? (konten[0]?.name || "Allgemein") : activeKonto;
+  document.getElementById("bf-typ").value = typ || "ausgabe";
+  document.getElementById("bf-betrag").value = "";
+  document.getElementById("bf-beschreibung").value = "";
+  document.getElementById("bf-datum").value = new Date().toISOString().split("T")[0];
+  // Konto-Select befüllen
+  const sel = document.getElementById("bf-konto");
+  sel.innerHTML = konten.map(k => `<option value="${k.name}" ${k.name === kName ? "selected" : ""}>${k.name}</option>`).join("");
+  if (!sel.value) sel.innerHTML = `<option value="Allgemein">Allgemein</option>` + sel.innerHTML;
+  // Kategorie-Select
+  const kSel = document.getElementById("bf-kategorie");
+  kSel.value = "";
+  document.getElementById("buchungModal").classList.add("open");
+  setTimeout(() => UPLOAD.render("beleg-upload", {
+    label: "Beleg hochladen (PDF oder Bild)",
+    folder: "belege",
+    onSuccess: (u) => { belegUrl = u; }
   }), 50);
 }
-function closeModal(){document.getElementById('buchungModal').classList.remove('open');}
+function closeModal() { document.getElementById("buchungModal").classList.remove("open"); }
 
-async function saveBuchung(){
-  const betrag=parseFloat(document.getElementById('bf-betrag').value);
-  if(!betrag||betrag<=0){alert('Bitte gültigen Betrag eingeben.');return;}
-  const data={
-    typ:document.getElementById('bf-typ').value,
+async function saveBuchung() {
+  const betrag = parseFloat(document.getElementById("bf-betrag").value);
+  if (!betrag || betrag <= 0) { alert("Bitte gültigen Betrag eingeben."); return; }
+  const data = {
+    club_id: CLUB_ID,
+    typ: document.getElementById("bf-typ").value,
     betrag,
-    beschreibung:document.getElementById('bf-beschreibung').value||null,
-    kategorie:document.getElementById('bf-kategorie').value||null,
-    datum:document.getElementById('bf-datum').value,
+    beschreibung: document.getElementById("bf-beschreibung").value || null,
+    kategorie: document.getElementById("bf-kategorie").value || null,
+    konto: document.getElementById("bf-konto").value || "Allgemein",
+    datum: document.getElementById("bf-datum").value,
     beleg_url: belegUrl || null,
   };
-  await db.from('finanzen').insert([data]);
+  await db.from("finanzen").insert([data]);
   closeModal();
-  await loadBuchungen();
+  await loadAll();
 }
-async function deleteBuchung(id){
-  if(!confirm('Buchung wirklich löschen?'))return;
-  await db.from('finanzen').delete().eq('id',id);
-  await loadBuchungen();
+
+async function deleteBuchung(id) {
+  if (!confirm("Buchung wirklich löschen?")) return;
+  await db.from("finanzen").delete().eq("id", id);
+  await loadAll();
 }
-document.addEventListener('click',e=>{if(e.target.classList.contains('overlay'))e.target.classList.remove('open');});
-initDB().catch(()=>{document.getElementById('buchungen-tbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Verbindungsfehler</td></tr>';});
+
+// ── Modal: Neues Konto ──
+function openNeuesKonto() {
+  document.getElementById("nk-name").value = "";
+  document.getElementById("neuesKontoModal").classList.add("open");
+  setTimeout(() => document.getElementById("nk-name").focus(), 100);
+}
+async function saveNeuesKonto() {
+  const name = document.getElementById("nk-name").value.trim();
+  if (!name) { alert("Bitte Kontoname eingeben."); return; }
+  if (konten.find(k => k.name.toLowerCase() === name.toLowerCase())) {
+    alert("Ein Konto mit diesem Namen existiert bereits."); return;
+  }
+  // Konto existiert sobald die erste Buchung darauf gemacht wird.
+  // Wir erstellen eine Platzhalter-Notiz-Buchung (optional) oder zeigen es einfach sofort.
+  // Einfacher Weg: sofort in aktiven Konto wechseln — Buchungen erstellen das Konto
+  document.getElementById("neuesKontoModal").classList.remove("open");
+  // Temp: Konto lokal hinzufügen damit es in den Tabs erscheint
+  konten.push({ name, color: KONTO_COLORS[konten.length % KONTO_COLORS.length] });
+  activeKonto = name;
+  renderTabs();
+  render();
+  // Direkt Modal öffnen für erste Buchung
+  openModal("ausgabe");
+}
+
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("overlay")) e.target.classList.remove("open");
+});
+initDB().catch(console.error);
 </script>
 
 <div class="shell">
@@ -207,82 +378,127 @@ initDB().catch(()=>{document.getElementById('buchungen-tbody').innerHTML='<tr><t
   <div class="main">
     <div class="topbar">
       <div>
-        <div class="page-title">Finanzen</div>
-        <div class="page-sub">UHC Jonschwil Vipers · Einnahmen & Ausgaben</div>
+        <div class="page-title" id="page-title">Finanzen</div>
+        <div class="page-sub" id="page-sub">Vereinsplattform</div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="openModal('einnahme')">+ Einnahme</button>
         <button class="btn btn-accent" onclick="openModal('ausgabe')">+ Ausgabe</button>
       </div>
     </div>
     <div class="content">
-      <div class="stat-grid">
-        <div class="stat" style="border-color:rgba(212,240,74,.2)"><div class="stat-label">Saldo</div><div class="stat-val" id="stat-saldo">–</div></div>
-        <div class="stat"><div class="stat-label">Einnahmen</div><div class="stat-val" style="color:var(--green);font-size:18px" id="stat-ein">–</div></div>
-        <div class="stat"><div class="stat-label">Ausgaben</div><div class="stat-val" style="color:var(--red);font-size:18px" id="stat-aus">–</div></div>
-        <div class="stat"><div class="stat-label">Buchungen</div><div class="stat-val" id="stat-count">–</div></div>
+
+      <!-- Konten-Tabs -->
+      <div class="konto-tabs" id="konto-tabs"></div>
+
+      <!-- Konto-Stats -->
+      <div class="konto-header">
+        <div class="stat" style="border-color:rgba(212,240,74,.18)">
+          <div class="stat-label">Saldo</div>
+          <div class="stat-val" id="stat-saldo">–</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Einnahmen</div>
+          <div class="stat-val" style="color:var(--green);font-size:20px" id="stat-ein">–</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Ausgaben</div>
+          <div class="stat-val" style="color:var(--red);font-size:20px" id="stat-aus">–</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Buchungen</div>
+          <div class="stat-val" id="stat-count">–</div>
+        </div>
       </div>
 
-      <div class="two-col">
+      <!-- Haupt-Layout -->
+      <div class="main-layout">
+        <!-- Buchungstabelle -->
         <div class="card">
           <div class="card-header">
             <span class="card-title">Buchungen</span>
-            <div class="filter-row" style="margin:0">
-              <button class="filter-pill active" onclick="setFilter('all',this)">Alle</button>
-              <button class="filter-pill" onclick="setFilter('einnahme',this)">Einnahmen</button>
-              <button class="filter-pill" onclick="setFilter('ausgabe',this)">Ausgaben</button>
+            <div class="filter-row">
+              <button class="filter-pill active" data-typ="all" onclick="setFilter('all',this)">Alle</button>
+              <button class="filter-pill" data-typ="einnahme" onclick="setFilter('einnahme',this)">Einnahmen</button>
+              <button class="filter-pill" data-typ="ausgabe" onclick="setFilter('ausgabe',this)">Ausgaben</button>
             </div>
           </div>
-          <table>
-            <thead><tr><th>Datum</th><th>Typ</th><th>Beschreibung</th><th>Kategorie</th><th>Betrag</th><th></th></tr></thead>
-            <tbody id="buchungen-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Lade...</td></tr></tbody>
-          </table>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Datum</th><th>Typ</th><th>Beschreibung</th><th>Kategorie</th>
+                  <th>Konto</th><th class="r">Betrag</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="buchungen-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">Lade...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
+        <!-- Seitenleiste -->
         <div>
+          <!-- Kategorien-Chart -->
           <div class="card" style="margin-bottom:12px">
-            <div class="card-header"><span class="card-title">Nach Kategorie</span></div>
+            <div class="card-header"><span class="card-title">Ausgaben nach Kategorie</span></div>
             <div id="kategorien"></div>
           </div>
+          <!-- Konten-Übersicht (nur bei Gesamt) -->
+          <div class="card" id="konten-card" style="margin-bottom:12px">
+            <div class="card-header"><span class="card-title">Alle Konten</span></div>
+            <div id="konten-uebersicht"></div>
+          </div>
+          <!-- Quick-Upload -->
           <div class="card">
             <div class="card-header"><span class="card-title">Beleg hochladen</span></div>
-            <div style="padding:14px">
-              <div id="quick-upload-area"></div>
-            </div>
+            <div style="padding:12px"><div id="quick-upload-area"></div></div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>
 
-<!-- Modal: Buchung -->
+<!-- Modal: Buchung erfassen -->
 <div class="overlay" id="buchungModal">
-  <div class="modal" style="max-width:420px">
+  <div class="modal">
     <div class="modal-title">Buchung erfassen</div>
     <div class="form-grid">
       <div class="form-row-2">
         <div><label class="form-label">Typ</label>
           <select class="form-input" id="bf-typ">
-            <option value="ausgabe">Ausgabe</option><option value="einnahme">Einnahme</option>
+            <option value="ausgabe">Ausgabe</option>
+            <option value="einnahme">Einnahme</option>
           </select>
         </div>
-        <div><label class="form-label">Betrag (CHF)</label><input class="form-input" type="number" id="bf-betrag" min="0" step="0.05" placeholder="0.00"></div>
+        <div><label class="form-label">Betrag (CHF)</label>
+          <input class="form-input" type="number" id="bf-betrag" min="0" step="0.05" placeholder="0.00">
+        </div>
       </div>
-      <div><label class="form-label">Beschreibung</label><input class="form-input" type="text" id="bf-beschreibung" placeholder="z.B. Schiedsrichterhonorar"></div>
+      <div><label class="form-label">Beschreibung</label>
+        <input class="form-input" type="text" id="bf-beschreibung" placeholder="z.B. Schiedsrichterhonorar">
+      </div>
       <div class="form-row-2">
-        <div><label class="form-label">Kategorie</label>
-          <select class="form-input" id="bf-kategorie">
-            <option value="">– wählen –</option>
-            <option>Schiedsrichter</option><option>Material</option><option>Halle</option>
-            <option>Eintritt</option><option>Buffet/Bar</option><option>Reisekosten</option>
-            <option>Lizenzgebühren</option><option>Versicherung</option><option>Werbung</option><option>Sonstiges</option>
-          </select>
+        <div><label class="form-label">Konto</label>
+          <select class="form-input" id="bf-konto"></select>
         </div>
-        <div><label class="form-label">Datum</label><input class="form-input" type="date" id="bf-datum"></div>
+        <div><label class="form-label">Datum</label>
+          <input class="form-input" type="date" id="bf-datum">
+        </div>
       </div>
-      <div>
-        <label class="form-label">Beleg (optional)</label>
+      <div><label class="form-label">Kategorie</label>
+        <select class="form-input" id="bf-kategorie">
+          <option value="">– keine –</option>
+          <option>Schiedsrichter</option><option>Material</option><option>Halle</option>
+          <option>Eintritt</option><option>Buffet / Bar</option><option>Reisekosten</option>
+          <option>Lizenzgebühren</option><option>Versicherung</option><option>Werbung</option>
+          <option>Lohn / Honorar</option><option>Sonstiges</option>
+        </select>
+      </div>
+      <div><label class="form-label">Beleg (optional)</label>
         <div id="beleg-upload"></div>
       </div>
     </div>
@@ -293,24 +509,43 @@ initDB().catch(()=>{document.getElementById('buchungen-tbody').innerHTML='<tr><t
   </div>
 </div>
 
+<!-- Modal: Neues Konto -->
+<div class="overlay" id="neuesKontoModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">Neues Konto erstellen</div>
+    <div class="form-grid">
+      <div><label class="form-label">Kontoname</label>
+        <input class="form-input" type="text" id="nk-name" placeholder="z.B. Cup, Saison, Turnier..." onkeydown="if(event.key==='Enter')saveNeuesKonto()">
+      </div>
+      <div class="info-box">
+        Jedes Konto wird separat abgerechnet. Unter «Gesamt» sind alle Konten zusammen sichtbar. Du kannst beliebig viele Konten erstellen, z.B. eines pro Saison oder Anlass.
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('neuesKontoModal').classList.remove('open')">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveNeuesKonto()">Konto erstellen</button>
+    </div>
+  </div>
+</div>
+
 <script src="upload.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  UPLOAD.render('quick-upload-area', {
-    label: 'Beleg ohne Buchung hochladen',
-    folder: 'belege',
+document.addEventListener("DOMContentLoaded", () => {
+  UPLOAD.render("quick-upload-area", {
+    label: "Beleg ohne Buchung hochladen",
+    folder: "belege",
     onSuccess: (url) => {
       if (url) {
-        openModal('ausgabe');
+        openModal("ausgabe");
         setTimeout(() => {
           belegUrl = url;
-          UPLOAD.render('beleg-upload', {folder:'belege',existingUrl:url,onSuccess:(u)=>{belegUrl=u;}});
+          UPLOAD.render("beleg-upload", { folder: "belege", existingUrl: url, onSuccess: (u) => { belegUrl = u; } });
         }, 100);
       }
     }
   });
 });
 </script>
-<script src="nav.js"></script><script>renderNav('finanzen');</script>
+<script src="nav.js"></script><script>renderNav("finanzen");</script>
 </body>
 </html>

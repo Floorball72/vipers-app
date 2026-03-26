@@ -216,6 +216,7 @@ create table finanzen (
   beschreibung  text,
   beleg_url     text,
   datum         date not null,
+  konto         text default 'Allgemein',  -- Kontobezeichnung (Cup, Saison etc.)
   erstellt_von  uuid references auth.users(id) on delete set null,
   created_at    timestamptz default now()
 );
