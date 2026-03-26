@@ -97,6 +97,9 @@ create table players (
   email         text,
   telefon       text,
   geburtsdatum  date,
+  trikot_shirt     text,  -- Trikotgroesse Shirt (XXS–XXXL)
+  trikot_hose      text,  -- Trikotgroesse Hose
+  trikot_stuelpengr text, -- Trikotgroesse Stuelpengamaschen
   aktiv         boolean default true,
   created_at    timestamptz default now()
 );

@@ -138,14 +138,14 @@ function renderListe(){
   const data=getFiltered();
   const cont=document.getElementById("main-content");
   if(!data.length){cont.innerHTML="<div class='empty'><div class='empty-title'>Keine Mitglieder gefunden</div></div>";return;}
-  cont.innerHTML="<div class='card'><table><thead><tr><th>Name</th><th>Rolle</th><th>Team(s)</th><th>Mitglied seit</th><th>Status</th><th></th></tr></thead><tbody>"+
+  cont.innerHTML="<div class='card'><table><thead><tr><th>Name</th><th>Rolle</th><th>Team(s)</th><th>Geburtsjahr</th><th>Mitglied seit</th><th>Status</th><th></th></tr></thead><tbody>"+
   data.map(m=>{
     const init=((m.vorname||"?")[0]+(m.nachname||"?")[0]).toUpperCase();
     const teamNames=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace("UHC Jonschwil ",""))||[];
     return "<tr onclick=\"openDetail('"+m.id+"')\">"+
       "<td><div style='display:flex;align-items:center;gap:10px'><div class='avatar' style='background:"+( AVATAR_COLORS[m.rolle]||"var(--bg3)")+";color:var(--text)'>"+init+"</div><div><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div><div style='font-size:11px;color:var(--text3)'>"+( m.email||"–")+"</div></div></div></td>"+
       "<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||m.rolle)+"</span></td>"+
-      "<td style='font-size:12px;color:var(--text2)'>"+(teamNames.slice(0,2).join(", ")||"–")+"</td>"+
+      "<td style='font-size:12px;color:var(--text2)'>"+(teamNames.slice(0,2).join(", ")||"–")+"</td>"+"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.geburtsdatum?new Date(m.geburtsdatum+"T12:00:00").getFullYear():"–")+"</td>"+
       "<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.mitglied_seit||"–")+"</td>"+
       "<td><span class='status-dot' style='background:"+(m.aktiv?"var(--green)":"var(--text3)")+"'></span>"+( m.aktiv?"Aktiv":"Inaktiv")+"</td>"+
       "<td><div class='row-actions'>"+
@@ -206,25 +206,134 @@ function setTab(tab,el){activeTab=tab;document.querySelectorAll(".tab").forEach(
 function setFilter(rolle,el){filterRolle=rolle;document.querySelectorAll(".filter-pill").forEach(p=>p.classList.remove("active"));el.classList.add("active");render();}
 function onSearch(v){searchQ=v;render();}
 
-function openModal(){editId=null;clearForm();document.getElementById("mitgliedModal").classList.add("open");}
+function openModal(){
+  editId=null;
+  // Alle Felder leeren
+  ["mf-vorname","mf-nachname","mf-email","mf-telefon","mf-adresse","mf-geburtsdatum",
+   "mf-shirt","mf-hose","mf-stuelpengr","mf-trikotnummer"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value="";
+  });
+  document.getElementById("mf-rolle").value="spieler";
+  document.getElementById("mf-seit").value=new Date().toISOString().split("T")[0];
+  document.getElementById("mf-aktiv").value="true";
+  setClubAnzeige();
+  toggleSpielerFelder("spieler");
+  renderTeamCheckboxes([]);
+  document.getElementById("mitgliedModal").classList.add("open");
+}
 function openEdit(id){
   const m=mitglieder.find(x=>x.id===id);if(!m)return;editId=id;
-  document.getElementById("mf-vorname").value=m.vorname||"";document.getElementById("mf-nachname").value=m.nachname||"";
-  document.getElementById("mf-email").value=m.email||"";document.getElementById("mf-telefon").value=m.telefon||"";
-  document.getElementById("mf-rolle").value=m.rolle||"spieler";document.getElementById("mf-seit").value=m.mitglied_seit||"";
+  document.getElementById("mf-vorname").value=m.vorname||"";
+  document.getElementById("mf-nachname").value=m.nachname||"";
+  document.getElementById("mf-email").value=m.email||"";
+  document.getElementById("mf-telefon").value=m.telefon||"";
+  document.getElementById("mf-adresse").value=m.adresse||"";
+  document.getElementById("mf-geburtsdatum").value=m.geburtsdatum||"";
+  document.getElementById("mf-rolle").value=m.rolle||"spieler";
+  document.getElementById("mf-seit").value=m.mitglied_seit||"";
   document.getElementById("mf-aktiv").value=String(m.aktiv!==false);
+  setClubAnzeige();
+  toggleSpielerFelder(m.rolle||"spieler");
+  // Spieler-Felder
+  if(m.rolle==="spieler"){
+    loadPlayerFields(m.id);
+  }
+  renderTeamCheckboxes(m.team_ids||[]);
   document.getElementById("mitgliedModal").classList.add("open");
 }
 function openDetail(id){openEdit(id);}
-function clearForm(){["mf-vorname","mf-nachname","mf-email","mf-telefon"].forEach(id=>document.getElementById(id).value="");document.getElementById("mf-rolle").value="spieler";document.getElementById("mf-seit").value=new Date().toISOString().split("T")[0];document.getElementById("mf-aktiv").value="true";}
+
+// Spieler-Felder aus players-Tabelle laden
+async function loadPlayerFields(userId){
+  const{data:p}=await db.from("players").select("*").eq("user_id",userId).eq("club_id",CLUB_ID).single();
+  if(!p)return;
+  document.getElementById("mf-shirt").value=p.trikot_shirt||"";
+  document.getElementById("mf-hose").value=p.trikot_hose||"";
+  document.getElementById("mf-stuelpengr").value=p.trikot_stuelpengr||"";
+  // Trikotnummer in players ist schon im Spielerprofil - zeige sie an
+  const numEl=document.getElementById("mf-trikotnummer");
+  if(numEl) numEl.value=p.nummer||"";
+}
+
+function renderTeamCheckboxes(selected){
+  const cont=document.getElementById("mf-teams-grid");
+  if(!cont)return;
+  const clubTeams=teams.filter(t=>t.club_id===CLUB_ID);
+  if(!clubTeams.length){cont.innerHTML="<div style='font-size:12px;color:var(--text3)'>Keine Teams im Verein.</div>";return;}
+  cont.innerHTML=clubTeams.map(t=>{
+    const sel=selected.includes(t.id);
+    const short=t.name.replace(/UHC Jonschwil |United Toggenburg /gi,"");
+    return `<label style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--bg3);border:1px solid ${sel?"rgba(212,240,74,.35)":"var(--border2)"};border-radius:7px;cursor:pointer;font-size:12px;transition:all .12s">
+      <input type="checkbox" value="${t.id}" ${sel?"checked":""} style="accent-color:var(--accent);width:14px;height:14px">
+      <span style="color:${sel?"var(--accent)":"var(--text2)"}">${short}</span>
+    </label>`;
+  }).join("");
+}
+
+function toggleSpielerFelder(rolle){
+  const el=document.getElementById("spieler-felder");
+  if(el) el.style.display=rolle==="spieler"?"block":"none";
+}
+function setClubAnzeige(){
+  const club=APP_CONFIG.ACTIVE_CLUB;
+  const anzeige=document.getElementById("mf-club-anzeige");
+  if(anzeige) anzeige.value=club.name;
+  const hidden=document.getElementById("mf-club");
+  if(hidden) hidden.value=club.club_id;
+}
 function closeModal(){document.getElementById("mitgliedModal").classList.remove("open");editId=null;}
 
 async function saveMitglied(){
-  const data={vorname:document.getElementById("mf-vorname").value,nachname:document.getElementById("mf-nachname").value,email:document.getElementById("mf-email").value||null,telefon:document.getElementById("mf-telefon").value||null,rolle:document.getElementById("mf-rolle").value,mitglied_seit:document.getElementById("mf-seit").value||null,aktiv:document.getElementById("mf-aktiv").value==="true"};
-  if(!data.vorname||!data.nachname){alert("Bitte Vor- und Nachname eingeben.");return;}
-  if(editId){await db.from("user_profiles").update(data).eq("id",editId);}
-  else{await db.from("user_profiles").insert([{id:crypto.randomUUID(),...data}]);}
-  closeModal();const{data:m}=await db.from("user_profiles").select("*").order("nachname");mitglieder=m||[];render();updateStats();
+  const vn=document.getElementById("mf-vorname").value.trim();
+  const nn=document.getElementById("mf-nachname").value.trim();
+  if(!vn||!nn){alert("Bitte Vor- und Nachname eingeben.");return;}
+  const rolle=document.getElementById("mf-rolle").value;
+  const teamIds=Array.from(document.querySelectorAll("#mf-teams-grid input:checked")).map(cb=>cb.value);
+  const data={
+    vorname:vn, nachname:nn,
+    email:document.getElementById("mf-email").value||null,
+    telefon:document.getElementById("mf-telefon").value||null,
+    adresse:document.getElementById("mf-adresse").value||null,
+    geburtsdatum:document.getElementById("mf-geburtsdatum").value||null,
+    rolle, club_id:CLUB_ID,
+    team_ids:teamIds.length?teamIds:null,
+    mitglied_seit:document.getElementById("mf-seit").value||null,
+    aktiv:document.getElementById("mf-aktiv").value==="true",
+  };
+  let profileId=editId;
+  if(editId){
+    await db.from("user_profiles").update(data).eq("id",editId);
+  } else {
+    profileId=crypto.randomUUID();
+    await db.from("user_profiles").insert([{id:profileId,...data}]);
+  }
+  // Spieler-Trikotsfelder in players-Tabelle speichern (nur wenn Spieler)
+  if(rolle==="spieler"){
+    const shirt=document.getElementById("mf-shirt").value||null;
+    const hose=document.getElementById("mf-hose").value||null;
+    const stuelpengr=document.getElementById("mf-stuelpengr").value||null;
+    const trikotNr=parseInt(document.getElementById("mf-trikotnummer")?.value)||null;
+    // Player-Eintrag suchen oder erstellen
+    const{data:existing}=await db.from("players").select("id").eq("user_id",profileId).eq("club_id",CLUB_ID).single();
+    if(existing){
+      await db.from("players").update({
+        trikot_shirt:shirt, trikot_hose:hose, trikot_stuelpengr:stuelpengr,
+        nummer:trikotNr, team_id:teamIds[0]||null
+      }).eq("id",existing.id);
+    } else {
+      await db.from("players").insert([{
+        club_id:CLUB_ID, user_id:profileId,
+        vorname:vn, nachname:nn,
+        team_id:teamIds[0]||null,
+        nummer:trikotNr,
+        trikot_shirt:shirt, trikot_hose:hose, trikot_stuelpengr:stuelpengr,
+        aktiv:true,
+      }]);
+    }
+  }
+  closeModal();
+  const{data:m}=await db.from("user_profiles").select("*").eq("club_id",CLUB_ID).order("nachname");
+  mitglieder=m||[];render();updateStats();
 }
 async function deleteMitglied(id){if(!confirm("Mitglied wirklich entfernen?"))return;await db.from("user_profiles").delete().eq("id",id);mitglieder=mitglieder.filter(m=>m.id!==id);render();updateStats();}
 function printAusweis(name){alert("Ausweis für "+name+" wird gedruckt (PDF-Export folgt in nächster Version).");}
@@ -267,20 +376,24 @@ initDB().catch(console.error);
 </div>
 
 <div class="overlay" id="mitgliedModal">
-  <div class="modal">
+  <div class="modal" style="max-width:580px">
     <div class="modal-title">Mitglied erfassen</div>
     <div class="form-grid">
       <div class="form-row-2">
-        <div><label class="form-label">Vorname</label><input class="form-input" type="text" id="mf-vorname"></div>
-        <div><label class="form-label">Nachname</label><input class="form-input" type="text" id="mf-nachname"></div>
+        <div><label class="form-label">Vorname</label><input class="form-input" type="text" id="mf-vorname" placeholder="Max"></div>
+        <div><label class="form-label">Nachname</label><input class="form-input" type="text" id="mf-nachname" placeholder="Muster"></div>
       </div>
       <div class="form-row-2">
         <div><label class="form-label">E-Mail</label><input class="form-input" type="email" id="mf-email"></div>
         <div><label class="form-label">Telefon</label><input class="form-input" type="tel" id="mf-telefon"></div>
       </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Adresse</label><input class="form-input" type="text" id="mf-adresse" placeholder="Musterstrasse 1, 9243 Jonschwil"></div>
+        <div><label class="form-label">Geburtsdatum</label><input class="form-input" type="date" id="mf-geburtsdatum"></div>
+      </div>
       <div class="form-row-3">
         <div><label class="form-label">Rolle</label>
-          <select class="form-input" id="mf-rolle">
+          <select class="form-input" id="mf-rolle" onchange="toggleSpielerFelder(this.value)">
             <option value="spieler">Spieler</option><option value="trainer">Trainer</option>
             <option value="admin">Admin</option><option value="eltern">Eltern</option>
           </select>
@@ -292,8 +405,46 @@ initDB().catch(console.error);
           </select>
         </div>
       </div>
-      <div style="background:rgba(91,191,255,.08);border:1px solid rgba(91,191,255,.2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--blue);line-height:1.6">
-        Nach dem Speichern kann das Mitglied via E-Mail-Einladung einen Login-Account erstellen. Die Rolle bestimmt welche Module sichtbar sind.
+      <div>
+        <label class="form-label">Verein</label>
+        <input class="form-input" type="text" id="mf-club-anzeige" readonly style="opacity:.6;cursor:not-allowed">
+        <input type="hidden" id="mf-club">
+      </div>
+      <div>
+        <label class="form-label">Teams</label>
+        <div id="mf-teams-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px"></div>
+      </div>
+      <div id="spieler-felder">
+        <div style="height:1px;background:var(--border);margin:4px 0 10px"></div>
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Spieler-Details</div>
+        <div class="form-row-2" style="margin-bottom:10px">
+          <div><label class="form-label">Trikotnummer</label><input class="form-input" type="number" id="mf-trikotnummer" min="1" max="99" placeholder="z.B. 17"></div>
+          <div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);font-weight:500;margin-bottom:7px">Trikotgroesse</div>
+        <div class="form-row-3">
+          <div><label class="form-label">Shirt</label>
+            <select class="form-input" id="mf-shirt">
+              <option value="">– –</option>
+              <option>XXS</option><option>XS</option><option>S</option><option>M</option>
+              <option>L</option><option>XL</option><option>XXL</option><option>XXXL</option>
+            </select>
+          </div>
+          <div><label class="form-label">Hose</label>
+            <select class="form-input" id="mf-hose">
+              <option value="">– –</option>
+              <option>XXS</option><option>XS</option><option>S</option><option>M</option>
+              <option>L</option><option>XL</option><option>XXL</option><option>XXXL</option>
+            </select>
+          </div>
+          <div><label class="form-label">Stuelpen</label>
+            <select class="form-input" id="mf-stuelpengr">
+              <option value="">– –</option>
+              <option>XS</option><option>S</option><option>M</option>
+              <option>L</option><option>XL</option><option>XXL</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-actions">
