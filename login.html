@@ -123,7 +123,9 @@ async function loadUserAndRedirect(user) {
   const userData = profile
     ? {...profile, email: user.email, rolle, club_id: activeClub.club_id, team_ids: membership?.team_ids}
     : { id: user.id, email: user.email, vorname: user.user_metadata?.vorname || '', nachname: user.user_metadata?.nachname || '', rolle, club_id: activeClub.club_id };
-  localStorage.setItem('vipers_user', JSON.stringify(userData));
+  // Login-Status auf 'active' setzen
+  try { await db.from('user_profiles').update({login_status:'active'}).eq('id', user.id); } catch(e){}
+  localStorage.setItem('vipers_user', JSON.stringify({...userData, login_status:'active'}));
   window.location.href = 'dashboard.html';
 }
 
@@ -274,29 +276,54 @@ async function doRegister() {
     return;
   }
 
-  // 2. User Profile erstellen
+  // 2. Bestehendes Profil per E-Mail suchen (vom Admin erfasst)
   const userId = data.user?.id;
   if (userId) {
-    await db.from('user_profiles').upsert([{
-      id: userId,
-      vorname: vn,
-      nachname: nn,
-      email,
-      rolle: selectedRolle,
-      aktiv: true,
-      freigegeben: true,  // Spieler + Eltern sind direkt aktiv
-      mitglied_seit: new Date().toISOString().split('T')[0],
-    }]);
+    const { data: existing } = await db.from('user_profiles')
+      .select('*').eq('email', email).maybeSingle();
 
-    // 3. Spieler verknüpfen — Pflicht für Spieler-Rolle
-    if (selectedRolle === 'spieler' && selectedPlayerId) {
-      await db.from('players').update({ user_id: userId }).eq('id', selectedPlayerId);
+    if (existing && existing.id !== userId) {
+      // Admin hat dieses Mitglied bereits erfasst → übernehme seine Daten
+      const merged = {
+        id: userId,
+        vorname: existing.vorname || vn,
+        nachname: existing.nachname || nn,
+        email,
+        telefon: existing.telefon || null,
+        adresse: existing.adresse || null,
+        geburtsdatum: existing.geburtsdatum || null,
+        rolle: existing.rolle || selectedRolle,
+        club_id: existing.club_id || APP_CONFIG.ACTIVE_CLUB.club_id,
+        team_ids: existing.team_ids || null,
+        mitglied_seit: existing.mitglied_seit || new Date().toISOString().split('T')[0],
+        aktiv: true,
+        login_status: 'active',
+      };
+      // Neues Profil mit echter Auth-ID
+      await db.from('user_profiles').upsert([merged]);
+      // Spieler-Eintrag per E-Mail verknüpfen
+      await db.from('players').update({ user_id: userId }).eq('email', email).is('user_id', null);
+      // Platzhalter löschen
+      await db.from('user_profiles').delete().eq('id', existing.id);
+      localStorage.setItem('vipers_user', JSON.stringify(merged));
+    } else {
+      // Kein bestehendes Profil → frisch anlegen
+      await db.from('user_profiles').upsert([{
+        id: userId, vorname: vn, nachname: nn, email,
+        rolle: selectedRolle,
+        club_id: APP_CONFIG.ACTIVE_CLUB.club_id,
+        aktiv: true, login_status: 'active',
+        mitglied_seit: new Date().toISOString().split('T')[0],
+      }]);
+      // Spieler verknüpfen (manuell gewählt in Schritt 3)
+      if (selectedRolle === 'spieler' && selectedPlayerId) {
+        await db.from('players').update({ user_id: userId }).eq('id', selectedPlayerId);
+      }
+      localStorage.setItem('vipers_user', JSON.stringify({
+        id: userId, vorname: vn, nachname: nn, email,
+        rolle: selectedRolle, club_id: APP_CONFIG.ACTIVE_CLUB.club_id, login_status: 'active',
+      }));
     }
-
-    // 4. In localStorage speichern
-    localStorage.setItem('vipers_user', JSON.stringify({
-      id: userId, vorname: vn, nachname: nn, email, rolle: selectedRolle
-    }));
   }
 
   showAlert(alertId, 'success', 'Account erstellt! ' + (data.session ? 'Weiterleitung...' : 'Bitte E-Mail bestätigen.'));
