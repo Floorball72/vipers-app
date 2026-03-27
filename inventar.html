@@ -212,6 +212,7 @@ function openAusleiheModal(invId,invName){
   sel.innerHTML="<option value=''>– Kein Spieler (Extern) –</option>"
     +players.map(p=>"<option value='"+p.id+"'>"+p.vorname+" "+p.nachname+(p.nummer?" (#"+p.nummer+")":"")+"</option>").join("");
   document.getElementById("am-externe").value="";
+  document.getElementById("am-anzahl").value="1";
   document.getElementById("am-von").value=new Date().toISOString().split("T")[0];
   document.getElementById("am-bis").value="";
   document.getElementById("am-preis").value="";
@@ -224,19 +225,21 @@ async function saveAusleihe(){
   const von=document.getElementById("am-von").value;
   const bis=document.getElementById("am-bis").value||null;
   const preis=parseFloat(document.getElementById("am-preis").value)||null;
+  const anzahl=parseInt(document.getElementById("am-anzahl")?.value)||1;
   if(!spielerId&&!extern){alert("Bitte Spieler wählen oder externen Namen eingeben.");return;}
-  // Verfügbarkeit reduzieren
   const item=inventar.find(x=>x.id===ausleiheInventarId);
-  await db.from("inventar").update({anzahl_verfuegbar:item.anzahl_verfuegbar-1}).eq("id",ausleiheInventarId);
-  await db.from("inventar_ausleihen").insert([{
+  if(anzahl>item.anzahl_verfuegbar){alert("Nur "+item.anzahl_verfuegbar+" Stück verfügbar.");return;}
+  await db.from("inventar").update({anzahl_verfuegbar:item.anzahl_verfuegbar-anzahl}).eq("id",ausleiheInventarId);
+  const {error:_auslErr}=await db.from("inventar_ausleihen").insert([{
     inventar_id:ausleiheInventarId,
     player_id:spielerId||null,
     ausgegeben_am:von,
     zurueck_bis:bis,
-    mietpreis:preis,
+    mietpreis:preis?preis*anzahl:null,
     bezahlt:false,
-    notizen:extern||null,
+    notizen:(extern?(extern+" ("+anzahl+"x)"):(anzahl>1?anzahl+"x":null))||null,
   }]);
+  if(_auslErr){alert("Fehler: "+_auslErr.message);return;}
   closeAusleiheModal();
   await loadAll();
 }
@@ -389,7 +392,8 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
         <input class="form-input" type="text" id="am-externe" placeholder="Name (falls kein Spielerprofil)">
       </div>
       <div class="form-row-2">
-        <div><label class="form-label">Ausgegeben am</label><input class="form-input" type="date" id="am-von"></div>
+        <div><label class="form-label">Anzahl</label><input class="form-input" type="number" id="am-anzahl" min="1" value="1"></div>
+      <div><label class="form-label">Ausgegeben am</label><input class="form-input" type="date" id="am-von"></div>
         <div><label class="form-label">Zurück bis</label><input class="form-input" type="date" id="am-bis"></div>
       </div>
       <div><label class="form-label">Mietpreis (CHF, optional)</label>

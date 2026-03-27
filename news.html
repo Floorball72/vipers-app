@@ -188,8 +188,10 @@ async function saveNews(){
     zielgruppe=["spieler","trainer"];
   }
   const data={titel,inhalt:document.getElementById("nf-inhalt").value||null,typ:document.getElementById("nf-typ").value,zielgruppe,team_ids:forAll?null:teamIds,gepinnt:document.getElementById("nf-pinned").checked,erstellt_am:new Date().toISOString()};
-  if(editId){await db.from("news").update(data).eq("id",editId);}
-  else{await db.from("news").insert([{club_id:CLUB_ID,...data}]);}
+  let _nErr;
+  if(editId){const r=await db.from("news").update(data).eq("id",editId);_nErr=r.error;}
+  else{const r=await db.from("news").insert([{club_id:CLUB_ID,...data}]);_nErr=r.error;}
+  if(_nErr){alert("Fehler beim Speichern: "+_nErr.message);return;}
   closeModal();await initDB();
 }
 async function togglePin(id,pinned){await db.from("news").update({gepinnt:!pinned}).eq("id",id);await initDB();}

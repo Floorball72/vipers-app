@@ -1,230 +1,126 @@
-// upload.js — Supabase Storage Upload Modul
-// Einbinden: <script src="upload.js"></script>
-// Voraussetzung: config.js muss vorher geladen sein
-//
-// Supabase Storage Setup (einmalig im Dashboard):
-//   Storage → New bucket → Name: "belege" → Public: OFF
-//   Policies → New policy → "Authenticated users can upload/read"
-
+// upload.js — Stackflow Upload Modul (Supabase Storage)
 const UPLOAD = {
-  bucket: 'belege',
-  maxSizeMB: 10,
-  allowed: ['image/jpeg','image/png','image/webp','application/pdf'],
-  allowedLabel: 'JPG, PNG, WebP oder PDF',
-
-  // Gibt einen Supabase-Client zurück (nutzt den bereits initialisierten oder erstellt einen)
+  modes: {
+    belege:   { allowed: ['image/jpeg','image/png','image/webp','application/pdf'], label: 'JPG, PNG oder PDF', accept: '.jpg,.jpeg,.png,.webp,.pdf', maxMB: 10 },
+    videos:   { allowed: ['video/mp4','video/quicktime','video/webm'], label: 'MP4, MOV oder WebM', accept: '.mp4,.mov,.webm', maxMB: 500 },
+    inventar: { allowed: ['image/jpeg','image/png','image/webp'], label: 'JPG oder PNG', accept: '.jpg,.jpeg,.png,.webp', maxMB: 5 },
+    logos:    { allowed: ['image/jpeg','image/png','image/webp','image/svg+xml'], label: 'JPG, PNG oder SVG', accept: '.jpg,.jpeg,.png,.webp,.svg', maxMB: 5 },
+    default:  { allowed: ['image/jpeg','image/png','image/webp','application/pdf','video/mp4','video/quicktime'], label: 'Bild, PDF oder Video', accept: '.jpg,.jpeg,.png,.webp,.pdf,.mp4,.mov', maxMB: 50 }
+  },
+  BUCKET: 'stackflow',
   _client: null,
   async client() {
     if (this._client) return this._client;
-    const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2.39.0');
     this._client = mod.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY);
     return this._client;
   },
 
-  // Rendert ein Upload-Widget in ein Element
-  // container: DOM-Element oder ID-String
-  // opts: { label, onSuccess(url, name), onError(msg), existingUrl }
   render(container, opts = {}) {
     const el = typeof container === 'string' ? document.getElementById(container) : container;
     if (!el) return;
-    const id = 'upw-' + Math.random().toString(36).slice(2, 8);
-    el.innerHTML = `
-      <div class="upload-widget" id="${id}">
-        ${opts.existingUrl ? `
-          <div class="upload-existing" id="${id}-existing">
-            <div class="upload-existing-info">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M4 2h6l4 4v8H4V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                <path d="M10 2v4h4" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-              </svg>
-              <a href="${opts.existingUrl}" target="_blank" class="upload-existing-link">Beleg ansehen</a>
-            </div>
-            <button class="upload-remove-btn" onclick="UPLOAD._clear('${id}', ${JSON.stringify(opts).replace(/"/g, '&quot;')})">Entfernen</button>
-          </div>
-        ` : `
-          <label class="upload-dropzone" id="${id}-zone" for="${id}-input">
-            <input type="file" id="${id}-input" accept=".jpg,.jpeg,.png,.webp,.pdf" style="display:none"
-              onchange="UPLOAD._onFile('${id}', this, ${JSON.stringify(opts.label||'').replace(/"/g, '&quot;')})">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-            </svg>
-            <div class="upload-hint">
-              <span>${opts.label || 'Beleg hochladen'}</span>
-              <span class="upload-hint-sub">${this.allowedLabel} · max. ${this.maxSizeMB} MB</span>
-            </div>
-          </label>
-        `}
-        <div class="upload-progress" id="${id}-prog" style="display:none">
-          <div class="upload-progress-bar" id="${id}-bar"></div>
-          <span class="upload-progress-label" id="${id}-label">Hochladen...</span>
-        </div>
-        <div class="upload-error" id="${id}-err" style="display:none"></div>
-      </div>`;
+    const folder = opts.folder || 'belege';
+    const mode = this.modes[folder] || this.modes.default;
+    const id = 'upw-' + Math.random().toString(36).slice(2,8);
+    const label = opts.label || 'Datei hochladen';
+    const optsJson = JSON.stringify(opts).replace(/"/g,'&quot;');
 
-    // Drag & Drop
-    const zone = document.getElementById(id + '-zone');
-    if (zone) {
-      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-      zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-      zone.addEventListener('drop', e => {
-        e.preventDefault(); zone.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file) UPLOAD._upload(id, file, opts);
-      });
-    }
-
-    // Callbacks auf Widget speichern
-    UPLOAD._callbacks = UPLOAD._callbacks || {};
-    UPLOAD._callbacks[id] = opts;
+    el.innerHTML = opts.existingUrl
+      ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px">
+           <a href="${opts.existingUrl}" target="_blank" style="font-size:12px;color:var(--blue)">Datei ansehen →</a>
+           <button onclick="UPLOAD._clear('${id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;padding:0 4px">×</button>
+         </div>`
+      : `<div id="${id}" style="font-family:'DM Sans',sans-serif">
+           <label id="${id}-zone" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;border:1px dashed var(--border2);border-radius:8px;cursor:pointer;text-align:center"
+             for="${id}-input"
+             ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+             ondragleave="this.style.borderColor=''"
+             ondrop="event.preventDefault();this.style.borderColor='';UPLOAD._drop('${id}',event,${optsJson})">
+             <input type="file" id="${id}-input" accept="${mode.accept}" style="display:none"
+               onchange="UPLOAD._pick('${id}',this,${optsJson})">
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+             <span style="font-size:12px;color:var(--text3)">${label}</span>
+             <span style="font-size:11px;color:var(--text3)">${mode.label} &middot; max. ${mode.maxMB} MB</span>
+           </label>
+           <div id="${id}-prog" style="display:none;margin-top:8px">
+             <div style="background:var(--bg3);border-radius:4px;height:4px;overflow:hidden"><div id="${id}-bar" style="height:100%;background:var(--accent);width:0%;transition:width .3s"></div></div>
+             <span id="${id}-lbl" style="font-size:11px;color:var(--text3);margin-top:4px;display:block">Hochladen...</span>
+           </div>
+           <div id="${id}-err" style="display:none;font-size:12px;color:var(--red);margin-top:6px"></div>
+         </div>`;
   },
 
-  _onFile(id, input, label) {
-    const file = input.files[0];
-    if (!file) return;
-    const opts = (UPLOAD._callbacks || {})[id] || {};
-    UPLOAD._upload(id, file, opts);
+  _clear(id) {
+    const w = document.getElementById(id); if (w) w.innerHTML = '';
+  },
+  _drop(id, event, opts) {
+    const f = event.dataTransfer?.files?.[0]; if (f) this._go(id, f, opts);
+  },
+  _pick(id, input, opts) {
+    const f = input.files?.[0]; if (f) this._go(id, f, opts);
   },
 
-  async _upload(id, file, opts) {
+  async _go(id, file, opts) {
+    const folder = opts.folder || 'belege';
+    const mode = this.modes[folder] || this.modes.default;
+    const err = document.getElementById(id+'-err');
+    const prog = document.getElementById(id+'-prog');
+    const bar = document.getElementById(id+'-bar');
+    const lbl = document.getElementById(id+'-lbl');
+    const zone = document.getElementById(id+'-zone');
+
     // Validierung
-    if (!this.allowed.includes(file.type)) {
-      this._showErr(id, `Nicht erlaubter Dateityp. Erlaubt: ${this.allowedLabel}`);
-      return;
+    const typeOk = mode.allowed.some(t => file.type === t || file.type.startsWith(t.split('/')[0]+'/') && t.endsWith('*'));
+    if (!mode.allowed.includes(file.type)) {
+      // Prüfe Dateiendung als Fallback
+      const ext = '.'+file.name.split('.').pop().toLowerCase();
+      if (!mode.accept.split(',').includes(ext)) {
+        if (err) { err.textContent = 'Dateityp nicht erlaubt.'; err.style.display='block'; } return;
+      }
     }
-    if (file.size > this.maxSizeMB * 1024 * 1024) {
-      this._showErr(id, `Datei zu gross. Maximum: ${this.maxSizeMB} MB`);
-      return;
+    if (file.size > mode.maxMB*1024*1024) {
+      if (err) { err.textContent = 'Datei zu gross (max '+mode.maxMB+' MB)'; err.style.display='block'; } return;
     }
 
-    this._showProgress(id, 0);
+    if (err) err.style.display='none';
+    if (zone) zone.style.display='none';
+    if (prog) prog.style.display='block';
+    if (bar) bar.style.width='20%';
+    if (lbl) lbl.textContent='Verbinde...';
 
     try {
-      const supabase = await this.client();
-      const ext = file.name.split('.').pop().toLowerCase();
-      const folder = opts.folder || 'allgemein';
-      const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const sb = await this.client();
+      if (bar) bar.style.width='50%';
+      if (lbl) lbl.textContent='Hochladen...';
 
-      // Upload mit Progress-Simulation (Supabase SDK hat kein Progress-Event)
-      let prog = 10;
-      const ticker = setInterval(() => {
-        prog = Math.min(prog + 15, 85);
-        this._showProgress(id, prog);
-      }, 200);
+      const ext = file.name.split('.').pop();
+      const path = folder+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
 
-      const { data, error } = await supabase.storage
-        .from(this.bucket)
-        .upload(filename, file, { cacheControl: '3600', upsert: false });
+      const { error: upErr } = await sb.storage.from(this.BUCKET).upload(path, file, { cacheControl:'3600', upsert:false });
+      if (upErr) throw upErr;
 
-      clearInterval(ticker);
+      if (bar) bar.style.width='90%';
+      const { data: { publicUrl } } = sb.storage.from(this.BUCKET).getPublicUrl(path);
+      if (bar) bar.style.width='100%';
+      if (prog) setTimeout(()=>{ prog.style.display='none'; },600);
 
-      if (error) {
-        this._showErr(id, this._friendlyError(error.message));
-        return;
-      }
-
-      // Public URL holen
-      const { data: { publicUrl } } = supabase.storage.from(this.bucket).getPublicUrl(filename);
-
-      this._showProgress(id, 100);
-      setTimeout(() => {
-        this._showSuccess(id, publicUrl, file.name);
-        if (opts.onSuccess) opts.onSuccess(publicUrl, file.name);
-      }, 300);
-
-    } catch (e) {
-      this._showErr(id, 'Upload fehlgeschlagen: ' + (e.message || 'Unbekannter Fehler'));
-    }
-  },
-
-  _showProgress(id, pct) {
-    const prog = document.getElementById(id + '-prog');
-    const bar  = document.getElementById(id + '-bar');
-    const lbl  = document.getElementById(id + '-label');
-    const zone = document.getElementById(id + '-zone');
-    if (zone) zone.style.display = 'none';
-    if (prog) prog.style.display = 'flex';
-    if (bar)  bar.style.width = pct + '%';
-    if (lbl)  lbl.textContent = pct < 100 ? `Hochladen... ${pct}%` : 'Fertig!';
-  },
-
-  _showSuccess(id, url, name) {
-    const widget = document.getElementById(id);
-    if (!widget) return;
-    widget.innerHTML = `
-      <div class="upload-existing">
-        <div class="upload-existing-info">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M4 2h6l4 4v8H4V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-            <path d="M10 2v4h4" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-          </svg>
-          <a href="${url}" target="_blank" class="upload-existing-link">${name}</a>
-          <span style="font-size:10px;color:var(--green);margin-left:4px">✓ Hochgeladen</span>
-        </div>
-        <button class="upload-remove-btn" onclick="UPLOAD._resetWidget('${id}')">Entfernen</button>
+      // Erfolg-Anzeige
+      const w = document.getElementById(id);
+      if (w) w.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(77,214,140,.07);border:1px solid rgba(77,214,140,.2);border-radius:8px">
+        <span style="font-size:12px;color:var(--green)">&#10003; ${file.name}</span>
+        <a href="${publicUrl}" target="_blank" style="font-size:11px;color:var(--blue)">Ansehen</a>
       </div>`;
-  },
 
-  _showErr(id, msg) {
-    const prog = document.getElementById(id + '-prog');
-    const zone = document.getElementById(id + '-zone');
-    const err  = document.getElementById(id + '-err');
-    if (prog) prog.style.display = 'none';
-    if (zone) zone.style.display = '';
-    if (err)  { err.textContent = msg; err.style.display = 'block'; }
-    setTimeout(() => { if (err) err.style.display = 'none'; }, 5000);
-  },
-
-  _clear(id, opts) {
-    const widget = document.getElementById(id);
-    if (!widget) return;
-    if (opts.onSuccess) opts.onSuccess(null, null);
-    UPLOAD.render(widget, {...opts, existingUrl: null});
-  },
-
-  _resetWidget(id) {
-    const opts = (UPLOAD._callbacks || {})[id] || {};
-    const widget = document.getElementById(id);
-    if (!widget) return;
-    UPLOAD.render(widget, {...opts, existingUrl: null});
-    if (opts.onSuccess) opts.onSuccess(null, null);
-  },
-
-  _friendlyError(msg) {
-    if (msg.includes('Bucket not found'))    return 'Storage-Bucket "belege" nicht gefunden. Bitte in Supabase erstellen (siehe README).';
-    if (msg.includes('not authorized'))      return 'Nicht autorisiert. Bitte einloggen.';
-    if (msg.includes('Payload too large'))   return `Datei zu gross (max. ${this.maxSizeMB} MB).`;
-    if (msg.includes('duplicate'))           return 'Diese Datei existiert bereits.';
-    return msg;
-  },
-
-  // CSS einmalig einfügen
-  injectCSS() {
-    if (document.getElementById('upload-css')) return;
-    const s = document.createElement('style');
-    s.id = 'upload-css';
-    s.textContent = `
-      .upload-widget{width:100%}
-      .upload-dropzone{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px dashed var(--border2);border-radius:8px;cursor:pointer;transition:all .15s;color:var(--text3)}
-      .upload-dropzone:hover,.upload-dropzone.dragover{border-color:var(--accent);color:var(--accent);background:rgba(212,240,74,.04)}
-      .upload-dropzone.dragover{border-style:solid}
-      .upload-hint{display:flex;flex-direction:column;gap:2px}
-      .upload-hint span:first-child{font-size:13px;font-weight:500;color:var(--text2)}
-      .upload-hint-sub{font-size:11px;color:var(--text3)}
-      .upload-progress{display:flex;align-items:center;gap:10px;padding:12px 0}
-      .upload-progress-bar-bg{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-      .upload-progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .2s;width:0%}
-      .upload-progress-label{font-size:12px;color:var(--text2);white-space:nowrap}
-      .upload-error{font-size:12px;color:var(--red);padding:8px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:7px;margin-top:6px}
-      .upload-existing{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(77,214,140,.06);border:1px solid rgba(77,214,140,.2);border-radius:8px}
-      .upload-existing-info{display:flex;align-items:center;gap:8px;color:var(--green)}
-      .upload-existing-link{font-size:13px;color:var(--green);font-weight:500;text-decoration:none;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .upload-existing-link:hover{text-decoration:underline}
-      .upload-remove-btn{background:transparent;border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text3);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .12s}
-      .upload-remove-btn:hover{color:var(--red);border-color:rgba(255,107,107,.3)}
-    `;
-    document.head.appendChild(s);
+      if (opts.onSuccess) opts.onSuccess(publicUrl, file.name);
+    } catch(e) {
+      if (prog) prog.style.display='none';
+      if (zone) zone.style.display='flex';
+      const msg = e.message?.includes('row-level') || e.message?.includes('Bucket')
+        ? 'Storage-Bucket "stackflow" fehlt. Bitte in Supabase erstellen.'
+        : (e.message||'Upload fehlgeschlagen');
+      if (err) { err.textContent=msg; err.style.display='block'; }
+      if (opts.onError) opts.onError(msg);
+      console.error('Upload:', e);
+    }
   }
 };
-
-// CSS sofort einbinden
-UPLOAD.injectCSS();

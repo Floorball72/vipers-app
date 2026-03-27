@@ -398,6 +398,39 @@ insert into news (club_id, titel, inhalt, typ, gepinnt) values
   ('uhc-jonschwil', 'Willkommen bei Stackflow!', 'Alle Vereinsdaten zentral verwalten.', 'info', true);
 
 -- ── Fertig! ───────────────────────────────────────────────────
+
+-- ── SCHRITT 6: Storage Bucket ────────────────────────────────
+-- Bucket "stackflow" für alle Uploads (Belege, Videos, Logos, Fotos)
+-- WICHTIG: Supabase führt Storage-Policies nicht via SQL aus.
+-- Bitte manuell im Supabase Dashboard:
+--   Storage → New bucket → Name: "stackflow" → Public: ON
+--   (Public ON damit Dateien ohne Auth gelesen werden können)
+--
+-- Alternativ via SQL (falls Storage-Extension aktiv):
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'stackflow', 
+  'stackflow', 
+  true,
+  524288000,  -- 500 MB
+  array['image/jpeg','image/png','image/webp','image/svg+xml',
+        'application/pdf',
+        'video/mp4','video/quicktime','video/webm']
+)
+on conflict (id) do update set
+  public = true,
+  file_size_limit = 524288000;
+
+-- Storage Policy: alle dürfen hochladen und lesen
+insert into storage.policies (name, bucket_id, definition)
+values (
+  'stackflow_open',
+  'stackflow',
+  '{"statement":"allow all","version":"1"}'
+)
+on conflict do nothing;
+
+
 select
   (select count(*) from clubs)      as vereine,
   (select count(*) from teams)      as teams,

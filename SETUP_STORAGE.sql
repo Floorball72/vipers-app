@@ -1,57 +1,27 @@
 -- ============================================================
--- UHC Jonschwil Vipers — Supabase Storage Setup
--- Im Supabase SQL Editor ausführen NACHDEM SETUP_DATABASE.sql
--- bereits ausgeführt wurde.
+-- STORAGE SETUP für Stackflow
+-- Im Supabase Dashboard ausführen: Storage → SQL Editor
+-- ODER direkt im SQL Editor wenn storage Extension aktiv ist
 -- ============================================================
 
--- foto_url Spalte zu inventar hinzufügen (falls noch nicht vorhanden)
-alter table inventar add column if not exists foto_url text;
+-- Bucket erstellen (falls nicht existiert)
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('stackflow', 'stackflow', true, 524288000)
+on conflict (id) do update set public = true, file_size_limit = 524288000;
 
--- logo_url ist bereits in sponsoren vorhanden (aus SETUP_DATABASE.sql)
--- beleg_url ist bereits in finanzen vorhanden (aus SETUP_DATABASE.sql)
+-- Policy: Alle dürfen lesen (public bucket)
+create policy "storage_public_read"
+on storage.objects for select
+using (bucket_id = 'stackflow');
 
--- ============================================================
--- Storage Bucket via Supabase Dashboard erstellen:
--- (SQL kann keinen Bucket erstellen — das geht nur im Dashboard)
---
--- 1. Supabase Dashboard → Storage → "New bucket"
--- 2. Name: belege
--- 3. Public: AUS (privat)
--- 4. File size limit: 10 MB
--- 5. Allowed MIME types: image/jpeg, image/png, image/webp, application/pdf
---
--- Dann diese Policies setzen:
--- ============================================================
+-- Policy: Alle dürfen hochladen  
+create policy "storage_public_insert"
+on storage.objects for insert
+with check (bucket_id = 'stackflow');
 
--- Policy: Eingeloggte User können hochladen
-insert into storage.policies (name, bucket_id, operation, definition)
-values (
-  'Authenticated upload',
-  'belege',
-  'INSERT',
-  '(auth.role() = ''authenticated'')'
-) on conflict do nothing;
+-- Policy: Alle dürfen löschen
+create policy "storage_public_delete"
+on storage.objects for delete
+using (bucket_id = 'stackflow');
 
--- Policy: Eingeloggte User können lesen
-insert into storage.policies (name, bucket_id, operation, definition)
-values (
-  'Authenticated read',
-  'belege',
-  'SELECT',
-  '(auth.role() = ''authenticated'')'
-) on conflict do nothing;
-
--- Policy: Eigene Dateien löschen
-insert into storage.policies (name, bucket_id, operation, definition)
-values (
-  'Authenticated delete own',
-  'belege',
-  'DELETE',
-  '(auth.role() = ''authenticated'')'
-) on conflict do nothing;
-
--- ============================================================
--- HINWEIS: Falls die Policy-INSERTs einen Fehler geben,
--- die Policies manuell im Dashboard setzen:
--- Storage → belege → Policies → Add policy → "Full access for authenticated users"
--- ============================================================
+select 'Storage Bucket "stackflow" konfiguriert' as status;

@@ -337,6 +337,7 @@ async function loadPlayerFields(userId){
 }
 
 function renderTeamCheckboxes(selected){
+  try{
   const cont=document.getElementById("mf-teams-grid");
   if(!cont)return;
   const clubTeams=teams.filter(t=>t.club_id===CLUB_ID);
@@ -352,15 +353,19 @@ function renderTeamCheckboxes(selected){
 }
 
 function toggleSpielerFelder(rolle){
-  const el=document.getElementById("spieler-felder");
-  if(el) el.style.display=rolle==="spieler"?"block":"none";
+  try{
+    const el=document.getElementById("spieler-felder");
+    if(el) el.style.display=rolle==="spieler"?"block":"none";
+  }catch(e){console.warn("toggleSpielerFelder:",e);}
 }
 function setClubAnzeige(){
-  const club=APP_CONFIG.ACTIVE_CLUB;
-  const anzeige=document.getElementById("mf-club-anzeige");
-  if(anzeige) anzeige.value=club.name;
-  const hidden=document.getElementById("mf-club");
-  if(hidden) hidden.value=club.club_id;
+  try{
+    const club=APP_CONFIG.ACTIVE_CLUB;
+    const anzeige=document.getElementById("mf-club-anzeige");
+    if(anzeige) anzeige.value=club.name;
+    const hidden=document.getElementById("mf-club");
+    if(hidden) hidden.value=club.club_id;
+  }catch(e){console.warn("setClubAnzeige:",e);}
 }
 function closeModal(){document.getElementById("mitgliedModal").classList.remove("open");editId=null;}
 
