@@ -153,7 +153,7 @@ let editingGame = null;
 let editingPlayer = null;
 
 async function initDB() {
-  const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+  const mod = await import('https://esm.sh/@supabase/supabase-js@2.39.0');
   db = mod.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
   CLUB_ID = APP_CONFIG.ACTIVE_CLUB.club_id;
   await loadAll();

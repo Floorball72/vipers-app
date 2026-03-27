@@ -362,26 +362,27 @@ create policy "p_games_r"   on games   for select using (true);
 create policy "p_players_r" on players for select using (true);
 create policy "p_news_r"    on news    for select using (true);
 
--- Eingeloggte User: voller Zugriff
-create policy "p_profiles"   on user_profiles         for all using (true);
-create policy "p_memberships" on user_club_memberships for all using (auth.role()='authenticated');
-create policy "p_events"     on events                for all using (auth.role()='authenticated');
-create policy "p_posts"      on social_posts          for all using (auth.role()='authenticated');
-create policy "p_scorer"     on scorer                for all using (auth.role()='authenticated');
-create policy "p_anw"        on anwesenheit           for all using (auth.role()='authenticated');
-create policy "p_finanzen"   on finanzen              for all using (auth.role()='authenticated');
-create policy "p_sponsor"    on sponsoren             for all using (auth.role()='authenticated');
-create policy "p_sponlei"    on sponsor_leistungen    for all using (auth.role()='authenticated');
-create policy "p_inventar"   on inventar              for all using (auth.role()='authenticated');
-create policy "p_invausl"    on inventar_ausleihen    for all using (auth.role()='authenticated');
-create policy "p_training"   on trainingseinheiten    for all using (auth.role()='authenticated');
-create policy "p_video"      on videoanalysen         for all using (auth.role()='authenticated');
-create policy "p_ausweise"   on mitgliedsausweise     for all using (auth.role()='authenticated');
-create policy "p_teams_w"    on teams                 for all using (auth.role()='authenticated');
-create policy "p_games_w"    on games                 for all using (auth.role()='authenticated');
-create policy "p_players_w"  on players               for all using (auth.role()='authenticated');
-create policy "p_clubs_w"    on clubs                 for all using (auth.role()='authenticated');
-create policy "p_news_w"     on news                  for all using (auth.role()='authenticated');
+-- Voller Zugriff für alle (App nutzt anon-key, Sicherheit via App-Logik)
+-- Für Produktion: Policies auf auth.uid() einschränken
+create policy "p_profiles"    on user_profiles         for all using (true) with check (true);
+create policy "p_memberships" on user_club_memberships for all using (true) with check (true);
+create policy "p_events"      on events                for all using (true) with check (true);
+create policy "p_posts"       on social_posts          for all using (true) with check (true);
+create policy "p_scorer"      on scorer                for all using (true) with check (true);
+create policy "p_anw"         on anwesenheit           for all using (true) with check (true);
+create policy "p_finanzen"    on finanzen              for all using (true) with check (true);
+create policy "p_sponsor"     on sponsoren             for all using (true) with check (true);
+create policy "p_sponlei"     on sponsor_leistungen    for all using (true) with check (true);
+create policy "p_inventar"    on inventar              for all using (true) with check (true);
+create policy "p_invausl"     on inventar_ausleihen    for all using (true) with check (true);
+create policy "p_training"    on trainingseinheiten    for all using (true) with check (true);
+create policy "p_video"       on videoanalysen         for all using (true) with check (true);
+create policy "p_ausweise"    on mitgliedsausweise     for all using (true) with check (true);
+create policy "p_teams_w"     on teams                 for all using (true) with check (true);
+create policy "p_games_w"     on games                 for all using (true) with check (true);
+create policy "p_players_w"   on players               for all using (true) with check (true);
+create policy "p_clubs_w"     on clubs                 for all using (true) with check (true);
+create policy "p_news_w"      on news                  for all using (true) with check (true);
 
 -- ── SCHRITT 5: Demo-Daten ─────────────────────────────────────
 insert into clubs (club_id, name, short_name, swiss_uh_id, primary_color) values

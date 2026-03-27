@@ -72,7 +72,7 @@ const CONFIG = APP_CONFIG;
 let db=null,CLUB_ID="uhc-jonschwil";
 
 async function initDB(){
-  const mod=await import('https://esm.sh/@supabase/supabase-js@2');
+  const mod=await import('https://esm.sh/@supabase/supabase-js@2.39.0');
   db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
   CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
   await loadDashboard();
@@ -157,7 +157,7 @@ async function loadDashboard(){
     }).join('');
 }
 
-initDB().catch(console.error);
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
 </script>
 
 <div class="shell">

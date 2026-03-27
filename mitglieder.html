@@ -103,6 +103,7 @@ async function initDB(){
   ]);
   mitglieder=m.data||[];teams=t.data||[];
   render();updateStats();
+  const _ps=document.getElementById("m-page-sub");if(_ps)_ps.textContent=APP_CONFIG.ACTIVE_CLUB.name+" · Verwaltung aller Mitglieder";
   // Freigaben-Badge aus geladenen Mitgliedern berechnen
   const _ausstehend=(m.data||[]).filter(x=>x.login_status==="pending"||x.login_status==="invited").length;
   const _badge=document.getElementById("freigaben-badge");
@@ -389,7 +390,6 @@ async function saveMitglied(){
     nummer:parseInt(document.getElementById("mf-trikotnummer")?.value)||null,
   }:null;
 
-  const btn=document.querySelector("#buchungModal .btn-accent")||document.querySelector(".modal .btn-accent");
 
   if(editId){
     // ── Bearbeiten ──────────────────────────────────────────
@@ -460,7 +460,8 @@ function loginStatusBadge(m){
   if(st==="active"){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(77,214,140,.12);color:var(--green);border:1px solid rgba(77,214,140,.2)'>Eingeloggt</span>";}
   if(st==="invited"){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)'>Eingeladen</span>";}
   if(!has_email){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text3);border:1px solid var(--border2)'>Kein Login</span>";}
-  return "<button onclick=\"event.stopPropagation();resendInvite('"+m.id+"','"+( m.email||"")+"','"+( m.vorname||"")+" "+(m.nachname||"")+"')\" style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2);cursor:pointer;font-family:\"DM Sans\",sans-serif'>Einladen</button>";
+  const mid=m.id, memail=(m.email||""), mname=((m.vorname||"")+" "+(m.nachname||"")).trim();
+  return "<button onclick=\"event.stopPropagation();resendInvite(this)\" data-id='"+mid+"' data-email='"+memail+"' data-name='"+mname+"' style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2);cursor:pointer;font-family:\"DM Sans\",sans-serif'>Einladen</button>";
 }
 
 function copyInviteLink(){
@@ -473,16 +474,16 @@ function copyInviteLink(){
   setTimeout(()=>{btn.textContent="Kopieren";btn.style.background="";},2000);
 }
 
-function resendInvite(id,email,name){showInviteInfo(name.split(" ")[0],name.split(" ").slice(1).join(" "),email,"");}
+function resendInvite(btn){const id=btn.dataset.id,email=btn.dataset.email,name=btn.dataset.name||"";const parts=name.split(" ");showInviteInfo(parts[0]||"",parts.slice(1).join(" ")||"",email,"");}
 
-initDB().catch(console.error);
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
 </script>
 
 <div class="shell">
   <div id="nav-placeholder"></div>
   <div class="main">
     <div class="topbar">
-      <div><div class="page-title">Mitglieder & Rollen</div><div class="page-sub">APP_CONFIG.ACTIVE_CLUB.name+' ·' Verwaltung aller Mitglieder</div></div>
+      <div><div class="page-title">Mitglieder & Rollen</div><div class="page-sub" id="m-page-sub">Mitglieder & Rollen</div></div>
       <button class="btn btn-accent" onclick="openModal()">+ Mitglied hinzufügen</button>
     </div>
     <div class="content">

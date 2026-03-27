@@ -195,7 +195,7 @@ async function saveNews(){
 async function togglePin(id,pinned){await db.from("news").update({gepinnt:!pinned}).eq("id",id);await initDB();}
 async function deleteNews(id){if(!confirm("Beitrag loeschen?"))return;await db.from("news").delete().eq("id",id);await initDB();}
 document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
-initDB().catch(console.error);
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
 </script>
 
 <div class="shell">

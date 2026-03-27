@@ -336,6 +336,8 @@ function closeModal() { document.getElementById("buchungModal").classList.remove
 async function saveBuchung() {
   const betrag = parseFloat(document.getElementById("bf-betrag").value);
   if (!betrag || betrag <= 0) { alert("Bitte gültigen Betrag eingeben."); return; }
+  const datum = document.getElementById("bf-datum").value;
+  if (!datum) { alert("Bitte Datum eingeben."); return; }
   const data = {
     club_id: CLUB_ID,
     typ: document.getElementById("bf-typ").value,
@@ -343,10 +345,11 @@ async function saveBuchung() {
     beschreibung: document.getElementById("bf-beschreibung").value || null,
     kategorie: document.getElementById("bf-kategorie").value || null,
     konto: document.getElementById("bf-konto").value || "Allgemein",
-    datum: document.getElementById("bf-datum").value,
+    datum,
     beleg_url: belegUrl || null,
   };
-  await db.from("finanzen").insert([data]);
+  const { error } = await db.from("finanzen").insert([data]);
+  if (error) { alert("Fehler beim Speichern: " + error.message); return; }
   closeModal();
   await loadAll();
 }
@@ -373,19 +376,24 @@ async function saveNeuesKonto() {
   // Wir erstellen eine Platzhalter-Notiz-Buchung (optional) oder zeigen es einfach sofort.
   // Einfacher Weg: sofort in aktiven Konto wechseln — Buchungen erstellen das Konto
   document.getElementById("neuesKontoModal").classList.remove("open");
-  // Temp: Konto lokal hinzufügen damit es in den Tabs erscheint
-  konten.push({ name, color: KONTO_COLORS[konten.length % KONTO_COLORS.length] });
+  // Konto lokal hinzufügen — wird nach erster Buchung in DB gespeichert
+  if (!konten.find(k => k.name === name)) {
+    konten.push({ name, color: KONTO_COLORS[konten.length % KONTO_COLORS.length] });
+  }
   activeKonto = name;
   renderTabs();
   render();
-  // Direkt Modal öffnen für erste Buchung
   openModal("ausgabe");
 }
 
 document.addEventListener("click", e => {
   if (e.target.classList.contains("overlay")) e.target.classList.remove("open");
 });
-initDB().catch(console.error);
+initDB().catch(e => {
+  console.error("Finanzen initDB Fehler:", e);
+  document.getElementById("buchungen-tbody").innerHTML =
+    "<tr><td colspan=\"7\" style=\"text-align:center;padding:40px;color:var(--red)\">Verbindungsfehler: " + e.message + "</td></tr>";
+});
 </script>
 
 <div class="shell">
