@@ -5,7 +5,6 @@ const APP_CONFIG = {
   APP_URL:           'https://vipers-app.vercel.app',
   SWISS_UH_API_KEY:  '',
 
-  // Vereinskonfiguration
   CLUB_ID:      'uhc-jonschwil',
   CLUB_NAME:    'UHC Jonschwil Vipers',
   CLUB_SHORT:   'Vipers',
@@ -13,17 +12,12 @@ const APP_CONFIG = {
   SWISS_UH_ID:  692,
   GCAL_ID:      '5320809ae59397fe852db643253723db16d2292d8b38179e85d35af082623f8e@group.calendar.google.com',
 
-  // Kompatibilität: ACTIVE_CLUB für bestehenden Code
   get ACTIVE_CLUB() {
     return {
-      club_id:      this.CLUB_ID,
       name:         this.CLUB_NAME,
       short:        this.CLUB_SHORT,
       primaryColor: this.CLUB_COLOR,
       swiss_uh_id:  this.SWISS_UH_ID,
-      gcal_id:      this.GCAL_ID,
-    };
+      gcal_id:      this.GCAL_ID};
   },
-  // CLUBS Array für Kompatibilität
-  get CLUBS() { return [this.ACTIVE_CLUB]; },
-};
+  get CLUBS() { return [this.ACTIVE_CLUB]; }};

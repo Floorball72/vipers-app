@@ -73,8 +73,8 @@ async function initDB(){
 }
 async function loadData(){
   const[g,e]=await Promise.all([
-    db.from('games').select('datum,gegner,heimspiel,teams(name)').order('datum'),
-    db.from('events').select('datum,titel,typ').order('datum'),
+    db.from('games').select('datum,gegner,heimspiel,teams(name)').order('date'),
+    db.from('events').select('datum,titel,typ').order('date'),
   ]);
   games=g.data||[];events=e.data||[];
   renderCal();
@@ -83,12 +83,12 @@ async function loadData(){
 function getCalEvents(dateStr){
   const evs=[];
   // Spiele
-  games.filter(g=>g.datum===dateStr).forEach(g=>{
-    evs.push({type:'ev-spiel',label:(g.heimspiel?'vs. ':'@ ')+g.gegner});
+  games.filter(g=>g.date===dateStr).forEach(g=>{
+    evs.push({type:'ev-spiel',label:(g.home_game?'vs. ':'@ ')+g.opponent});
   });
   // Events
-  events.filter(e=>e.datum===dateStr).forEach(e=>{
-    evs.push({type:'ev-event',label:e.titel});
+  events.filter(e=>e.date===dateStr).forEach(e=>{
+    evs.push({type:'ev-event',label:e.title});
   });
   // Freitag = Vorschau-Post
   const d=new Date(dateStr+'T12:00:00');

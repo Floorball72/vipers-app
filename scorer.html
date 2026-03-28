@@ -89,10 +89,10 @@ async function initDB(){
 
 async function loadAll(){
   const[t,s,p,g]=await Promise.all([
-    db.from('teams').select('*').eq('aktiv',true).order('name'),
-    db.from('scorer').select('*, players(vorname,nachname,nummer,team_id), games(datum,gegner,teams(name))').order('tore',{ascending:false}),
-    db.from('players').select('*').eq('aktiv',true).order('nachname'),
-    db.from('games').select('*,teams(name)').order('datum',{ascending:false}),
+    db.from('teams').select('*').eq('active',true).order('name'),
+    db.from('scorer').select('*, players(vorname,nachname,nummer,team_id), games(datum,gegner,teams(name))').order('goals',{ascending:false}),
+    db.from('players').select('*').eq('active',true).order('last_name'),
+    db.from('games').select('*,teams(name)').order('date',{ascending:false}),
   ]);
   teams=t.data||[];players=p.data||[];scorer=s.data||[];games=g.data||[];
   buildTeamPills();
@@ -119,11 +119,11 @@ function getTeamScorer(){
   const map={};
   s.forEach(row=>{
     const pid=row.player_id;
-    if(!map[pid]) map[pid]={player:row.players,tore:0,assists:0,punkte:0,spiele:0,strafmin:0,ids:[]};
-    map[pid].tore+=row.tore||0;
+    if(!map[pid]) map[pid]={player:row.players,goals:0,assists:0,punkte:0,spiele:0,strafmin:0,ids:[]};
+    map[pid].goals+=row.goals||0;
     map[pid].assists+=row.assists||0;
-    map[pid].punkte+=(row.tore||0)+(row.assists||0);
-    map[pid].strafmin+=row.strafminuten||0;
+    map[pid].punkte+=(row.goals||0)+(row.assists||0);
+    map[pid].strafmin+=row.penalty_minutes||0;
     map[pid].spiele+=1;
     map[pid].ids.push(row.id);
   });
@@ -139,13 +139,13 @@ function render(){
   } else {
     tbody.innerHTML=data.map((d,i)=>{
       const p=d.player;
-      const name=p?`${p.vorname} ${p.nachname}`:'Unbekannt';
-      const num=p?.nummer||'–';
+      const name=p?`${p.first_name} ${p.last_name}`:'Unbekannt';
+      const num=p?.jersey_number||'–';
       const rankCls=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
       return `<tr>
         <td><span class="rank-num ${rankCls}">${i+1}</span></td>
         <td><div style="font-weight:500">${name}</div><div style="font-size:11px;color:var(--text3)">#${num}</div></td>
-        <td class="num" style="color:var(--amber)">${d.tore}</td>
+        <td class="num" style="color:var(--amber)">${d.goals}</td>
         <td class="num" style="color:var(--blue)">${d.assists}</td>
         <td class="num"><span class="pts-badge">${d.punkte}</span></td>
         <td class="num" style="color:var(--text3)">${d.spiele}</td>
@@ -155,15 +155,15 @@ function render(){
   }
 
   // Top Torschützen (Sidebar)
-  const topTore=data.filter(d=>d.tore>0).slice(0,5);
+  const topTore=data.filter(d=>d.goals>0).slice(0,5);
   document.getElementById('top-tore').innerHTML=topTore.length===0?'<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Keine Daten</div>':topTore.map((d,i)=>{
     const p=d.player;
-    const name=p?`${p.vorname} ${p.nachname}`:'–';
+    const name=p?`${p.first_name} ${p.last_name}`:'–';
     return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
       <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);width:16px">${i+1}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:500">${name}</div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(d.tore/topTore[0].tore*100)}%;background:var(--amber)"></div></div></div>
-      <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--amber)">${d.tore}</span>
+      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(d.goals/topTore[0].goals*100)}%;background:var(--amber)"></div></div></div>
+      <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--amber)">${d.goals}</span>
     </div>`;
   }).join('');
 
@@ -171,7 +171,7 @@ function render(){
   const topAss=[...data].sort((a,b)=>b.assists-a.assists).filter(d=>d.assists>0).slice(0,5);
   document.getElementById('top-assists').innerHTML=topAss.length===0?'<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Keine Daten</div>':topAss.map((d,i)=>{
     const p=d.player;
-    const name=p?`${p.vorname} ${p.nachname}`:'–';
+    const name=p?`${p.first_name} ${p.last_name}`:'–';
     return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
       <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);width:16px">${i+1}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:500">${name}</div>
@@ -186,13 +186,13 @@ function openAddScorer(){
   // Spieler-Select befüllen
   const sel=document.getElementById('sf-player');
   sel.innerHTML='<option value="">– Spieler wählen –</option>';
-  players.forEach(p=>{sel.innerHTML+=`<option value="${p.id}">#${p.nummer||'?'} ${p.vorname} ${p.nachname}</option>`;});
+  players.forEach(p=>{sel.innerHTML+=`<option value="${p.id}">#${p.jersey_number||'?'} ${p.first_name} ${p.last_name}</option>`;});
   // Spiele-Select
   const gsel=document.getElementById('sf-game');
   gsel.innerHTML='<option value="">– Spiel wählen –</option>';
   games.slice(0,20).forEach(g=>{
-    const d=new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
-    gsel.innerHTML+=`<option value="${g.id}">${d} vs. ${g.gegner}</option>`;
+    const d=new Date(g.date+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
+    gsel.innerHTML+=`<option value="${g.id}">${d} vs. ${g.opponent}</option>`;
   });
   document.getElementById('sf-tore').value=0;
   document.getElementById('sf-assists').value=0;
@@ -204,15 +204,14 @@ async function saveScorer(){
   const pid=document.getElementById('sf-player').value;
   const gid=document.getElementById('sf-game').value;
   if(!pid){alert('Bitte Spieler wählen.');return;}
-  const data={
-    club_id:CLUB_ID,player_id:pid,game_id:gid||null,
-    tore:parseInt(document.getElementById('sf-tore').value)||0,
+  const data={player_id:pid,game_id:gid||null,
+    goals:parseInt(document.getElementById('sf-tore').value)||0,
     assists:parseInt(document.getElementById('sf-assists').value)||0,
-    strafminuten:parseInt(document.getElementById('sf-strafmin').value)||0,
-    saison: new Date().getFullYear()+'/'+(new Date().getFullYear()+1).toString().slice(-2)
+    penalty_minutes:parseInt(document.getElementById('sf-strafmin').value)||0,
+    season: new Date().getFullYear()+'/'+(new Date().getFullYear()+1).toString().slice(-2)
   };
   // Upsert: falls Eintrag für diesen Spieler+Spiel existiert, updaten
-  await db.from('scorer').upsert([{club_id:CLUB_ID,...data}],{onConflict:'player_id,game_id'});
+  await db.from('scorer').upsert([{...data}],{onConflict:'player_id,game_id'});
   document.getElementById('scorerModal').classList.remove('open');
   await loadAll();
 }

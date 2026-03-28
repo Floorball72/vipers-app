@@ -93,8 +93,8 @@ create table games (
   datum          date not null,
   anstoss        time not null default '17:00',
   heimspiel      boolean default true,
-  spielkategorie text default 'saison'
-                   check (spielkategorie in ('saison','cup','friendly')),
+  spielkategorie text default 'season'
+                   check (spielkategorie in ('season','cup','friendly')),
   ort            text,
   resultat_heim  integer,
   resultat_gast  integer,
@@ -210,8 +210,8 @@ create table sponsoren (
   betrag_jahr   numeric(10,2),
   vertrag_start date,
   vertrag_ende  date,
-  status        text default 'aktiv'
-                  check (status in ('aktiv','inaktiv','verhandlung')),
+  status        text default 'active'
+                  check (status in ('active','inaktiv','verhandlung')),
   notizen       text,
   created_at    timestamptz default now()
 );

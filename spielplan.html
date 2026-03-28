@@ -162,8 +162,8 @@ async function initDB() {
 async function loadAll() {
   showLoading();
   const [t, g] = await Promise.all([
-    db.from('teams').select('*').eq('aktiv', true).order('name'),
-    db.from('games').select('*, teams(name,liga)').order('datum').order('anstoss')
+    db.from('teams').select('*').eq('active', true).order('name'),
+    db.from('games').select('*, teams(name,liga)').order('date').order('kickoff')
   ]);
   teams = t.data || [];
   games = g.data || [];
@@ -182,8 +182,8 @@ function render() {
 
 function renderSpielplan() {
   const filtered = activeTeamId === 'all' ? games : games.filter(g => g.team_id === activeTeamId);
-  const upcoming = filtered.filter(g => !g.resultat_heim && !g.resultat_gast);
-  const past = filtered.filter(g => g.resultat_heim != null || g.resultat_gast != null);
+  const upcoming = filtered.filter(g => !g.score_home && !g.score_away);
+  const past = filtered.filter(g => g.score_home != null || g.score_away != null);
 
   let html = '';
 
@@ -199,17 +199,17 @@ function renderSpielplan() {
   } else {
     html += '<table><thead><tr><th>Datum</th><th>Team</th><th>Gegner</th><th>Ort</th><th>Liga</th><th>Anstoss</th><th></th></tr></thead><tbody>';
     upcoming.forEach(g => {
-      const datum = new Date(g.datum + 'T12:00:00').toLocaleDateString('de-CH', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+      const datum = new Date(g.date + 'T12:00:00').toLocaleDateString('de-CH', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
       html += `<tr>
         <td style="font-family:'DM Mono',monospace;font-size:12px">${datum}</td>
         <td style="color:var(--text2);font-size:12px">${g.teams?.name || '–'}</td>
-        <td><strong>${g.heimspiel ? 'vs.' : '@'} ${g.gegner}</strong></td>
-        <td><span class="badge ${g.heimspiel ? 'badge-home' : 'badge-away'}">${g.heimspiel ? 'Heim' : 'Auswärts'}</span></td>
-        <td style="color:var(--text2);font-size:12px">${g.spielkategorie||g.liga||'Saison'}</td>
-        <td style="font-family:'DM Mono',monospace;font-size:12px">${g.anstoss?.slice(0,5) || '–'}</td>
+        <td><strong>${g.home_game ? 'vs.' : '@'} ${g.opponent}</strong></td>
+        <td><span class="badge ${g.home_game ? 'badge-home' : 'badge-away'}">${g.home_game ? 'Heim' : 'Auswärts'}</span></td>
+        <td style="color:var(--text2);font-size:12px">${g.game_category||g.league||'Saison'}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${g.kickoff?.slice(0,5) || '–'}</td>
         <td>
           <div class="row-actions">
-            <button class="icon-btn" onclick="openResultModal('${g.id}','${g.gegner}')" title="Resultat eintragen">
+            <button class="icon-btn" onclick="openResultModal('${g.id}','${g.opponent}')" title="Resultat eintragen">
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <button class="icon-btn" onclick="openEditGame('${g.id}')" title="Bearbeiten">
@@ -235,17 +235,17 @@ function renderSpielplan() {
       </div>
       <table><thead><tr><th>Datum</th><th>Team</th><th>Gegner</th><th>Resultat</th><th>Ort</th><th></th></tr></thead><tbody>`;
     [...past].reverse().forEach(g => {
-      const datum = new Date(g.datum + 'T12:00:00').toLocaleDateString('de-CH', {weekday:'short', day:'numeric', month:'short'});
-      const won = g.heimspiel
-        ? (g.resultat_heim > g.resultat_gast)
-        : (g.resultat_gast > g.resultat_heim);
-      const res = `${g.resultat_heim}:${g.resultat_gast}`;
+      const datum = new Date(g.date + 'T12:00:00').toLocaleDateString('de-CH', {weekday:'short', day:'numeric', month:'short'});
+      const won = g.home_game
+        ? (g.score_home > g.score_away)
+        : (g.score_away > g.score_home);
+      const res = `${g.score_home}:${g.score_away}`;
       html += `<tr>
         <td style="font-family:'DM Mono',monospace;font-size:12px">${datum}</td>
         <td style="color:var(--text2);font-size:12px">${g.teams?.name || '–'}</td>
-        <td>${g.heimspiel ? 'vs.' : '@'} ${g.gegner}</td>
+        <td>${g.home_game ? 'vs.' : '@'} ${g.opponent}</td>
         <td><span class="${won ? 'result-win' : 'result-loss'}">${res}</span></td>
-        <td><span class="badge ${g.heimspiel ? 'badge-home' : 'badge-away'}">${g.heimspiel ? 'Heim' : 'Ausw.'}</span></td>
+        <td><span class="badge ${g.home_game ? 'badge-home' : 'badge-away'}">${g.home_game ? 'Heim' : 'Ausw.'}</span></td>
         <td>
           <div class="row-actions">
             <button class="icon-btn" onclick="openEditGame('${g.id}')" title="Bearbeiten">
@@ -295,7 +295,7 @@ function openNewGame() {
   document.getElementById('gf-datum').value = '';
   document.getElementById('gf-anstoss').value = '17:00';
   document.getElementById('gf-heim').value = 'true';
-  const _spkat=document.getElementById('gf-spielkategorie');if(_spkat)_spkat.value='saison';
+  const _spkat=document.getElementById('gf-spielkategorie');if(_spkat)_spkat.value='season';
   document.getElementById('gf-ort').value = '';
   document.getElementById('result-section').style.display = 'none';
   document.getElementById('gameModal').classList.add('open');
@@ -307,15 +307,15 @@ function openEditGame(id) {
   editingGame = g;
   document.getElementById('game-modal-title').textContent = 'Spiel bearbeiten';
   document.getElementById('gf-team').value = g.team_id || '';
-  document.getElementById('gf-gegner').value = g.gegner || '';
-  document.getElementById('gf-datum').value = g.datum || '';
-  document.getElementById('gf-anstoss').value = g.anstoss?.slice(0,5) || '17:00';
-  document.getElementById('gf-heim').value = String(g.heimspiel);
-  const _spkat2=document.getElementById('gf-spielkategorie');if(_spkat2)_spkat2.value=g.spielkategorie||'saison';
+  document.getElementById('gf-gegner').value = g.opponent || '';
+  document.getElementById('gf-datum').value = g.date || '';
+  document.getElementById('gf-anstoss').value = g.kickoff?.slice(0,5) || '17:00';
+  document.getElementById('gf-heim').value = String(g.home_game);
+  const _spkat2=document.getElementById('gf-spielkategorie');if(_spkat2)_spkat2.value=g.game_category||'season';
   document.getElementById('gf-ort').value = g.ort || '';
   document.getElementById('result-section').style.display = 'grid';
-  document.getElementById('gf-heim-score').value = g.resultat_heim ?? '';
-  document.getElementById('gf-gast-score').value = g.resultat_gast ?? '';
+  document.getElementById('gf-heim-score').value = g.score_home ?? '';
+  document.getElementById('gf-gast-score').value = g.score_away ?? '';
   document.getElementById('gameModal').classList.add('open');
 }
 
@@ -342,23 +342,22 @@ function closeModal(id) {
 async function saveGame() {
   const data = {
     team_id: document.getElementById('gf-team').value || null,
-    gegner: document.getElementById('gf-gegner').value,
-    datum: document.getElementById('gf-datum').value,
-    anstoss: document.getElementById('gf-anstoss').value,
-    heimspiel: document.getElementById('gf-heim').value === 'true',
-    spielkategorie: (document.getElementById('gf-spielkategorie')||{value:'saison'}).value,
-    ort: document.getElementById('gf-ort').value || null,
-  };
+    opponent: document.getElementById('gf-gegner').value,
+    date: document.getElementById('gf-datum').value,
+    kickoff: document.getElementById('gf-anstoss').value,
+    home_game: document.getElementById('gf-heim').value === 'true',
+    game_category: (document.getElementById('gf-spielkategorie')||{value:'season'}).value,
+    ort: document.getElementById('gf-ort').value || null};
   const rh = document.getElementById('gf-heim-score').value;
   const rg = document.getElementById('gf-gast-score').value;
-  if (rh !== '' && rg !== '') { data.resultat_heim = parseInt(rh); data.resultat_gast = parseInt(rg); }
+  if (rh !== '' && rg !== '') { data.score_home = parseInt(rh); data.score_away = parseInt(rg); }
 
-  if (!data.gegner || !data.datum) { alert('Bitte Gegner und Datum eintragen.'); return; }
+  if (!data.opponent || !data.date) { alert('Bitte Gegner und Datum eintragen.'); return; }
 
   if (editingGame) {
     await db.from('games').update(data).eq('id', editingGame.id);
   } else {
-    await db.from('games').insert([{club_id:CLUB_ID,...data}]);
+    await db.from('games').insert([{...data}]);
   }
   closeModal('gameModal');
   await loadAll();
@@ -368,7 +367,7 @@ async function saveResult() {
   const h = document.getElementById('rf-heim').value;
   const g = document.getElementById('rf-gast').value;
   if (h === '' || g === '') { alert('Bitte beide Werte eintragen.'); return; }
-  await db.from('games').update({ resultat_heim: parseInt(h), resultat_gast: parseInt(g) }).eq('id', editingGame.id);
+  await db.from('games').update({ score_home: parseInt(h), score_away: parseInt(g) }).eq('id', editingGame.id);
   closeModal('resultModal');
   await loadAll();
 }
@@ -384,7 +383,7 @@ async function deleteGame(id) {
 async function deletePlayer(id) {
   if (!confirm('Spieler wirklich entfernen?')) return;
   const teamId = document.getElementById('players-modal-team-id').value;
-  await db.from('players').update({ aktiv: false }).eq('id', id);
+  await db.from('players').update({ active: false }).eq('id', id);
   await loadPlayers(teamId);
 }
 
@@ -465,7 +464,7 @@ initDB().catch(e => {
         <div>
           <label class="form-label">Kategorie</label>
           <select class="form-input" id="gf-spielkategorie">
-            <option value="saison">Saison</option>
+            <option value="season">Saison</option>
             <option value="cup">Cup</option>
             <option value="friendly">Friendly</option>
           </select>
@@ -523,8 +522,8 @@ const origLoadAll = loadAll;
 async function loadAll() {
   showLoading();
   const [t, g] = await Promise.all([
-    db.from('teams').select('*').eq('aktiv', true).order('name'),
-    db.from('games').select('*, teams(name,liga)').order('datum').order('anstoss')
+    db.from('teams').select('*').eq('active', true).order('name'),
+    db.from('games').select('*, teams(name,liga)').order('date').order('kickoff')
   ]);
   teams = t.data || [];
   games = g.data || [];

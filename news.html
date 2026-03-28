@@ -33,12 +33,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 .news-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:14px;transition:border-color .15s}
 .news-card.pinned{border-color:rgba(212,240,74,.25)}
 .news-card:hover{border-color:var(--border2)}
-.typ-badge{display:inline-flex;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
-.typ-info{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
-.typ-wichtig{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
-.typ-training{background:rgba(212,240,74,.1);color:var(--accent);border:1px solid rgba(212,240,74,.2)}
-.typ-spiel{background:rgba(155,143,255,.1);color:var(--purple);border:1px solid rgba(155,143,255,.2)}
-.typ-event{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.type-badge{display:inline-flex;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.type-info{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+.type-wichtig{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.type-training{background:rgba(212,240,74,.1);color:var(--accent);border:1px solid rgba(212,240,74,.2)}
+.type-spiel{background:rgba(155,143,255,.1);color:var(--purple);border:1px solid rgba(155,143,255,.2)}
+.type-event{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
 .team-tag{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);margin-right:4px;margin-bottom:4px}
 .news-title{font-size:16px;font-weight:600;margin-bottom:8px;line-height:1.3}
 .news-body{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px}
@@ -81,28 +81,28 @@ async function initDB(){
   db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
   CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
   currentUser=JSON.parse(localStorage.getItem("vipers_user")||"null");
-  currentRolle=currentUser?.rolle||"admin";
+  currentRolle=currentUser?.role||"admin";
   const[n,t]=await Promise.all([
-    db.from('news').select("*").order("gepinnt",{ascending:false}).order("created_at",{ascending:false}),
-    db.from('teams').select("id,name").eq("aktiv",true).order("name"),
+    db.from('news').select("*").order("pinned",{ascending:false}).order("created_at",{ascending:false}),
+    db.from('teams').select("id,name").eq("active",true).order("name"),
   ]);
   teams=t.data||[];
   let allNews=n.data||[];
   // Filterung nach Rolle/Teams
   if(currentRolle==="admin"){
     news=allNews;
-  } else if(currentRolle==="spieler"&&currentUser?.team_ids?.length){
+  } else if(currentRolle==="player"&&currentUser?.team_ids?.length){
     const myTeams=currentUser.team_ids;
     news=allNews.filter(n=>{
-      if((n.zielgruppe||[]).includes("alle"))return true;
-      if((n.zielgruppe||[]).includes("spieler"))return true;
+      if((n.audience||[]).includes("all"))return true;
+      if((n.audience||[]).includes("player"))return true;
       if(n.team_ids?.some(tid=>myTeams.includes(tid)))return true;
       return false;
     });
   } else if(currentRolle==="trainer"){
-    news=allNews.filter(n=>(n.zielgruppe||[]).includes("alle")||(n.zielgruppe||[]).includes("trainer")||!n.team_ids?.length);
-  } else if(currentRolle==="eltern"){
-    news=allNews.filter(n=>(n.zielgruppe||[]).includes("alle")||(n.zielgruppe||[]).includes("eltern"));
+    news=allNews.filter(n=>(n.audience||[]).includes("all")||(n.audience||[]).includes("trainer")||!n.team_ids?.length);
+  } else if(currentRolle==="parent"){
+    news=allNews.filter(n=>(n.audience||[]).includes("all")||(n.audience||[]).includes("parent"));
   } else {
     news=allNews;
   }
@@ -115,21 +115,21 @@ function render(){
   cont.innerHTML=news.map(n=>{
     const d=new Date(n.created_at).toLocaleDateString("de-CH",{day:"numeric",month:"short",year:"numeric"});
     const teamNames=(n.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace("UHC Jonschwil ","")).filter(Boolean);
-    const showAll=(n.zielgruppe||[]).includes("alle");
-    return "<div class='news-card"+(n.gepinnt?" pinned":"")+"'>"
+    const showAll=(n.audience||[]).includes("all");
+    return "<div class='news-card"+(n.pinned?" pinned":"")+"'>"
       +"<div style='display:flex;align-items:center;gap:6px;margin-bottom:10px'>"
-      +"<span class='typ-badge typ-"+(n.typ||"info")+( n.gepinnt?"'":"'")+">"+(TYP[n.typ]||n.typ)+"</span>"
-      +(n.gepinnt?"<span style='font-size:10px;color:var(--accent);font-weight:600'>GEPINNT</span>":"")
+      +"<span class='typ-badge typ-"+(n.type||"info")+( n.pinned?"'":"'")+">"+(TYP[n.type]||n.type)+"</span>"
+      +(n.pinned?"<span style='font-size:10px;color:var(--accent);font-weight:600'>GEPINNT</span>":"")
       +"<div style='flex:1'></div>"
       +(showAll?"<span class='team-tag'>Alle Teams</span>"
         :teamNames.map(tn=>"<span class='team-tag'>"+tn+"</span>").join(""))
       +"</div>"
-      +"<div class='news-title'>"+n.titel+"</div>"
-      +(n.inhalt?"<div class='news-body'>"+n.inhalt+"</div>":"")
+      +"<div class='news-title'>"+n.title+"</div>"
+      +(n.content?"<div class='news-body'>"+n.content+"</div>":"")
       +"<div class='news-footer'><span>"+d+"</span>"
       +(currentRolle==="admin"||currentRolle==="trainer"
         ?"<div class='news-actions'>"
-        +"<button class='icon-btn' onclick='togglePin(\""+n.id+"\","+n.gepinnt+")' title='Pinnen'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M10 2l4 4-6 6H4v-4L10 2Z' stroke='"+(n.gepinnt?"var(--accent)":"currentColor")+"' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"
+        +"<button class='icon-btn' onclick='togglePin(\""+n.id+"\","+n.pinned+")' title='Pinnen'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M10 2l4 4-6 6H4v-4L10 2Z' stroke='"+(n.pinned?"var(--accent)":"currentColor")+"' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"
         +"<button class='icon-btn' onclick='openEdit(\""+n.id+"\")' title='Bearbeiten'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M11 2l3 3L5 14H2v-3L11 2Z' stroke='currentColor' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"
         +"<button class='icon-btn del' onclick='deleteNews(\""+n.id+"\")' title='Loeschen'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"
         +"</div>":"")
@@ -170,31 +170,31 @@ function toggleTeam(id){
 function openModal(){editId=null;document.getElementById("nf-titel").value="";document.getElementById("nf-inhalt").value="";document.getElementById("nf-typ").value="info";document.getElementById("nf-pinned").checked=false;document.getElementById("team-select-area").innerHTML=renderTeamChecks([],true);document.getElementById("newsModal").classList.add("open");}
 function openEdit(id){
   const n=news.find(x=>x.id===id);if(!n)return;editId=id;
-  document.getElementById("nf-titel").value=n.titel||"";document.getElementById("nf-inhalt").value=n.inhalt||"";document.getElementById("nf-typ").value=n.typ||"info";document.getElementById("nf-pinned").checked=!!n.gepinnt;
-  const showAll=(n.zielgruppe||[]).includes("alle");
+  document.getElementById("nf-titel").value=n.title||"";document.getElementById("nf-inhalt").value=n.content||"";document.getElementById("nf-typ").value=n.type||"info";document.getElementById("nf-pinned").checked=!!n.pinned;
+  const showAll=(n.audience||[]).includes("all");
   document.getElementById("team-select-area").innerHTML=renderTeamChecks(n.team_ids||[],showAll);
   document.getElementById("newsModal").classList.add("open");
 }
 function closeModal(){document.getElementById("newsModal").classList.remove("open");editId=null;}
 
 async function saveNews(){
-  const titel=document.getElementById("nf-titel").value;if(!titel){alert("Bitte Titel eingeben.");return;}
+  const title=document.getElementById("nf-titel").value;if(!title){alert("Bitte Titel eingeben.");return;}
   const forAll=document.getElementById("tc-all")?.checked!==false;
   let teamIds=[];
-  let zielgruppe=["alle"];
+  let audience=["all"];
   if(!forAll){
     teamIds=Array.from(document.querySelectorAll("#team-checks input:checked")).map(cb=>cb.value);
     if(!teamIds.length){alert("Bitte mindestens ein Team waehlen oder 'Alle Teams' aktivieren.");return;}
-    zielgruppe=["spieler","trainer"];
+    audience=["player","trainer"];
   }
-  const data={titel,inhalt:document.getElementById("nf-inhalt").value||null,typ:document.getElementById("nf-typ").value,zielgruppe,team_ids:forAll?null:teamIds,gepinnt:document.getElementById("nf-pinned").checked,};
+  const data={title,content:document.getElementById("nf-inhalt").value||null,type:document.getElementById("nf-typ").value,audience,team_ids:forAll?null:teamIds,pinned:document.getElementById("nf-pinned").checked};
   let _nErr;
   if(editId){const r=await db.from("news").update(data).eq("id",editId);_nErr=r.error;}
-  else{const r=await db.from("news").insert([{club_id:CLUB_ID,...data}]);_nErr=r.error;}
+  else{const r=await db.from("news").insert([{...data}]);_nErr=r.error;}
   if(_nErr){alert("Fehler beim Speichern: "+_nErr.message);return;}
   closeModal();await initDB();
 }
-async function togglePin(id,pinned){await db.from("news").update({gepinnt:!pinned}).eq("id",id);await initDB();}
+async function togglePin(id,pinned){await db.from("news").update({pinned:!pinned}).eq("id",id);await initDB();}
 async function deleteNews(id){if(!confirm("Beitrag loeschen?"))return;await db.from("news").delete().eq("id",id);await initDB();}
 document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
 initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
@@ -221,7 +221,7 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
         <div><label class="form-label">Typ</label>
           <select class="form-input" id="nf-typ">
             <option value="info">Info</option><option value="wichtig">Wichtig</option>
-            <option value="training">Training</option><option value="spiel">Spiel</option><option value="event">Event</option>
+            <option value="training">Training</option><option value="game">Spiel</option><option value="event">Event</option>
           </select>
         </div>
         <div style="display:flex;align-items:center;gap:8px;padding-top:22px">

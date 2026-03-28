@@ -65,7 +65,7 @@ select.form-input option{background:var(--bg3)}
 const CONFIG = APP_CONFIG;
 let db = null, auth = null;
 let registerStep = 1;
-let selectedRolle = 'spieler';
+let selectedRolle = 'player';
 let selectedPlayerId = null;
 let allPlayers = [];
 
@@ -91,8 +91,8 @@ async function init() {
       .from('players')
       .select('id,vorname,nachname,nummer,teams(name)')
       
-      .eq('aktiv', true)
-      .order('nachname');
+      .eq('active', true)
+      .order('last_name');
     allPlayers = data || [];
 
   } catch(e) {
@@ -134,17 +134,15 @@ async function loadUserAndRedirect(user) {
       }
     }
 
-    const rolle = profile?.rolle || 'spieler';
+    const rolle = profile?.role || 'player';
     const userData = {
       id: profile?.id || user.id,
       auth_user_id: user.id,
       email: user.email,
-      vorname: profile?.vorname || user.user_metadata?.vorname || '',
-      nachname: profile?.nachname || user.user_metadata?.nachname || '',
-      rolle,
-      club_id: profile?.club_id || APP_CONFIG.ACTIVE_CLUB.club_id,
-      login_status: 'active',
-    };
+      first_name: profile?.first_name || user.user_metadata?.first_name || '',
+      last_name: profile?.last_name || user.user_metadata?.last_name || '',
+      rolle
+      login_status: 'active'};
 
     // Login-Status aktualisieren
     if (profile) {
@@ -160,9 +158,9 @@ async function loadUserAndRedirect(user) {
     // Trotzdem weiterleiten mit Basis-Daten
     localStorage.setItem('vipers_user', JSON.stringify({
       auth_user_id: user.id, email: user.email,
-      vorname: user.user_metadata?.vorname || '',
-      nachname: user.user_metadata?.nachname || '',
-      rolle: 'spieler', club_id: APP_CONFIG.ACTIVE_CLUB.club_id
+      first_name: user.user_metadata?.first_name || '',
+      last_name: user.user_metadata?.last_name || '',
+      role: 'player'
     }));
     window.location.href = 'dashboard.html';
   }
@@ -238,7 +236,7 @@ function nextStep(from) {
     if (!vn || !nn || !email || !pass) { showAlert('r-alert2','error','Bitte alle Felder ausfüllen.'); return; }
     if (pass.length < 6) { showAlert('r-alert2','error','Passwort muss mindestens 6 Zeichen haben.'); return; }
     if (pass !== pass2) { showAlert('r-alert2','error','Passwörter stimmen nicht überein.'); return; }
-    if (selectedRolle === 'spieler') setRegisterStep(3);
+    if (selectedRolle === 'player') setRegisterStep(3);
     else doRegister();
   }
 }
@@ -259,17 +257,17 @@ function searchPlayer(q) {
   const res = document.getElementById('player-results');
   if (!q || q.length < 2) { res.classList.remove('open'); return; }
   const matches = allPlayers.filter(p =>
-    (p.vorname + ' ' + p.nachname).toLowerCase().includes(q.toLowerCase())
+    (p.first_name + ' ' + p.last_name).toLowerCase().includes(q.toLowerCase())
   );
   if (!matches.length) { res.classList.remove('open'); return; }
   res.innerHTML = matches.slice(0,6).map(p => {
-    const init = (p.vorname[0]||'') + (p.nachname[0]||'');
+    const init = (p.first_name[0]||'') + (p.last_name[0]||'');
     const team = p.teams?.name?.replace('UHC Jonschwil ','') || '';
-    const pid = p.id, pname = p.vorname + ' ' + p.nachname;
+    const pid = p.id, pname = p.first_name + ' ' + p.last_name;
     return `<div class="player-result-item" onclick="selectPlayer('${pid}','${pname}')">
       <div class="player-avatar">${init}</div>
       <div><div style="font-weight:500">${pname}</div>
-      <div style="font-size:11px;color:var(--text3)">#${p.nummer||'–'} · ${team}</div></div>
+      <div style="font-size:11px;color:var(--text3)">#${p.jersey_number||'–'} · ${team}</div></div>
     </div>`;
   }).join('');
   res.classList.add('open');
@@ -298,7 +296,7 @@ async function doRegister() {
   // 1. Supabase Auth signUp
   const { data, error } = await auth.signUp({
     email, password: pass,
-    options: { data: { vorname: vn, nachname: nn } }
+    options: { data: { first_name: vn, last_name: nn } }
   });
 
   if (error) {
@@ -325,39 +323,33 @@ async function doRegister() {
   if (existing) {
     // Profil mit Auth verknüpfen
     await db.from('user_profiles')
-      .update({ auth_user_id: userId, login_status: 'active', aktiv: true })
+      .update({ auth_user_id: userId, login_status: 'active', active: true })
       .eq('id', existing.id);
     // Spieler per E-Mail verknüpfen
     await db.from('players').update({ user_id: userId }).eq('email', email);
     localStorage.setItem('vipers_user', JSON.stringify({
       id: existing.id, auth_user_id: userId,
-      vorname: existing.vorname || vn, nachname: existing.nachname || nn,
-      email, rolle: existing.rolle || selectedRolle,
-      club_id: existing.club_id || APP_CONFIG.ACTIVE_CLUB.club_id,
-      login_status: 'active',
-    }));
+      first_name: existing.first_name || vn, last_name: existing.last_name || nn,
+      email, role: existing.role || selectedRolle
+      login_status: 'active'}));
   } else {
     // Neues Profil anlegen
     const { data: newP } = await db.from('user_profiles').insert([{
       auth_user_id: userId,
-      vorname: vn, nachname: nn, email,
-      rolle: selectedRolle,
-      club_id: APP_CONFIG.ACTIVE_CLUB.club_id,
-      aktiv: true, login_status: 'active',
-      mitglied_seit: new Date().toISOString().split('T')[0],
-    }]).select('id').single();
+      first_name: vn, last_name: nn, email,
+      role: selectedRolle
+      active: true, login_status: 'active',
+      member_since: new Date().toISOString().split('T')[0]}]).select('id').single();
 
     // Spielerprofil verknüpfen (falls in Schritt 3 gewählt)
-    if (selectedRolle === 'spieler' && selectedPlayerId) {
+    if (selectedRolle === 'player' && selectedPlayerId) {
       await db.from('players').update({ user_id: userId }).eq('id', selectedPlayerId);
     }
     localStorage.setItem('vipers_user', JSON.stringify({
       id: newP?.id, auth_user_id: userId,
-      vorname: vn, nachname: nn, email,
-      rolle: selectedRolle,
-      club_id: APP_CONFIG.ACTIVE_CLUB.club_id,
-      login_status: 'active',
-    }));
+      first_name: vn, last_name: nn, email,
+      role: selectedRolle
+      login_status: 'active'}));
   }
 
   // 3. Weiterleitung
@@ -388,11 +380,9 @@ async function submitRequest() {
   if (!vn || !nn || !email) { showAlert('req-alert','error','Bitte alle Pflichtfelder ausfüllen.'); return; }
   // Speichern als user_profile mit pending-Status
   const { error } = await db.from('user_profiles').insert([{
-    vorname: vn, nachname: nn, email,
-    rolle: document.getElementById('req-rolle').value,
-    club_id: APP_CONFIG.ACTIVE_CLUB.club_id,
-    login_status: 'pending', aktiv: false,
-  }]);
+    first_name: vn, last_name: nn, email,
+    role: document.getElementById('req-rolle').value
+    login_status: 'pending', active: false}]);
   if (error) { showAlert('req-alert','error','Fehler: ' + error.message); return; }
   showAlert('req-alert','success','Anfrage gesendet! Der Vereinsadmin wird dich kontaktieren.');
   setTimeout(() => hideRequest(), 3000);
@@ -466,12 +456,12 @@ init().catch(e => {
         <div style="font-size:13px;color:var(--text3);margin-bottom:18px">Wähle deine Rolle im Verein</div>
         <div class="alert" id="r-alert"></div>
         <div class="role-grid">
-          <div class="role-card selected" id="role-spieler" onclick="selectRolle('spieler')">
+          <div class="role-card selected" id="role-spieler" onclick="selectRolle('player')">
             <div class="role-card-icon">🏑</div>
             <div class="role-card-label">Spieler</div>
             <div class="role-card-sub">Aktives Mitglied</div>
           </div>
-          <div class="role-card" id="role-eltern" onclick="selectRolle('eltern')">
+          <div class="role-card" id="role-eltern" onclick="selectRolle('parent')">
             <div class="role-card-icon">👨‍👩‍👧</div>
             <div class="role-card-label">Elternteil</div>
             <div class="role-card-sub">Junioren-Eltern</div>

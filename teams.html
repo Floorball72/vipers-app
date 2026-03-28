@@ -110,8 +110,8 @@ async function initDB(){
 async function loadAll(){
   const[t,p,g,s]=await Promise.all([
     db.from("teams").select("*").order("name"),
-    db.from("players").select("*").eq("aktiv",true).order("nachname"),
-    db.from("games").select("*").order("datum"),
+    db.from("players").select("*").eq("active",true).order("last_name"),
+    db.from("games").select("*").order("date"),
     db.from("scorer").select("*"),
   ]);
   teams=t.data||[]; players=p.data||[]; games=g.data||[]; scorer=s.data||[];
@@ -135,14 +135,14 @@ function renderGrid(){
   cont.innerHTML=teams.map((t,i)=>{
     const color=TEAM_COLORS[i%TEAM_COLORS.length];
     const teamPlayers=players.filter(p=>p.team_id===t.id);
-    const teamGames=games.filter(g=>g.team_id===t.id&&g.resultat_heim!=null);
+    const teamGames=games.filter(g=>g.team_id===t.id&&g.score_home!=null);
     const short=t.name.replace(/UHC Jonschwil /g,"").split(" ").map(w=>w[0]).join("").slice(0,3).toUpperCase();
     return `<div class="team-card" onclick="renderDetail('${t.id}')">
       <div class="team-card-top">
         <div class="team-icon" style="background:${color}22;color:${color}">${short}</div>
         <div>
           <div class="team-name">${t.name.replace(/UHC Jonschwil /g,"")}</div>
-          <div class="team-liga">${t.liga||"–"} · Saison ${t.saison||""}</div>
+          <div class="team-liga">${t.league||"–"} · Saison ${t.season||""}</div>
         </div>
       </div>
       <div class="team-stats-row">
@@ -160,10 +160,10 @@ function renderGrid(){
 }
 
 function getWins(teamId){
-  return games.filter(g=>g.team_id===teamId&&g.resultat_heim!=null&&(g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim)).length;
+  return games.filter(g=>g.team_id===teamId&&g.score_home!=null&&(g.home_game?g.score_home>g.score_away:g.score_away>g.score_home)).length;
 }
 function getAvg(teamId,field){
-  const played=games.filter(g=>g.team_id===teamId&&g.resultat_heim!=null);
+  const played=games.filter(g=>g.team_id===teamId&&g.score_home!=null);
   if(!played.length)return 0;
   return +(played.reduce((s,g)=>s+parseFloat(g[field]||0),0)/played.length).toFixed(1);
 }
@@ -178,25 +178,25 @@ function renderDetail(teamId){
   const i=teams.indexOf(t);
   const color=TEAM_COLORS[i%TEAM_COLORS.length];
   const short=t.name.replace(/UHC Jonschwil /g,"").split(" ").map(w=>w[0]).join("").slice(0,3).toUpperCase();
-  const teamPlayers=players.filter(p=>p.team_id===teamId).sort((a,b)=>(a.nummer||99)-(b.nummer||99));
-  const played=games.filter(g=>g.team_id===teamId&&g.resultat_heim!=null);
+  const teamPlayers=players.filter(p=>p.team_id===teamId).sort((a,b)=>(a.jersey_number||99)-(b.jersey_number||99));
+  const played=games.filter(g=>g.team_id===teamId&&g.score_home!=null);
   const wins=getWins(teamId);
-  const losses=played.filter(g=>g.heimspiel?g.resultat_heim<g.resultat_gast:g.resultat_gast<g.resultat_heim).length;
-  const avgFor=getAvg(teamId,t.id&&played.length?( played[0]?.heimspiel?"resultat_heim":"resultat_gast"):"resultat_heim");
-  const avgFor2=played.length?+(played.reduce((s,g)=>s+(g.heimspiel?g.resultat_heim:g.resultat_gast),0)/played.length).toFixed(1):0;
-  const avgAgainst=played.length?+(played.reduce((s,g)=>s+(g.heimspiel?g.resultat_gast:g.resultat_heim),0)/played.length).toFixed(1):0;
+  const losses=played.filter(g=>g.home_game?g.score_home<g.score_away:g.score_away<g.score_home).length;
+  const avgFor=getAvg(teamId,t.id&&played.length?( played[0]?.home_game?"score_home":"score_away"):"score_home");
+  const avgFor2=played.length?+(played.reduce((s,g)=>s+(g.home_game?g.score_home:g.score_away),0)/played.length).toFixed(1):0;
+  const avgAgainst=played.length?+(played.reduce((s,g)=>s+(g.home_game?g.score_away:g.score_home),0)/played.length).toFixed(1):0;
   const teamScorer={};
   scorer.filter(s=>teamPlayers.find(p=>p.id===s.player_id)).forEach(s=>{
-    if(!teamScorer[s.player_id])teamScorer[s.player_id]={name:"",tore:0,assists:0,strafmin:0};
+    if(!teamScorer[s.player_id])teamScorer[s.player_id]={name:"",goals:0,assists:0,strafmin:0};
     const p=teamPlayers.find(x=>x.id===s.player_id);
-    teamScorer[s.player_id].name=(p?.vorname||"")+" "+(p?.nachname||"");
-    teamScorer[s.player_id].tore+=s.tore||0;
+    teamScorer[s.player_id].name=(p?.first_name||"")+" "+(p?.last_name||"");
+    teamScorer[s.player_id].goals+=s.goals||0;
     teamScorer[s.player_id].assists+=s.assists||0;
-    teamScorer[s.player_id].strafmin+=s.strafminuten||0;
+    teamScorer[s.player_id].strafmin+=s.penalty_minutes||0;
   });
-  const topScorer=Object.values(teamScorer).sort((a,b)=>(b.tore+b.assists)-(a.tore+a.assists)).slice(0,5);
+  const topScorer=Object.values(teamScorer).sort((a,b)=>(b.goals+b.assists)-(a.goals+a.assists)).slice(0,5);
   document.getElementById("page-title").textContent=t.name.replace(/UHC Jonschwil /g,"");
-  document.getElementById("page-sub").textContent=t.liga+" · "+t.saison;
+  document.getElementById("page-sub").textContent=t.league+" · "+t.season;
   dv.innerHTML=`
     <button class="back-btn" onclick="renderGrid()">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -206,7 +206,7 @@ function renderDetail(teamId){
       <div class="detail-icon" style="background:${color}22;color:${color}">${short}</div>
       <div style="flex:1">
         <div class="detail-name">${t.name}</div>
-        <div class="detail-meta">${t.liga||"–"} · ${t.saison||""}${t.trainingszeiten?" · "+t.trainingszeiten:""}${t.trainingsort?" · "+t.trainingsort:""}</div>
+        <div class="detail-meta">${t.league||"–"} · ${t.season||""}${t.training_times?" · "+t.training_times:""}${t.training_location?" · "+t.training_location:""}</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost" onclick="openTeamModal('${t.id}')">Bearbeiten</button>
@@ -225,11 +225,11 @@ function renderDetail(teamId){
         <div class="card-header"><span class="card-title">Spieler (${teamPlayers.length})</span></div>
         ${teamPlayers.length===0?'<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">Noch keine Spieler zugewiesen.<br><button class="btn btn-accent" style="margin-top:12px;font-size:12px" onclick="openAssignModal(\''+t.id+'\')">Spieler zuweisen</button></div>':
         teamPlayers.map(p=>`<div class="player-item" onclick="location.href='spieler.html?id=${p.id}'">
-          <span class="player-nr">#${p.nummer||"–"}</span>
-          <div class="player-avatar" style="background:${color}18;color:${color}">${(p.vorname[0]||"")+(p.nachname[0]||"")}</div>
+          <span class="player-nr">#${p.jersey_number||"–"}</span>
+          <div class="player-avatar" style="background:${color}18;color:${color}">${(p.first_name[0]||"")+(p.last_name[0]||"")}</div>
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:500">${p.vorname} ${p.nachname}</div>
-            <div style="font-size:11px;color:var(--text3)">${p.position||"–"}${p.trikot_shirt?" · Shirt: "+p.trikot_shirt:""}</div>
+            <div style="font-size:13px;font-weight:500">${p.first_name} ${p.last_name}</div>
+            <div style="font-size:11px;color:var(--text3)">${p.position||"–"}${p.shirt_size?" · Shirt: "+p.shirt_size:""}</div>
           </div>
           <button onclick="event.stopPropagation();removePlayer('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;border-radius:4px;line-height:1" title="Entfernen">×</button>
         </div>`).join("")}
@@ -239,18 +239,18 @@ function renderDetail(teamId){
           <div class="card-header"><span class="card-title">Top Scorer</span></div>
           ${topScorer.length===0?'<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Keine Scorer-Daten</div>':
           '<table><thead><tr><th>Spieler</th><th style="text-align:right;color:var(--amber)">T</th><th style="text-align:right;color:var(--blue)">A</th><th style="text-align:right">Pkt</th></tr></thead><tbody>'+
-          topScorer.map(s=>`<tr><td style="font-size:13px;font-weight:500">${s.name}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--amber)">${s.tore}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--blue)">${s.assists}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px"><strong>${s.tore+s.assists}</strong></td></tr>`).join("")+
+          topScorer.map(s=>`<tr><td style="font-size:13px;font-weight:500">${s.name}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--amber)">${s.goals}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--blue)">${s.assists}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px"><strong>${s.goals+s.assists}</strong></td></tr>`).join("")+
           '</tbody></table>'}
         </div>
         <div class="card">
           <div class="card-header"><span class="card-title">Letzte Resultate</span></div>
           ${played.length===0?'<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Keine Resultate</div>':
           [...played].reverse().slice(0,5).map(g=>{
-            const won=g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim;
-            const d=new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
+            const won=g.home_game?g.score_home>g.score_away:g.score_away>g.score_home;
+            const d=new Date(g.date+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
             return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid var(--border)">
-              <div style="font-size:12px;color:var(--text2)">${d} · ${g.heimspiel?"vs.":"@"} ${g.gegner}</div>
-              <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:${won?"var(--green)":"var(--red)"}">${g.resultat_heim}:${g.resultat_gast}</span>
+              <div style="font-size:12px;color:var(--text2)">${d} · ${g.home_game?"vs.":"@"} ${g.opponent}</div>
+              <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:${won?"var(--green)":"var(--red)"}">${g.score_home}:${g.score_away}</span>
             </div>`;
           }).join("")}
         </div>
@@ -264,11 +264,11 @@ function openTeamModal(id){
   if(id){
     const t=teams.find(x=>x.id===id);if(!t)return;
     document.getElementById("tf-name").value=t.name||"";
-    document.getElementById("tf-liga").value=t.liga||"";
-    document.getElementById("tf-saison").value=t.saison||"";
-    document.getElementById("tf-trainingszeiten").value=t.trainingszeiten||"";
-    document.getElementById("tf-trainingsort").value=t.trainingsort||"";
-    document.getElementById("tf-aktiv").value=String(t.aktiv!==false);
+    document.getElementById("tf-liga").value=t.league||"";
+    document.getElementById("tf-saison").value=t.season||"";
+    document.getElementById("tf-trainingszeiten").value=t.training_times||"";
+    document.getElementById("tf-trainingsort").value=t.training_location||"";
+    document.getElementById("tf-aktiv").value=String(t.active!==false);
     document.getElementById("teamModal-title").textContent="Team bearbeiten";
   } else {
     ["tf-name","tf-liga","tf-trainingszeiten","tf-trainingsort"].forEach(id=>document.getElementById(id).value="");
@@ -282,16 +282,14 @@ function closeTeamModal(){document.getElementById("teamModal").classList.remove(
 async function saveTeam(){
   const name=document.getElementById("tf-name").value.trim();
   if(!name){alert("Bitte Teamname eingeben.");return;}
-  const data={
-    club_id:CLUB_ID, name,
-    liga:document.getElementById("tf-liga").value||null,
-    saison:document.getElementById("tf-saison").value||"",
-    trainingszeiten:document.getElementById("tf-trainingszeiten").value||null,
-    trainingsort:document.getElementById("tf-trainingsort").value||null,
-    aktiv:document.getElementById("tf-aktiv").value==="true",
-  };
+  const data={name,
+    league:document.getElementById("tf-liga").value||null,
+    season:document.getElementById("tf-saison").value||"",
+    training_times:document.getElementById("tf-trainingszeiten").value||null,
+    training_location:document.getElementById("tf-trainingsort").value||null,
+    active:document.getElementById("tf-aktiv").value==="true"};
   if(editTeamId){await db.from("teams").update(data).eq("id",editTeamId);}
-  else{await db.from("teams").insert([{club_id:CLUB_ID,...data}]);}
+  else{await db.from("teams").insert([{...data}]);}
   closeTeamModal();await loadAll();
 }
 async function deleteTeam(id){
@@ -313,7 +311,7 @@ function openAssignModal(teamId){
   const allPlayers=players.sort((a,b)=>{
     if(a.team_id===teamId&&b.team_id!==teamId)return-1;
     if(b.team_id===teamId&&a.team_id!==teamId)return 1;
-    return(a.nachname||"").localeCompare(b.nachname||"");
+    return(a.last_name||"").localeCompare(b.last_name||"");
   });
   cont.innerHTML=allPlayers.length===0
     ?'<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Keine Spieler vorhanden. Zuerst unter Mitglieder Spieler erfassen.</div>'
@@ -322,9 +320,9 @@ function openAssignModal(teamId){
       const otherTeam=p.team_id&&!inTeam?teams.find(t=>t.id===p.team_id):null;
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
         <input type="checkbox" class="assign-check" value="${p.id}" ${inTeam?"checked":""}>
-        <div class="player-avatar">${(p.vorname[0]||"")+(p.nachname[0]||"")}</div>
+        <div class="player-avatar">${(p.first_name[0]||"")+(p.last_name[0]||"")}</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:500">${p.vorname} ${p.nachname}${p.nummer?" <span style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>#"+p.nummer+"</span>":""}</div>
+          <div style="font-size:13px;font-weight:500">${p.first_name} ${p.last_name}${p.jersey_number?" <span style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>#"+p.jersey_number+"</span>":""}</div>
           ${otherTeam?`<div style="font-size:11px;color:var(--amber)">Aktuell: ${otherTeam.name.replace(/UHC Jonschwil /g,"")}</div>`:""}
         </div>
         ${inTeam?`<span style="font-size:10px;color:var(--green);padding:2px 7px;border-radius:20px;background:rgba(77,214,140,.1);border:1px solid rgba(77,214,140,.2)">In diesem Team</span>`:""}

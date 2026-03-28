@@ -99,10 +99,9 @@ const KAT = {
   taktik:     {label:"Taktik",     cls:"kat-taktik"},
   kondition:  {label:"Kondition",  cls:"kat-kondition"},
   aufwaermen: {label:"Aufwärmen",  cls:"kat-aufwaermen"},
-  gegner:     {label:"Gegneranalyse",cls:"kat-gegner"},
+  opponent:     {label:"Gegneranalyse",cls:"kat-gegner"},
   highlights: {label:"Highlights", cls:"kat-highlights"},
-  allgemein:  {label:"Allgemein",  cls:"kat-allgemein"},
-};
+  allgemein:  {label:"Allgemein",  cls:"kat-allgemein"}};
 
 async function initDB(){
   const mod=await import("https://esm.sh/@supabase/supabase-js@2");
@@ -113,10 +112,10 @@ async function initDB(){
 
 async function loadAll(){
   const[tr,vi,te,ga]=await Promise.all([
-    db.from("trainingseinheiten").select("*,teams(name)").order("created_at",{ascending:false}),
-    db.from("videoanalysen").select("*,games(datum,gegner)").order("created_at",{ascending:false}),
-    db.from("teams").select("*").eq("aktiv",true).order("name"),
-    db.from("games").select("*").order("datum",{ascending:false}).limit(40),
+    db.from("training_units").select("*,teams(name)").order("created_at",{ascending:false}),
+    db.from("video_analyses").select("*,games(datum,gegner)").order("created_at",{ascending:false}),
+    db.from("teams").select("*").eq("active",true).order("name"),
+    db.from("games").select("*").order("date",{ascending:false}).limit(40),
   ]);
   trainings=tr.data||[]; videos=vi.data||[]; teams=te.data||[]; games=ga.data||[];
   render();
@@ -165,29 +164,29 @@ function renderTraining(){
     return;
   }
   cont.innerHTML="<div class='cards-grid'>"+trainings.map(t=>{
-    const k=KAT[t.kategorie?.toLowerCase()]||KAT.allgemein;
+    const k=KAT[t.category?.toLowerCase()]||KAT.allgemein;
     const thumb=getThumbUrl(t.video_url);
     const embed=getEmbedUrl(t.video_url);
     const teamName=t.teams?.name?.replace(/UHC Jonschwil /g,"")||"";
     return "<div class='item-card'>"
-      +"<div class='card-thumb' onclick=\""+(embed?"openPlayer('"+encodeURIComponent(t.video_url)+"','"+t.titel.replace(/'/g,"\\'")+"')":"")+"\">"
+      +"<div class='card-thumb' onclick=\""+(embed?"openPlayer('"+encodeURIComponent(t.video_url)+"','"+t.title.replace(/'/g,"\\'")+"')":"")+"\">"
       +(thumb?"<img src='"+thumb+"' style='width:100%;height:100%;object-fit:cover'>":"")
       +"<div class='card-thumb-label'><span class='kat "+k.cls+"'>"+k.label+"</span></div>"
       +(embed?"<div class='play-circle' style='position:absolute'><svg width='16' height='16' viewBox='0 0 16 16' fill='none'><path d='M5 3l8 5-8 5V3Z' fill='var(--accent)'/></svg></div>"
         :"<svg width='32' height='32' viewBox='0 0 32 32' fill='none' style='opacity:.15'><circle cx='16' cy='16' r='14' stroke='currentColor' stroke-width='1.5'/><path d='M12 10l10 6-10 6V10Z' fill='currentColor'/></svg>")
       +"</div>"
       +"<div class='card-body'>"
-      +"<div class='card-title'>"+t.titel+"</div>"
+      +"<div class='card-title'>"+t.title+"</div>"
       +"<div class='card-meta'>"
       +(teamName?"<span>"+teamName+"</span>":"")
-      +(t.dauer_min?"<span>"+t.dauer_min+" Min.</span>":"")
+      +(t.duration_min?"<span>"+t.duration_min+" Min.</span>":"")
       +(t.trainer?"<span>"+t.trainer+"</span>":"")
       +"</div>"
-      +(t.beschreibung?"<div class='card-desc'>"+t.beschreibung+"</div>":"")
+      +(t.description?"<div class='card-desc'>"+t.description+"</div>":"")
       +(t.video_url&&!getEmbedUrl(t.video_url)?"<div style='margin-top:8px;font-size:11px;color:var(--blue)'><a href='"+t.video_url+"' target='_blank' style='color:var(--blue)'>Video öffnen →</a></div>":"")
       +"</div>"
       +"<div class='card-footer'>"
-      +(embed?"<button class='btn btn-ghost' style='flex:1;justify-content:center;font-size:11px;padding:5px' onclick=\"openPlayer('"+encodeURIComponent(t.video_url)+"','"+t.titel.replace(/'/g,"\\'")+"')\">▶ Abspielen</button>":"")
+      +(embed?"<button class='btn btn-ghost' style='flex:1;justify-content:center;font-size:11px;padding:5px' onclick=\"openPlayer('"+encodeURIComponent(t.video_url)+"','"+t.title.replace(/'/g,"\\'")+"')\">▶ Abspielen</button>":"")
       +"<button class='btn btn-ghost' style='flex:1;justify-content:center;font-size:11px;padding:5px' onclick='openTrainingModal(\""+t.id+"\")'>Bearbeiten</button>"
       +"<button class='icon-btn del' onclick='deleteItem(\""+t.id+"\",\"trainingseinheiten\")'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"
       +"</div></div>";
@@ -202,30 +201,30 @@ function renderVideo(){
     return;
   }
   cont.innerHTML="<div class='cards-grid'>"+videos.map(v=>{
-    const k=KAT[v.kategorie?.toLowerCase()]||KAT.gegner;
+    const k=KAT[v.category?.toLowerCase()]||KAT.opponent;
     const thumb=getThumbUrl(v.video_url);
     const embed=getEmbedUrl(v.video_url);
     const game=v.games;
-    const gameLabel=game?new Date(game.datum+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"})+" vs. "+game.gegner:"";
+    const gameLabel=game?new Date(game.date+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"})+" vs. "+game.opponent:"";
     const tags=v.tags||[];
     return "<div class='item-card'>"
-      +"<div class='card-thumb' onclick=\""+(embed?"openPlayer('"+encodeURIComponent(v.video_url)+"','"+v.titel.replace(/'/g,"\\'")+"')":"")+"\">"
+      +"<div class='card-thumb' onclick=\""+(embed?"openPlayer('"+encodeURIComponent(v.video_url)+"','"+v.title.replace(/'/g,"\\'")+"')":"")+"\">"
       +(thumb?"<img src='"+thumb+"' style='width:100%;height:100%;object-fit:cover'>":"")
       +(embed?"<div class='play-circle' style='position:absolute'><svg width='16' height='16' viewBox='0 0 16 16' fill='none'><path d='M5 3l8 5-8 5V3Z' fill='var(--accent)'/></svg></div>"
         :"<svg width='32' height='32' viewBox='0 0 32 32' fill='none' style='opacity:.15'><circle cx='16' cy='16' r='14' stroke='currentColor' stroke-width='1.5'/><path d='M12 10l10 6-10 6V10Z' fill='currentColor'/></svg>")
       +"</div>"
       +"<div class='card-body'>"
-      +"<div class='card-title'>"+v.titel+"</div>"
+      +"<div class='card-title'>"+v.title+"</div>"
       +"<div class='card-meta'>"
       +(gameLabel?"<span>"+gameLabel+"</span>":"")
       +(v.erstellt_von?"<span>"+v.erstellt_von+"</span>":"")
       +"</div>"
-      +(v.notizen?"<div class='card-desc'>"+v.notizen+"</div>":"")
+      +(v.notes?"<div class='card-desc'>"+v.notes+"</div>":"")
       +(tags.length?"<div class='card-tags'>"+tags.map(t=>"<span class='tag'>"+t+"</span>").join("")+"</div>":"")
       +(v.video_url&&!embed?"<div style='margin-top:8px;font-size:11px'><a href='"+v.video_url+"' target='_blank' style='color:var(--blue)'>Video öffnen →</a></div>":"")
       +"</div>"
       +"<div class='card-footer'>"
-      +(embed?"<button class='btn btn-ghost' style='flex:1;justify-content:center;font-size:11px;padding:5px' onclick=\"openPlayer('"+encodeURIComponent(v.video_url)+"','"+v.titel.replace(/'/g,"\\'")+"')\">▶ Abspielen</button>":"")
+      +(embed?"<button class='btn btn-ghost' style='flex:1;justify-content:center;font-size:11px;padding:5px' onclick=\"openPlayer('"+encodeURIComponent(v.video_url)+"','"+v.title.replace(/'/g,"\\'")+"')\">▶ Abspielen</button>":"")
       +"<button class='btn btn-ghost' style='flex:1;justify-content:center;font-size:11px;padding:5px' onclick='openVideoModal(\""+v.id+"\")'>Bearbeiten</button>"
       +"<button class='icon-btn del' onclick='deleteItem(\""+v.id+"\",\"videoanalysen\")'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"
       +"</div></div>";
@@ -262,12 +261,12 @@ function openTrainingModal(id){
     teams.map(t=>"<option value='"+t.id+"'>"+t.name.replace(/UHC Jonschwil /g,"")+"</option>").join("");
   if(id){
     const t=trainings.find(x=>x.id===id);if(!t)return;
-    document.getElementById("tf-titel").value=t.titel||"";
+    document.getElementById("tf-titel").value=t.title||"";
     document.getElementById("tf-team").value=t.team_id||"";
-    document.getElementById("tf-kat").value=t.kategorie||"technik";
-    document.getElementById("tf-dauer").value=t.dauer_min||"";
+    document.getElementById("tf-kat").value=t.category||"technik";
+    document.getElementById("tf-dauer").value=t.duration_min||"";
     document.getElementById("tf-trainer").value=t.trainer||"";
-    document.getElementById("tf-beschreibung").value=t.beschreibung||"";
+    document.getElementById("tf-beschreibung").value=t.description||"";
     document.getElementById("tf-video").value=t.video_url||"";
     document.getElementById("trainingModal-title").textContent="Trainingsübung bearbeiten";
   } else {
@@ -283,17 +282,15 @@ async function saveTraining(){
   const titel=document.getElementById("tf-titel").value.trim();
   if(!titel){alert("Bitte Titel eingeben.");return;}
   const videoUrl=document.getElementById("tf-video").value||null;
-  const data={
-    club_id:CLUB_ID, titel,
+  const data={titel,
     team_id:document.getElementById("tf-team").value||null,
-    kategorie:document.getElementById("tf-kat").value||null,
-    beschreibung:document.getElementById("tf-beschreibung").value||null,
+    category:document.getElementById("tf-kat").value||null,
+    description:document.getElementById("tf-beschreibung").value||null,
     video_url:videoUrl,
-    dauer_min:parseInt(document.getElementById("tf-dauer").value)||null,
-    trainer:document.getElementById("tf-trainer").value||null,
-  };
-  if(editTrainingId){await db.from("trainingseinheiten").update(data).eq("id",editTrainingId);}
-  else{await db.from("trainingseinheiten").insert([{club_id:CLUB_ID,...data}]);}
+    duration_min:parseInt(document.getElementById("tf-dauer").value)||null,
+    trainer:document.getElementById("tf-trainer").value||null};
+  if(editTrainingId){await db.from("training_units").update(data).eq("id",editTrainingId);}
+  else{await db.from("training_units").insert([{...data}]);}
   document.getElementById("trainingModal").classList.remove("open");
   await loadAll();
 }
@@ -305,22 +302,22 @@ function openVideoModal(id){
   const gsel=document.getElementById("vf-game");
   gsel.innerHTML="<option value=''>– Kein Spiel –</option>"+
     games.map(g=>{
-      const d=new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
-      return "<option value='"+g.id+"'>"+d+" vs. "+g.gegner+"</option>";
+      const d=new Date(g.date+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
+      return "<option value='"+g.id+"'>"+d+" vs. "+g.opponent+"</option>";
     }).join("");
   if(id){
     const v=videos.find(x=>x.id===id);if(!v)return;
-    document.getElementById("vf-titel").value=v.titel||"";
+    document.getElementById("vf-titel").value=v.title||"";
     document.getElementById("vf-game").value=v.game_id||"";
-    document.getElementById("vf-kat").value=v.kategorie||"gegner";
+    document.getElementById("vf-kat").value=v.category||"opponent";
     document.getElementById("vf-trainer").value=v.erstellt_von||"";
-    document.getElementById("vf-notizen").value=v.notizen||"";
+    document.getElementById("vf-notizen").value=v.notes||"";
     document.getElementById("vf-tags").value=(v.tags||[]).join(", ");
     document.getElementById("vf-url").value=v.video_url||"";
     document.getElementById("videoModal-title").textContent="Videoanalyse bearbeiten";
   } else {
     ["vf-titel","vf-trainer","vf-notizen","vf-tags","vf-url"].forEach(id=>document.getElementById(id).value="");
-    document.getElementById("vf-kat").value="gegner";
+    document.getElementById("vf-kat").value="opponent";
     document.getElementById("videoModal-title").textContent="Videoanalyse erfassen";
   }
   setVideoSource("vf","url");
@@ -332,17 +329,15 @@ async function saveVideo(){
   if(!titel){alert("Bitte Titel eingeben.");return;}
   const tagsStr=document.getElementById("vf-tags").value;
   const videoUrl=document.getElementById("vf-url").value||null;
-  const data={
-    club_id:CLUB_ID, titel,
+  const data={titel,
     game_id:document.getElementById("vf-game").value||null,
-    kategorie:document.getElementById("vf-kat").value||null,
+    category:document.getElementById("vf-kat").value||null,
     video_url:videoUrl,
-    notizen:document.getElementById("vf-notizen").value||null,
+    notes:document.getElementById("vf-notizen").value||null,
     tags:tagsStr?tagsStr.split(",").map(s=>s.trim()).filter(Boolean):null,
-    erstellt_von:document.getElementById("vf-trainer").value||null,
-  };
-  if(editVideoId){await db.from("videoanalysen").update(data).eq("id",editVideoId);}
-  else{await db.from("videoanalysen").insert([{club_id:CLUB_ID,...data}]);}
+    erstellt_von:document.getElementById("vf-trainer").value||null};
+  if(editVideoId){await db.from("video_analyses").update(data).eq("id",editVideoId);}
+  else{await db.from("video_analyses").insert([{...data}]);}
   document.getElementById("videoModal").classList.remove("open");
   await loadAll();
 }
@@ -468,7 +463,7 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
         </div>
         <div><label class="form-label">Kategorie</label>
           <select class="form-input" id="vf-kat">
-            <option value="gegner">Gegneranalyse</option>
+            <option value="opponent">Gegneranalyse</option>
             <option value="highlights">Highlights</option>
             <option value="taktik">Taktik</option>
             <option value="allgemein">Allgemein</option>

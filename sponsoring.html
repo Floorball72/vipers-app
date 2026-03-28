@@ -86,15 +86,15 @@ async function initDB(){
 }
 async function loadAll(){
   const[s,l]=await Promise.all([
-    db.from('sponsoren').select("*").order("firmenname"),
-    db.from('sponsor_leistungen').select("*"),
+    db.from('sponsors').select("*").order("company_name"),
+    db.from('sponsor_services').select("*"),
   ]);
   sponsoren=s.data||[];leistungen=l.data||[];
   render();updateStats();
 }
 function updateStats(){
-  const aktiv=sponsoren.filter(s=>s.status==="aktiv");
-  const total=aktiv.reduce((sum,s)=>sum+(parseFloat(s.betrag_jahr)||0),0);
+  const aktiv=sponsoren.filter(s=>s.status==="active");
+  const total=aktiv.reduce((sum,s)=>sum+(parseFloat(s.amount_per_year)||0),0);
   document.getElementById("s-total").textContent=sponsoren.length;
   document.getElementById("s-aktiv").textContent=aktiv.length;
   document.getElementById("s-budget").textContent=CHF(total);
@@ -107,21 +107,21 @@ function render(){
   cont.innerHTML=sponsoren.map(s=>{
     const sLeistungen=leistungen.filter(l=>l.sponsor_id===s.id);
     const done=sLeistungen.filter(l=>l.erledigt).length;
-    const katCls=s.kategorie==="Hauptsponsor"?"kat-haupt":s.kategorie==="Partner"?"kat-partner":"kat-gonn";
-    const statusCls=s.status==="aktiv"?"status-aktiv":s.status==="verhandlung"?"status-verh":"status-inaktiv";
+    const katCls=s.category==="Hauptsponsor"?"kat-haupt":s.category==="Partner"?"kat-partner":"kat-gonn";
+    const statusCls=s.status==="active"?"status-aktiv":s.status==="verhandlung"?"status-verh":"status-inaktiv";
     return "<div class='sponsor-card' onclick='openDetail(\""+s.id+"\")'>"
       +"<div style='display:flex;align-items:start;justify-content:space-between'>"
-      +"<div><div class='kat-badge "+katCls+"'>"+(s.kategorie||"Sponsor")+"</div><div class='sponsor-name'>"+s.firmenname+"</div>"
-      +"<div class='sponsor-meta'><span>"+CHF(s.betrag_jahr)+"/Jahr</span>"+(s.kontaktperson?"<span>"+s.kontaktperson+"</span>":"")+( s.vertrag_ende?"<span>bis "+s.vertrag_ende+"</span>":"")+"</div>"
+      +"<div><div class='kat-badge "+katCls+"'>"+(s.category||"Sponsor")+"</div><div class='sponsor-name'>"+s.company_name+"</div>"
+      +"<div class='sponsor-meta'><span>"+CHF(s.amount_per_year)+"/Jahr</span>"+(s.contact_person?"<span>"+s.contact_person+"</span>":"")+( s.contract_end?"<span>bis "+s.contract_end+"</span>":"")+"</div>"
       +"</div><div style='display:flex;flex-direction:column;align-items:flex-end;gap:8px'>"
-      +"<span class='"+statusCls+"' style='font-size:12px;font-weight:500'>"+{"aktiv":"Aktiv","inaktiv":"Inaktiv","verhandlung":"In Verhandlung"}[s.status]+"</span>"
+      +"<span class='"+statusCls+"' style='font-size:12px;font-weight:500'>"+{"active":"Aktiv","inaktiv":"Inaktiv","verhandlung":"In Verhandlung"}[s.status]+"</span>"
       +(sLeistungen.length?"<span style='font-size:11px;color:var(--text3)'>"+done+"/"+sLeistungen.length+" Leistungen</span>":"")
       +"<div class='row-actions'><button class='icon-btn' onclick='event.stopPropagation();openEdit(\""+s.id+"\")' title='Bearbeiten'><svg width='13' height='13' viewBox='0 0 16 16' fill='none'><path d='M11 2l3 3L5 14H2v-3L11 2Z' stroke='currentColor' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"
       +"<button class='icon-btn del' onclick='event.stopPropagation();deleteSponsor(\""+s.id+"\")' title='Löschen'><svg width='13' height='13' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button></div>"
       +"</div></div>"
       +(sLeistungen.length?"<div style='margin-top:10px;padding-top:10px;border-top:1px solid var(--border)'>"
       +sLeistungen.slice(0,3).map(l=>"<div class='leistung-row'><div class='leistung-check "+(l.erledigt?"done":"")+"' onclick='event.stopPropagation();toggleLeistung(\""+l.id+"\","+l.erledigt+")'>"+( l.erledigt?"<svg width='10' height='10' viewBox='0 0 10 10' fill='none'><path d='M2 5l2 2.5L8 3' stroke='var(--green)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>":"")+"</div>"
-      +"<span style='flex:1;color:"+(l.erledigt?"var(--text3)":"var(--text2)")+(l.erledigt?";text-decoration:line-through":"")+"'>"+l.beschreibung+"</span>"
+      +"<span style='flex:1;color:"+(l.erledigt?"var(--text3)":"var(--text2)")+(l.erledigt?";text-decoration:line-through":"")+"'>"+l.description+"</span>"
       +(l.faellig_am?"<span style='font-size:10px;color:var(--text3)'>"+l.faellig_am+"</span>":"")
       +"</div>").join("")
       +(sLeistungen.length>3?"<div style='font-size:11px;color:var(--text3);padding:4px 0'>+"+( sLeistungen.length-3)+" weitere...</div>":"")
@@ -131,22 +131,22 @@ function render(){
   }).join("");
 }
 
-function openModal(){editId=null;["sf-firma","sf-kontakt","sf-email","sf-telefon","sf-website","sf-betrag"].forEach(id=>document.getElementById(id).value="");document.getElementById("sf-kat").value="Partner";document.getElementById("sf-status").value="aktiv";document.getElementById("sf-start").value="";document.getElementById("sf-ende").value="";logoUrl=null;document.getElementById("sponsorModal").classList.add("open");setTimeout(()=>UPLOAD.render("logo-upload",{label:"Logo hochladen (PNG/JPG)",folder:"logos",onSuccess:(u)=>{logoUrl=u;}}),50);}
-function openEdit(id){const s=sponsoren.find(x=>x.id===id);if(!s)return;editId=id;document.getElementById("sf-firma").value=s.firmenname||"";document.getElementById("sf-kontakt").value=s.kontaktperson||"";document.getElementById("sf-email").value=s.email||"";document.getElementById("sf-telefon").value=s.telefon||"";document.getElementById("sf-website").value=s.website||"";document.getElementById("sf-betrag").value=s.betrag_jahr||"";document.getElementById("sf-kat").value=s.kategorie||"Partner";document.getElementById("sf-status").value=s.status||"aktiv";document.getElementById("sf-start").value=s.vertrag_start||"";document.getElementById("sf-ende").value=s.vertrag_ende||"";document.getElementById("sponsorModal").classList.add("open");}
+function openModal(){editId=null;["sf-firma","sf-kontakt","sf-email","sf-telefon","sf-website","sf-betrag"].forEach(id=>document.getElementById(id).value="");document.getElementById("sf-kat").value="Partner";document.getElementById("sf-status").value="active";document.getElementById("sf-start").value="";document.getElementById("sf-ende").value="";logoUrl=null;document.getElementById("sponsorModal").classList.add("open");setTimeout(()=>UPLOAD.render("logo-upload",{label:"Logo hochladen (PNG/JPG)",folder:"logos",onSuccess:(u)=>{logoUrl=u;}}),50);}
+function openEdit(id){const s=sponsoren.find(x=>x.id===id);if(!s)return;editId=id;document.getElementById("sf-firma").value=s.company_name||"";document.getElementById("sf-kontakt").value=s.contact_person||"";document.getElementById("sf-email").value=s.email||"";document.getElementById("sf-telefon").value=s.phone||"";document.getElementById("sf-website").value=s.website||"";document.getElementById("sf-betrag").value=s.amount_per_year||"";document.getElementById("sf-kat").value=s.category||"Partner";document.getElementById("sf-status").value=s.status||"active";document.getElementById("sf-start").value=s.contract_start||"";document.getElementById("sf-ende").value=s.contract_end||"";document.getElementById("sponsorModal").classList.add("open");}
 function openDetail(id){openEdit(id);}
 function closeModal(){document.getElementById("sponsorModal").classList.remove("open");editId=null;}
 async function saveSponsor(){
-  const data={firmenname:document.getElementById("sf-firma").value,logo_url:logoUrl||null,kontaktperson:document.getElementById("sf-kontakt").value||null,email:document.getElementById("sf-email").value||null,telefon:document.getElementById("sf-telefon").value||null,website:document.getElementById("sf-website").value||null,betrag_jahr:parseFloat(document.getElementById("sf-betrag").value)||null,kategorie:document.getElementById("sf-kat").value,status:document.getElementById("sf-status").value,vertrag_start:document.getElementById("sf-start").value||null,vertrag_ende:document.getElementById("sf-ende").value||null};
-  if(!data.firmenname){alert("Bitte Firmenname eingeben.");return;}
-  if(editId){await db.from("sponsoren").update(data).eq("id",editId);}else{await db.from("sponsoren").insert([{club_id:CLUB_ID,...data}]);}
+  const data={company_name:document.getElementById("sf-firma").value,logo_url:logoUrl||null,contact_person:document.getElementById("sf-kontakt").value||null,email:document.getElementById("sf-email").value||null,phone:document.getElementById("sf-telefon").value||null,website:document.getElementById("sf-website").value||null,amount_per_year:parseFloat(document.getElementById("sf-betrag").value)||null,category:document.getElementById("sf-kat").value,status:document.getElementById("sf-status").value,contract_start:document.getElementById("sf-start").value||null,contract_end:document.getElementById("sf-ende").value||null};
+  if(!data.company_name){alert("Bitte Firmenname eingeben.");return;}
+  if(editId){await db.from("sponsors").update(data).eq("id",editId);}else{await db.from("sponsors").insert([{...data}]);}
   closeModal();await loadAll();
 }
-async function deleteSponsor(id){if(!confirm("Sponsor wirklich löschen?"))return;await db.from("sponsoren").delete().eq("id",id);await loadAll();}
-async function toggleLeistung(id,done){await db.from("sponsor_leistungen").update({erledigt:!done}).eq("id",id);await loadAll();}
+async function deleteSponsor(id){if(!confirm("Sponsor wirklich löschen?"))return;await db.from("sponsors").delete().eq("id",id);await loadAll();}
+async function toggleLeistung(id,done){await db.from("sponsor_services").update({erledigt:!done}).eq("id",id);await loadAll();}
 async function addLeistung(sponsorId){
   const text=prompt("Leistung beschreiben (z.B. Logo auf Trikot, Social-Post):");
   if(!text)return;
-  await db.from("sponsor_leistungen").insert([{club_id:CLUB_ID,sponsor_id:sponsorId,beschreibung:text}]);
+  await db.from("sponsor_services").insert([{sponsor_id:sponsorId,description:text}]);
   await loadAll();
 }
 document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
@@ -194,7 +194,7 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
       </div>
       <div class="form-row-2">
         <div><label class="form-label">Betrag/Jahr (CHF)</label><input class="form-input" type="number" id="sf-betrag" min="0" step="100"></div>
-        <div><label class="form-label">Status</label><select class="form-input" id="sf-status"><option value="aktiv">Aktiv</option><option value="verhandlung">In Verhandlung</option><option value="inaktiv">Inaktiv</option></select></div>
+        <div><label class="form-label">Status</label><select class="form-input" id="sf-status"><option value="active">Aktiv</option><option value="verhandlung">In Verhandlung</option><option value="inaktiv">Inaktiv</option></select></div>
       </div>
       <div class="form-row-2">
         <div><label class="form-label">Vertrag von</label><input class="form-input" type="date" id="sf-start"></div>

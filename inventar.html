@@ -42,11 +42,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 .inv-card:hover{border-color:var(--border2)}
 .inv-name{font-size:14px;font-weight:600;margin-bottom:4px}
 .inv-meta{font-size:12px;color:var(--text2);margin-bottom:10px}
-.zustand-badge{display:inline-flex;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:8px}
-.zustand-neu{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
-.zustand-gut{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
-.zustand-gebr{background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)}
-.zustand-def{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.condition-badge{display:inline-flex;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:8px}
+.condition-neu{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.condition-gut{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+.condition-gebr{background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)}
+.condition-def{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
 .avail-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px}
 .avail-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s}
 .inv-footer{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
@@ -97,9 +97,9 @@ async function initDB(){
 }
 async function loadAll(){
   const[inv,aus,pl]=await Promise.all([
-    db.from("inventar").select("*").order("kategorie").order("name"),
-    db.from("inventar_ausleihen").select("*,inventar(name),players(vorname,nachname)").order("ausgegeben_am",{ascending:false}),
-    db.from("players").select("id,vorname,nachname,nummer").eq("aktiv",true).order("nachname"),
+    db.from("inventory").select("*").order("category").order("name"),
+    db.from("inventory_loans").select("*,inventar(name),players(vorname,nachname)").order("loaned_at",{ascending:false}),
+    db.from("players").select("id,vorname,nachname,nummer").eq("active",true).order("last_name"),
   ]);
   inventar=inv.data||[]; ausleihen=aus.data||[]; players=pl.data||[];
   render(); updateStats();
@@ -107,9 +107,9 @@ async function loadAll(){
 
 function updateStats(){
   document.getElementById("s-total").textContent=inventar.length;
-  document.getElementById("s-verf").textContent=inventar.reduce((s,i)=>s+i.anzahl_verfuegbar,0);
-  document.getElementById("s-ausgeliehen").textContent=inventar.reduce((s,i)=>s+(i.anzahl_total-i.anzahl_verfuegbar),0);
-  document.getElementById("s-defekt").textContent=inventar.filter(i=>i.zustand==="defekt").length;
+  document.getElementById("s-verf").textContent=inventar.reduce((s,i)=>s+i.quantity_available,0);
+  document.getElementById("s-ausgeliehen").textContent=inventar.reduce((s,i)=>s+(i.quantity_total-i.quantity_available),0);
+  document.getElementById("s-defekt").textContent=inventar.filter(i=>i.condition==="broken").length;
 }
 
 function setTab(tab,el){
@@ -130,10 +130,10 @@ function renderInventar(){
     cont.innerHTML="<div class='empty'><div style='font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px'>Noch kein Inventar erfasst</div><button class='btn btn-accent' onclick='openModal()'>+ Erstes Objekt</button></div>";
     return;
   }
-  const cats=[...new Set(inventar.map(i=>i.kategorie||"Sonstiges"))].sort();
+  const cats=[...new Set(inventar.map(i=>i.category||"Sonstiges"))].sort();
   cont.innerHTML=cats.map(cat=>{
-    const items=inventar.filter(i=>(i.kategorie||"Sonstiges")===cat);
-    const pct=t=>t.anzahl_total?Math.round(t.anzahl_verfuegbar/t.anzahl_total*100):0;
+    const items=inventar.filter(i=>(i.category||"Sonstiges")===cat);
+    const pct=t=>t.quantity_total?Math.round(t.quantity_available/t.quantity_total*100):0;
     const zCls={neu:"zustand-neu",gut:"zustand-gut",gebraucht:"zustand-gebr",defekt:"zustand-def"};
     const zLbl={neu:"Neu",gut:"Gut",gebraucht:"Gebraucht",defekt:"Defekt"};
     return "<div style='margin-bottom:20px'>"
@@ -141,10 +141,10 @@ function renderInventar(){
       +"<div class='inv-grid'>"+items.map(item=>{
         const p=pct(item); const color=p>50?"var(--green)":p>20?"var(--amber)":"var(--red)";
         return "<div class='inv-card'>"
-          +"<div class='zustand-badge "+(zCls[item.zustand]||"zustand-gut")+"'>"+(zLbl[item.zustand]||item.zustand)+"</div>"
+          +"<div class='zustand-badge "+(zCls[item.condition]||"zustand-gut")+"'>"+(zLbl[item.condition]||item.condition)+"</div>"
           +"<div class='inv-name'>"+item.name+"</div>"
-          +"<div class='inv-meta'>"+(item.lagerort?"📦 "+item.lagerort+" · ":"")+(item.anschaffungspreis?"CHF "+parseFloat(item.anschaffungspreis).toFixed(0):"")+"</div>"
-          +"<div style='display:flex;align-items:center;justify-content:space-between'><span style='font-size:12px;color:var(--text2)'>"+item.anzahl_verfuegbar+"/"+item.anzahl_total+" verfügbar</span><span style='font-family:\"DM Mono\",monospace;font-size:12px;color:"+color+"'>"+p+"%</span></div>"
+          +"<div class='inv-meta'>"+(item.storage_location?"📦 "+item.storage_location+" · ":"")+(item.purchase_price?"CHF "+parseFloat(item.purchase_price).toFixed(0):"")+"</div>"
+          +"<div style='display:flex;align-items:center;justify-content:space-between'><span style='font-size:12px;color:var(--text2)'>"+item.quantity_available+"/"+item.quantity_total+" verfügbar</span><span style='font-family:\"DM Mono\",monospace;font-size:12px;color:"+color+"'>"+p+"%</span></div>"
           +"<div class='avail-bar'><div class='avail-fill' style='width:"+p+"%;background:"+color+"'></div></div>"
           +"<div class='inv-footer'>"
           +"<button class='btn btn-ghost' style='flex:1;font-size:11px;padding:5px;justify-content:center' onclick='openAusleiheModal(\""+item.id+"\",\""+item.name.replace(/"/g,'&quot;')+"\")'>Ausleihen</button>"
@@ -159,8 +159,8 @@ function renderInventar(){
 function renderAusleihen(){
   const cont=document.getElementById("main-content");
   const heute=new Date().toISOString().split("T")[0];
-  const aktive=ausleihen.filter(a=>!a.zurueckgegeben_am);
-  const vergangen=ausleihen.filter(a=>a.zurueckgegeben_am);
+  const aktive=ausleihen.filter(a=>!a.returned_at);
+  const vergangen=ausleihen.filter(a=>a.returned_at);
   
   let html="<div class='card' style='margin-bottom:16px'><div class='card-header'><span class='card-title'>Aktive Ausleihen ("+aktive.length+")</span></div>";
   if(!aktive.length){
@@ -168,14 +168,14 @@ function renderAusleihen(){
   } else {
     html+="<div style='overflow-x:auto'><table><thead><tr><th>Objekt</th><th>An Spieler</th><th>Seit</th><th>Bis</th><th>Preis</th><th>Bezahlt</th><th>Aktion</th></tr></thead><tbody>";
     html+=aktive.map(a=>{
-      const ueber=a.zurueck_bis&&a.zurueck_bis<heute;
+      const ueber=a.return_by&&a.return_by<heute;
       return "<tr>"
         +"<td style='font-weight:500'>"+(a.inventar?.name||"–")+"</td>"
-        +"<td>"+(a.players?a.players.vorname+" "+a.players.nachname:"Extern: "+(a.notizen||"–"))+"</td>"
-        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.ausgegeben_am||"–")+"</td>"
-        +"<td style='color:"+(ueber?"var(--red)":"var(--text2)")+";font-size:12px'>"+(a.zurueck_bis||"–")+(ueber?" ⚠":"")+"</td>"
-        +"<td style='font-family:\"DM Mono\",monospace;font-size:12px'>"+(a.mietpreis?("CHF "+parseFloat(a.mietpreis).toFixed(2)):"–")+"</td>"
-        +"<td>"+(a.bezahlt?`<span class='badge-bezahlt'>Bezahlt</span>`:`<button onclick='setBezahlt("${a.id}",${a.mietpreis||0},"${a.inventar?.name||""}")' style='font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(255,190,71,.3);background:rgba(255,190,71,.08);color:var(--amber);cursor:pointer;font-family:"DM Sans",sans-serif'>Als bezahlt markieren</button>`)+"</td>"
+        +"<td>"+(a.players?a.players.first_name+" "+a.players.last_name:"Extern: "+(a.notes||"–"))+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.loaned_at||"–")+"</td>"
+        +"<td style='color:"+(ueber?"var(--red)":"var(--text2)")+";font-size:12px'>"+(a.return_by||"–")+(ueber?" ⚠":"")+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:12px'>"+(a.rental_price?("CHF "+parseFloat(a.rental_price).toFixed(2)):"–")+"</td>"
+        +"<td>"+(a.paid?`<span class='badge-bezahlt'>Bezahlt</span>`:`<button onclick='setBezahlt("${a.id}",${a.rental_price||0},"${a.inventar?.name||""}")' style='font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(255,190,71,.3);background:rgba(255,190,71,.08);color:var(--amber);cursor:pointer;font-family:"DM Sans",sans-serif'>Als bezahlt markieren</button>`)+"</td>"
         +"<td><div class='row-actions'><button class='btn btn-ghost' style='font-size:11px;padding:4px 8px' onclick='zurueckgeben(\""+a.id+"\",\""+a.inventar_id+"\")'>Zurück</button></div></td>"
         +"</tr>";
     }).join("");
@@ -188,11 +188,11 @@ function renderAusleihen(){
       +"<div style='overflow-x:auto'><table><thead><tr><th>Objekt</th><th>Spieler</th><th>Ausgegeben</th><th>Zurück</th><th>Preis</th><th>Status</th></tr></thead><tbody>"
       +vergangen.slice(0,20).map(a=>"<tr>"
         +"<td>"+(a.inventar?.name||"–")+"</td>"
-        +"<td style='font-size:12px'>"+(a.players?a.players.vorname+" "+a.players.nachname:(a.notizen||"–"))+"</td>"
-        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.ausgegeben_am||"–")+"</td>"
-        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.zurueckgegeben_am||"–")+"</td>"
-        +"<td style='font-size:12px;color:var(--text2)'>"+(a.mietpreis?"CHF "+parseFloat(a.mietpreis).toFixed(2):"–")+"</td>"
-        +"<td>"+(a.bezahlt?"<span class='badge-bezahlt'>Bezahlt</span>":"<span class='badge-offen'>Offen</span>")+"</td>"
+        +"<td style='font-size:12px'>"+(a.players?a.players.first_name+" "+a.players.last_name:(a.notes||"–"))+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.loaned_at||"–")+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.returned_at||"–")+"</td>"
+        +"<td style='font-size:12px;color:var(--text2)'>"+(a.rental_price?"CHF "+parseFloat(a.rental_price).toFixed(2):"–")+"</td>"
+        +"<td>"+(a.paid?"<span class='badge-bezahlt'>Bezahlt</span>":"<span class='badge-offen'>Offen</span>")+"</td>"
         +"</tr>").join("")
       +"</tbody></table></div></div>";
   }
@@ -202,7 +202,7 @@ function renderAusleihen(){
 // ── Ausleihe Modal ────────────────────────────────────────────
 let ausleiheInventarId="";
 function openAusleiheModal(invId,invName){
-  if(inventar.find(x=>x.id===invId)?.anzahl_verfuegbar<=0){
+  if(inventar.find(x=>x.id===invId)?.quantity_available<=0){
     alert("Kein Exemplar verfügbar!"); return;
   }
   ausleiheInventarId=invId;
@@ -210,7 +210,7 @@ function openAusleiheModal(invId,invName){
   // Spieler-Select befüllen
   const sel=document.getElementById("am-spieler");
   sel.innerHTML="<option value=''>– Kein Spieler (Extern) –</option>"
-    +players.map(p=>"<option value='"+p.id+"'>"+p.vorname+" "+p.nachname+(p.nummer?" (#"+p.nummer+")":"")+"</option>").join("");
+    +players.map(p=>"<option value='"+p.id+"'>"+p.first_name+" "+p.last_name+(p.jersey_number?" (#"+p.jersey_number+")":"")+"</option>").join("");
   document.getElementById("am-externe").value="";
   document.getElementById("am-anzahl").value="1";
   document.getElementById("am-von").value=new Date().toISOString().split("T")[0];
@@ -228,17 +228,16 @@ async function saveAusleihe(){
   const anzahl=parseInt(document.getElementById("am-anzahl")?.value)||1;
   if(!spielerId&&!extern){alert("Bitte Spieler wählen oder externen Namen eingeben.");return;}
   const item=inventar.find(x=>x.id===ausleiheInventarId);
-  if(anzahl>item.anzahl_verfuegbar){alert("Nur "+item.anzahl_verfuegbar+" Stück verfügbar.");return;}
-  await db.from("inventar").update({anzahl_verfuegbar:item.anzahl_verfuegbar-anzahl}).eq("id",ausleiheInventarId);
-  const {error:_auslErr}=await db.from("inventar_ausleihen").insert([{
+  if(anzahl>item.quantity_available){alert("Nur "+item.quantity_available+" Stück verfügbar.");return;}
+  await db.from("inventory").update({quantity_available:item.quantity_available-anzahl}).eq("id",ausleiheInventarId);
+  const {error:_auslErr}=await db.from("inventory_loans").insert([{
     inventar_id:ausleiheInventarId,
     player_id:spielerId||null,
-    ausgegeben_am:von,
-    zurueck_bis:bis,
-    mietpreis:preis?preis*anzahl:null,
-    bezahlt:false,
-    notizen:(extern?(extern+" ("+anzahl+"x)"):(anzahl>1?anzahl+"x":null))||null,
-  }]);
+    loaned_at:von,
+    return_by:bis,
+    rental_price:preis?preis*anzahl:null,
+    paid:false,
+    notes:(extern?(extern+" ("+anzahl+"x)"):(anzahl>1?anzahl+"x":null))||null}]);
   if(_auslErr){alert("Fehler: "+_auslErr.message);return;}
   closeAusleiheModal();
   await loadAll();
@@ -246,25 +245,22 @@ async function saveAusleihe(){
 async function zurueckgeben(ausleiheId,invId){
   if(!confirm("Ausleihe als zurückgegeben markieren?"))return;
   const heute=new Date().toISOString().split("T")[0];
-  await db.from("inventar_ausleihen").update({zurueckgegeben_am:heute}).eq("id",ausleiheId);
+  await db.from("inventory_loans").update({returned_at:heute}).eq("id",ausleiheId);
   const item=inventar.find(x=>x.id===invId);
-  if(item) await db.from("inventar").update({anzahl_verfuegbar:item.anzahl_verfuegbar+1}).eq("id",invId);
+  if(item) await db.from("inventory").update({quantity_available:item.quantity_available+1}).eq("id",invId);
   await loadAll();
 }
 async function setBezahlt(ausleiheId,preis,invName){
   if(!confirm("Ausleihe als bezahlt markieren"+(preis>0?" (CHF "+parseFloat(preis).toFixed(2)+")?":"?")))return;
-  await db.from("inventar_ausleihen").update({bezahlt:true}).eq("id",ausleiheId);
+  await db.from("inventory_loans").update({paid:true}).eq("id",ausleiheId);
   // Betrag dem Gesamtkonto gutschreiben
   if(preis>0){
-    await db.from("finanzen").insert([{
-      club_id:CLUB_ID,
-      typ:"einnahme",
-      betrag:parseFloat(preis),
-      beschreibung:"Ausleihe: "+invName,
-      kategorie:"Ausleihe",
-      konto:"Allgemein",
-      datum:new Date().toISOString().split("T")[0],
-    }]);
+    await db.from("finance").insert([{type:"income",
+      amount:parseFloat(preis),
+      description:"Ausleihe: "+invName,
+      category:"Ausleihe",
+      account:"Allgemein",
+      date:new Date().toISOString().split("T")[0]}]);
   }
   await loadAll();
   if(preis>0) alert("CHF "+parseFloat(preis).toFixed(2)+" wurde dem Gesamtkonto gutgeschrieben.");
@@ -277,20 +273,20 @@ function openModal(){
   document.getElementById("if-kategorie").value="";
   document.getElementById("if-total").value="1";
   document.getElementById("if-verf").value="1";
-  document.getElementById("if-zustand").value="gut";
+  document.getElementById("if-zustand").value="good";
   document.getElementById("inventarModal").classList.add("open");
   setTimeout(()=>typeof UPLOAD!=="undefined"&&UPLOAD.render("inv-foto-upload",{label:"Foto hochladen",folder:"inventar",onSuccess:(u)=>{fotoUrl=u;}}),50);
 }
 function openEdit(id){
   const item=inventar.find(x=>x.id===id);if(!item)return;
-  editId=id; fotoUrl=item.foto_url||null;
+  editId=id; fotoUrl=item.photo_url||null;
   document.getElementById("if-name").value=item.name||"";
-  document.getElementById("if-kategorie").value=item.kategorie||"";
-  document.getElementById("if-lagerort").value=item.lagerort||"";
-  document.getElementById("if-total").value=item.anzahl_total||1;
-  document.getElementById("if-verf").value=item.anzahl_verfuegbar||1;
-  document.getElementById("if-zustand").value=item.zustand||"gut";
-  document.getElementById("if-preis").value=item.anschaffungspreis||"";
+  document.getElementById("if-kategorie").value=item.category||"";
+  document.getElementById("if-lagerort").value=item.storage_location||"";
+  document.getElementById("if-total").value=item.quantity_total||1;
+  document.getElementById("if-verf").value=item.quantity_available||1;
+  document.getElementById("if-zustand").value=item.condition||"good";
+  document.getElementById("if-preis").value=item.purchase_price||"";
   document.getElementById("inventarModal").classList.add("open");
 }
 function closeModal(){document.getElementById("inventarModal").classList.remove("open");editId=null;}
@@ -299,21 +295,20 @@ async function saveItem(){
   if(!name){alert("Bitte Name eingeben.");return;}
   const data={
     name,
-    kategorie:document.getElementById("if-kategorie").value||"Sonstiges",
-    lagerort:document.getElementById("if-lagerort").value||null,
-    anzahl_total:parseInt(document.getElementById("if-total").value)||1,
-    anzahl_verfuegbar:parseInt(document.getElementById("if-verf").value)||1,
-    zustand:document.getElementById("if-zustand").value,
-    anschaffungspreis:parseFloat(document.getElementById("if-preis").value)||null,
-    foto_url:fotoUrl||null,
-  };
-  if(editId){await db.from("inventar").update(data).eq("id",editId);}
-  else{await db.from("inventar").insert([{club_id:CLUB_ID,...data}]);}
+    category:document.getElementById("if-kategorie").value||"Sonstiges",
+    storage_location:document.getElementById("if-lagerort").value||null,
+    quantity_total:parseInt(document.getElementById("if-total").value)||1,
+    quantity_available:parseInt(document.getElementById("if-verf").value)||1,
+    condition:document.getElementById("if-zustand").value,
+    purchase_price:parseFloat(document.getElementById("if-preis").value)||null,
+    photo_url:fotoUrl||null};
+  if(editId){await db.from("inventory").update(data).eq("id",editId);}
+  else{await db.from("inventory").insert([{...data}]);}
   closeModal();await loadAll();
 }
 async function deleteItem(id){
   if(!confirm("Objekt löschen?"))return;
-  await db.from("inventar").delete().eq("id",id);
+  await db.from("inventory").delete().eq("id",id);
   await loadAll();
 }
 document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
@@ -362,8 +357,8 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
         <div><label class="form-label">Verfügbar</label><input class="form-input" type="number" id="if-verf" min="0" value="1"></div>
         <div><label class="form-label">Zustand</label>
           <select class="form-input" id="if-zustand">
-            <option value="neu">Neu</option><option value="gut" selected>Gut</option>
-            <option value="gebraucht">Gebraucht</option><option value="defekt">Defekt</option>
+            <option value="new">Neu</option><option value="good" selected>Gut</option>
+            <option value="used">Gebraucht</option><option value="broken">Defekt</option>
           </select>
         </div>
       </div>

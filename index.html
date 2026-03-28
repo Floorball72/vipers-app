@@ -394,12 +394,12 @@ const CONFIG = APP_CONFIG;
   CLUB_ID = APP_CONFIG.ACTIVE_CLUB.club_id;
       console.log('Supabase verbunden:', CONFIG.SUPABASE_URL);
       await loadGamesFromDB();
-    } catch(e) { console.warn('DB nicht erreichbar, Demo-Daten aktiv:', e); renderGames(); }
+    } catch(e) { console.warn('DB nicht erreichbar, Demo-Daten active:', e); renderGames(); }
   }
 
       async function updateResultInDB(dbId, heim, gast) {
     if (!db || !dbId) return;
-    await db.from('games').update({ resultat_heim: parseInt(heim), resultat_gast: parseInt(gast) }).eq('id', dbId);
+    await db.from('games').update({ score_home: parseInt(heim), score_away: parseInt(gast) }).eq('id', dbId);
   }
 
   // ── DOM rendern ──
@@ -407,7 +407,7 @@ const CONFIG = APP_CONFIG;
     // Vorschau-Spiele im Wochenplan
     const vg = document.getElementById('vorschau-games');
     vg.innerHTML = THIS_WEEKEND.map(g =>
-      `<div class="week-game">${g.team}: <strong style="color:var(--text)">${g.heim ? 'vs.' : '@'} ${g.gegner}</strong> <span>${g.datum} · ${g.zeit}</span></div>`
+      `<div class="week-game">${g.team}: <strong style="color:var(--text)">${g.heim ? 'vs.' : '@'} ${g.opponent}</strong> <span>${g.date} · ${g.zeit}</span></div>`
     ).join('');
 
     // Resultate im Wochenplan
@@ -415,12 +415,12 @@ const CONFIG = APP_CONFIG;
     rg.innerHTML = LAST_WEEKEND.map(g => {
       if (g.fehlt) return `<div class="week-game" style="color:var(--red)">${g.team}: <span style="color:var(--red)">Resultat fehlt</span></div>`;
       const won = g.resultat && parseInt(g.resultat) > parseInt(g.resultat.split(':')[1]);
-      return `<div class="week-game">${g.team} vs. ${g.gegner}: <strong style="color:${g.resultat ? 'var(--accent)' : 'var(--text3)'}">${g.resultat || '–'}</strong></div>`;
+      return `<div class="week-game">${g.team} vs. ${g.opponent}: <strong style="color:${g.resultat ? 'var(--accent)' : 'var(--text3)'}">${g.resultat || '–'}</strong></div>`;
     }).join('');
 
     // Post-Vorschau rechts
     document.getElementById('post-vorschau-teams').innerHTML = THIS_WEEKEND.map(g =>
-      `<div class="post-team-row">${g.team} · ${g.heim ? 'vs.' : '@'} ${g.gegner} · ${g.datum}</div>`
+      `<div class="post-team-row">${g.team} · ${g.heim ? 'vs.' : '@'} ${g.opponent} · ${g.date}</div>`
     ).join('');
 
     // Post-Resultat rechts
@@ -529,7 +529,7 @@ async function saveManualPost(){
   if(document.getElementById("mp-ig").checked)plattformen.push("instagram");
   if(document.getElementById("mp-fb").checked)plattformen.push("facebook");
   if(document.getElementById("mp-tt").checked)plattformen.push("tiktok");
-  try{if(db){await db.from("social_posts").insert([{club_id:CLUB_ID,typ:document.getElementById("mp-typ").value,woche_datum:datum.split("T")[0],geplant_fuer:new Date(datum).toISOString(),status:"geplant",canva_link:document.getElementById("mp-canva").value||null,text_entwurf:document.getElementById("mp-text").value||null,plattformen}]);}}catch(e){console.warn(e);}
+  try{if(db){await db.from("social_posts").insert([{type:document.getElementById("mp-typ").value,week_date:datum.split("T")[0],scheduled_for:new Date(datum).toISOString(),status:"geplant",canva_link:document.getElementById("mp-canva").value||null,text_draft:document.getElementById("mp-text").value||null,plattformen}]);}}catch(e){console.warn(e);}
   document.getElementById("manualPostModal").classList.remove("open");
   alert("Post '"+titel+"' wurde gespeichert!");
 }

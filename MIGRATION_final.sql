@@ -1,6 +1,6 @@
 -- Migration: spielkategorie zu games, manuelle Scorer-Einträge
-alter table games add column if not exists spielkategorie text default 'saison'
-  check (spielkategorie in ('saison','cup','friendly'));
+alter table games add column if not exists spielkategorie text default 'season'
+  check (spielkategorie in ('season','cup','friendly'));
 
 -- Inventar Ausleihen: Mietpreis und Bezahlt-Status
 alter table inventar_ausleihen add column if not exists mietpreis numeric(10,2);

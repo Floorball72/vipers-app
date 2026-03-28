@@ -73,16 +73,16 @@ async function initDB(){
 
 function render(){
   if(!player){document.getElementById('content').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">Spieler nicht gefunden</div>';return;}
-  const init=(player.vorname[0]||'?')+(player.nachname[0]||'?');
+  const init=(player.first_name[0]||'?')+(player.last_name[0]||'?');
   document.getElementById('player-avatar').textContent=init;
-  document.getElementById('player-name').textContent=`${player.vorname} ${player.nachname}`;
-  const age=player.geburtsdatum?new Date().getFullYear()-new Date(player.geburtsdatum).getFullYear():'–';
-  document.getElementById('player-meta').textContent=`#${player.nummer||'–'} · ${player.position||'–'} · ${player.teams?.name||''} · Jahrgang ${player.geburtsdatum?new Date(player.geburtsdatum).getFullYear():'–'}`;
-  document.title=`${player.vorname} ${player.nachname} — UHC Jonschwil Vipers`;
+  document.getElementById('player-name').textContent=`${player.first_name} ${player.last_name}`;
+  const age=player.birth_date?new Date().getFullYear()-new Date(player.birth_date).getFullYear():'–';
+  document.getElementById('player-meta').textContent=`#${player.jersey_number||'–'} · ${player.position||'–'} · ${player.teams?.name||''} · Jahrgang ${player.birth_date?new Date(player.birth_date).getFullYear():'–'}`;
+  document.title=`${player.first_name} ${player.last_name} — UHC Jonschwil Vipers`;
 
-  const tore=entries.reduce((s,x)=>s+(x.tore||0),0);
+  const tore=entries.reduce((s,x)=>s+(x.goals||0),0);
   const assists=entries.reduce((s,x)=>s+(x.assists||0),0);
-  const strafmin=entries.reduce((s,x)=>s+(x.strafminuten||0),0);
+  const strafmin=entries.reduce((s,x)=>s+(x.penalty_minutes||0),0);
   const spiele=entries.length;
   const punkte=tore+assists;
   const ppg=spiele?+(punkte/spiele).toFixed(2):0;
@@ -98,28 +98,28 @@ function render(){
     '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Keine Spieldaten vorhanden</td></tr>':
     entries.map(e=>{
       const g=e.games;
-      const d=g?new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'}):'–';
-      const pts=(e.tore||0)+(e.assists||0);
+      const d=g?new Date(g.date+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'}):'–';
+      const pts=(e.goals||0)+(e.assists||0);
       return `<tr>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${d}</td>
-        <td>${g?`${g.heimspiel?'vs. ':'@ '}${g.gegner}`:'–'}</td>
-        <td class="r" style="color:var(--amber)">${e.tore||0}</td>
+        <td>${g?`${g.home_game?'vs. ':'@ '}${g.opponent}`:'–'}</td>
+        <td class="r" style="color:var(--amber)">${e.goals||0}</td>
         <td class="r" style="color:var(--blue)">${e.assists||0}</td>
         <td class="r" style="color:${pts>0?'var(--accent)':'var(--text3)'}">${pts}</td>
-        <td class="r" style="color:var(--text3)">${e.strafminuten||0}'</td>
+        <td class="r" style="color:var(--text3)">${e.penalty_minutes||0}'</td>
       </tr>`;
     }).join('');
 
   // Beste Spiele
-  const best=[...entries].sort((a,b)=>((b.tore||0)+(b.assists||0))-((a.tore||0)+(a.assists||0))).slice(0,3);
+  const best=[...entries].sort((a,b)=>((b.goals||0)+(b.assists||0))-((a.goals||0)+(a.assists||0))).slice(0,3);
   document.getElementById('best-games').innerHTML=best.length===0?
     '<div style="padding:16px;color:var(--text3);font-size:13px">–</div>':
     best.map(e=>{
       const g=e.games;
-      const d=g?new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'}):'–';
+      const d=g?new Date(g.date+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'}):'–';
       return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div><div style="font-size:13px;font-weight:500">${g?`${g.heimspiel?'vs. ':'@ '}${g.gegner}`:'–'}</div><div style="font-size:11px;color:var(--text3)">${d}</div></div>
-        <div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--accent)">${e.tore||0}T ${e.assists||0}A</div>
+        <div><div style="font-size:13px;font-weight:500">${g?`${g.home_game?'vs. ':'@ '}${g.opponent}`:'–'}</div><div style="font-size:11px;color:var(--text3)">${d}</div></div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--accent)">${e.goals||0}T ${e.assists||0}A</div>
       </div>`;
     }).join('');
 }

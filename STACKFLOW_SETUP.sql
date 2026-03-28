@@ -1,425 +1,342 @@
 -- ============================================================
--- STACKFLOW — Vollständiges DB-Setup
--- ============================================================
--- ANLEITUNG:
---   1. Dieses Script im Supabase SQL Editor einfügen
---   2. Auf "Run" klicken
---   3. Am Ende steht: "Setup erfolgreich abgeschlossen"
---
--- ⚠️  ACHTUNG: Löscht alle bestehenden Tabellen und Daten!
+-- STACKFLOW — Complete Database Setup
+-- Run this in the Supabase SQL Editor
 -- ============================================================
 
--- ── SCHRITT 1: Alles löschen ─────────────────────────────────
-drop table if exists inventar_ausleihen     cascade;
-drop table if exists inventar               cascade;
-drop table if exists sponsor_leistungen     cascade;
-drop table if exists sponsoren              cascade;
-drop table if exists anwesenheit            cascade;
-drop table if exists news                   cascade;
-drop table if exists mitgliedsausweise      cascade;
-drop table if exists videoanalysen          cascade;
-drop table if exists trainingseinheiten     cascade;
-drop table if exists scorer                 cascade;
-drop table if exists social_posts           cascade;
-drop table if exists finanzen               cascade;
-drop table if exists events                 cascade;
-drop table if exists games                  cascade;
-drop table if exists players                cascade;
-drop table if exists user_club_memberships  cascade;
-drop table if exists user_profiles          cascade;
-drop table if exists teams                  cascade;
-drop table if exists clubs                  cascade;
+-- Step 1: Drop all existing tables
+drop table if exists membership_cards     cascade;
+drop table if exists video_analyses       cascade;
+drop table if exists training_units       cascade;
+drop table if exists scorer               cascade;
+drop table if exists attendance           cascade;
+drop table if exists social_posts         cascade;
+drop table if exists finance              cascade;
+drop table if exists sponsor_services     cascade;
+drop table if exists sponsors             cascade;
+drop table if exists inventory_loans      cascade;
+drop table if exists inventory            cascade;
+drop table if exists news                 cascade;
+drop table if exists events               cascade;
+drop table if exists games                cascade;
+drop table if exists players              cascade;
+drop table if exists memberships          cascade;
+drop table if exists user_profiles        cascade;
+drop table if exists teams                cascade;
 
--- ── SCHRITT 2: Tabellen erstellen ────────────────────────────
-
--- Vereine
-create table clubs (
-  club_id       text primary key,
-  name          text not null,
-  short_name    text,
-  swiss_uh_id   integer,
-  primary_color text default '#d4f04a',
-  gcal_id       text,
-  aktiv         boolean default true,
-  created_at    timestamptz default now()
-);
-
--- User-Profile (id = eigene UUID, auth_user_id = Supabase Auth Link)
-create table user_profiles (
-  id            uuid primary key default gen_random_uuid(),
-  auth_user_id  uuid unique references auth.users(id) on delete set null,
-  club_id       text references clubs(club_id) on delete set null,
-  vorname       text not null default '',
-  nachname      text not null default '',
-  email         text,
-  telefon       text,
-  adresse       text,
-  geburtsdatum  date,
-  foto_url      text,
-  rolle         text default 'spieler'
-                  check (rolle in ('admin','trainer','spieler','eltern')),
-  team_ids      uuid[],
-  aktiv         boolean default true,
-  login_status  text default 'pending'
-                  check (login_status in ('pending','invited','active')),
-  mitglied_seit date default current_date,
-  created_at    timestamptz default now()
-);
-
--- Vereinsmitgliedschaft
-create table user_club_memberships (
-  id            uuid primary key default gen_random_uuid(),
-  user_id       uuid references user_profiles(id) on delete cascade,
-  club_id       text references clubs(club_id) on delete cascade,
-  rolle         text default 'spieler'
-                  check (rolle in ('admin','trainer','spieler','eltern')),
-  mitglied_seit date default current_date,
-  aktiv         boolean default true,
-  created_at    timestamptz default now(),
-  unique(user_id, club_id)
-);
+-- Step 2: Create tables
 
 -- Teams
 create table teams (
-  id              uuid primary key default gen_random_uuid(),
-  club_id         text references clubs(club_id) on delete cascade,
-  name            text not null,
-  liga            text,
-  saison text,
-  trainingszeiten text,
-  trainingsort    text,
-  aktiv           boolean default true,
-  created_at      timestamptz default now()
+  id               uuid primary key default gen_random_uuid(),
+  name             text not null,
+  league           text,
+  season           text,
+  training_times   text,
+  training_location text,
+  active           boolean default true,
+  created_at       timestamptz default now()
 );
 
--- Spieler
+-- User Profiles (id = own UUID, auth_user_id = Supabase Auth link)
+create table user_profiles (
+  id            uuid primary key default gen_random_uuid(),
+  auth_user_id  uuid unique references auth.users(id) on delete set null,
+  first_name    text not null default '',
+  last_name     text not null default '',
+  email         text,
+  phone         text,
+  address       text,
+  birth_date    date,
+  photo_url     text,
+  role          text default 'player'
+                  check (role in ('admin','trainer','player','parent')),
+  team_ids      uuid[],
+  active        boolean default true,
+  login_status  text default 'pending'
+                  check (login_status in ('pending','invited','active')),
+  member_since  date default current_date,
+  created_at    timestamptz default now()
+);
+
+-- Memberships (user ↔ team)
+create table memberships (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid references user_profiles(id) on delete cascade,
+  team_id      uuid references teams(id) on delete cascade,
+  role         text default 'player',
+  joined_at    date default current_date,
+  active       boolean default true,
+  created_at   timestamptz default now()
+);
+
+-- Players
 create table players (
-  id                uuid primary key default gen_random_uuid(),
-  club_id           text references clubs(club_id) on delete cascade,
-  team_id           uuid references teams(id) on delete set null,
-  user_id           uuid references auth.users(id) on delete set null,
-  vorname           text not null,
-  nachname          text not null,
-  nummer            integer,
-  position          text,
-  email             text,
-  telefon           text,
-  geburtsdatum      date,
-  trikot_shirt      text,
-  trikot_hose       text,
-  trikot_stuelpengr text,
-  aktiv             boolean default true,
-  created_at        timestamptz default now()
+  id            uuid primary key default gen_random_uuid(),
+  team_id       uuid references teams(id) on delete set null,
+  user_id       uuid references auth.users(id) on delete set null,
+  first_name    text not null,
+  last_name     text not null,
+  jersey_number integer,
+  position      text,
+  email         text,
+  phone         text,
+  birth_date    date,
+  shirt_size    text,
+  shorts_size   text,
+  socks_size    text,
+  active        boolean default true,
+  created_at    timestamptz default now()
 );
 
--- Spiele
+-- Games
 create table games (
-  id             uuid primary key default gen_random_uuid(),
-  club_id        text references clubs(club_id) on delete cascade,
-  team_id        uuid references teams(id) on delete set null,
-  gegner         text not null,
-  datum          date not null,
-  anstoss        time default '17:00',
-  heimspiel      boolean default true,
-  spielkategorie text default 'saison'
-                   check (spielkategorie in ('saison','cup','friendly')),
-  ort            text,
-  resultat_heim  integer,
-  resultat_gast  integer,
-  kamera         boolean default false,
-  notizen        text,
-  swiss_uh_id    text,
-  created_at     timestamptz default now()
+  id            uuid primary key default gen_random_uuid(),
+  team_id       uuid references teams(id) on delete set null,
+  opponent      text not null,
+  date          date not null,
+  kickoff       time default '17:00',
+  home_game     boolean default true,
+  game_category text default 'season'
+                  check (game_category in ('season','cup','friendly')),
+  location      text,
+  score_home    integer,
+  score_away    integer,
+  camera        boolean default false,
+  notes         text,
+  created_at    timestamptz default now()
 );
 
 -- Events
 create table events (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  titel        text not null,
-  beschreibung text,
-  datum        date not null,
-  uhrzeit      time,
-  end_datum    date,
-  ort          text,
-  typ          text default 'event'
-                 check (typ in ('event','cup','turnier','gv','training')),
-  team_ids     uuid[],
-  todos        jsonb default '[]'::jsonb,
-  created_at   timestamptz default now()
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  description text,
+  date        date not null,
+  time        time,
+  end_date    date,
+  location    text,
+  type        text default 'event'
+                check (type in ('event','cup','tournament','meeting','training')),
+  team_ids    uuid[],
+  todos       jsonb default '[]'::jsonb,
+  created_at  timestamptz default now()
 );
 
 -- News
 create table news (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  titel        text not null,
-  inhalt       text,
-  typ          text default 'info'
-                 check (typ in ('info','wichtig','training','spiel','event')),
-  team_ids     uuid[],
-  gepinnt      boolean default false,
-  bild_url     text,
-  erstellt_von uuid references auth.users(id) on delete set null,
-  created_at   timestamptz default now()
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  content     text,
+  type        text default 'info'
+                check (type in ('info','important','training','game','event')),
+  audience    text[] default array['all'],
+  team_ids    uuid[],
+  pinned      boolean default false,
+  image_url   text,
+  created_at  timestamptz default now()
 );
 
 -- Social Media Posts
 create table social_posts (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  typ          text not null check (typ in ('vorschau','resultat','event','info')),
-  woche_datum  date not null,
-  geplant_fuer timestamptz not null,
-  status       text default 'geplant'
-                 check (status in ('geplant','erledigt','uebersprungen')),
-  canva_link   text,
-  text_entwurf text,
-  plattformen  text[] default array['instagram','facebook'],
-  created_at   timestamptz default now()
+  id             uuid primary key default gen_random_uuid(),
+  type           text not null check (type in ('preview','result','event','info')),
+  week_date      date not null,
+  scheduled_for  timestamptz not null,
+  status         text default 'planned'
+                   check (status in ('planned','done','skipped')),
+  canva_link     text,
+  text_draft     text,
+  platforms      text[] default array['instagram','facebook'],
+  created_at     timestamptz default now()
 );
 
--- Scorer / Statistiken
+-- Scorer / Statistics
 create table scorer (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  player_id    uuid references players(id) on delete cascade,
-  game_id      uuid references games(id) on delete set null,
-  tore         integer default 0,
-  assists      integer default 0,
-  strafminuten integer default 0,
-  saison text,
-  created_at   timestamptz default now(),
+  id              uuid primary key default gen_random_uuid(),
+  player_id       uuid references players(id) on delete cascade,
+  game_id         uuid references games(id) on delete set null,
+  goals           integer default 0,
+  assists         integer default 0,
+  penalty_minutes integer default 0,
+  season          text,
+  created_at      timestamptz default now(),
   unique nulls not distinct (player_id, game_id)
 );
 
--- Anwesenheit
-create table anwesenheit (
+-- Attendance
+create table attendance (
   id             uuid primary key default gen_random_uuid(),
-  club_id        text references clubs(club_id) on delete cascade,
   player_id      uuid references players(id) on delete cascade,
   team_id        uuid references teams(id) on delete set null,
   game_id        uuid references games(id) on delete set null,
   event_id       uuid references events(id) on delete set null,
-  training_datum date,
-  typ            text default 'training'
-                   check (typ in ('training','spiel','event')),
-  status         text default 'offen'
-                   check (status in ('anwesend','abwesend','entschuldigt','offen')),
-  notiz          text,
+  training_date  date,
+  type           text default 'training'
+                   check (type in ('training','game','event')),
+  status         text default 'open'
+                   check (status in ('present','absent','excused','open')),
+  notes          text,
   created_at     timestamptz default now()
 );
 
--- Finanzen
-create table finanzen (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  typ          text not null check (typ in ('einnahme','ausgabe')),
-  betrag       numeric(10,2) not null,
-  konto        text default 'Allgemein',
-  kategorie    text,
-  beschreibung text,
-  beleg_url    text,
-  datum        date not null,
-  created_at   timestamptz default now()
+-- Finance
+create table finance (
+  id          uuid primary key default gen_random_uuid(),
+  type        text not null check (type in ('income','expense')),
+  amount      numeric(10,2) not null,
+  account     text default 'General',
+  category    text,
+  description text,
+  receipt_url text,
+  date        date not null,
+  created_at  timestamptz default now()
 );
 
--- Sponsoren
-create table sponsoren (
-  id            uuid primary key default gen_random_uuid(),
-  club_id       text references clubs(club_id) on delete cascade,
-  firmenname    text not null,
-  kontaktperson text,
-  email         text,
-  telefon       text,
-  website       text,
-  logo_url      text,
-  kategorie     text,
-  betrag_jahr   numeric(10,2),
-  vertrag_start date,
-  vertrag_ende  date,
-  status        text default 'aktiv'
-                  check (status in ('aktiv','inaktiv','verhandlung')),
-  notizen       text,
-  created_at    timestamptz default now()
+-- Sponsors
+create table sponsors (
+  id              uuid primary key default gen_random_uuid(),
+  company_name    text not null,
+  contact_person  text,
+  email           text,
+  phone           text,
+  website         text,
+  logo_url        text,
+  category        text,
+  amount_per_year numeric(10,2),
+  contract_start  date,
+  contract_end    date,
+  status          text default 'active'
+                    check (status in ('active','inactive','negotiating')),
+  notes           text,
+  created_at      timestamptz default now()
 );
 
-create table sponsor_leistungen (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  sponsor_id   uuid references sponsoren(id) on delete cascade,
-  beschreibung text not null,
-  erledigt     boolean default false,
-  created_at   timestamptz default now()
+create table sponsor_services (
+  id          uuid primary key default gen_random_uuid(),
+  sponsor_id  uuid references sponsors(id) on delete cascade,
+  description text not null,
+  done        boolean default false,
+  created_at  timestamptz default now()
 );
 
--- Inventar
-create table inventar (
+-- Inventory
+create table inventory (
   id                uuid primary key default gen_random_uuid(),
-  club_id           text references clubs(club_id) on delete cascade,
   name              text not null,
-  kategorie         text default 'Sonstiges',
-  anzahl_total      integer default 1,
-  anzahl_verfuegbar integer default 1,
-  zustand           text default 'gut'
-                      check (zustand in ('neu','gut','gebraucht','defekt')),
-  lagerort          text,
-  foto_url          text,
-  anschaffungspreis numeric(10,2),
+  category          text default 'Other',
+  quantity_total    integer default 1,
+  quantity_available integer default 1,
+  condition         text default 'good'
+                      check (condition in ('new','good','used','broken')),
+  storage_location  text,
+  photo_url         text,
+  purchase_price    numeric(10,2),
   created_at        timestamptz default now()
 );
 
-create table inventar_ausleihen (
+create table inventory_loans (
   id                uuid primary key default gen_random_uuid(),
-  inventar_id       uuid references inventar(id) on delete cascade,
+  inventory_id      uuid references inventory(id) on delete cascade,
   player_id         uuid references players(id) on delete set null,
-  ausgegeben_am     date default current_date,
-  zurueck_bis       date,
-  zurueckgegeben_am date,
-  mietpreis         numeric(10,2),
-  bezahlt           boolean default false,
-  notizen           text,
+  loaned_at         date default current_date,
+  return_by         date,
+  returned_at       date,
+  rental_price      numeric(10,2),
+  paid              boolean default false,
+  notes             text,
   created_at        timestamptz default now()
 );
 
 -- Training
-create table trainingseinheiten (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  team_id      uuid references teams(id) on delete set null,
-  titel        text not null,
-  beschreibung text,
-  kategorie    text,
-  video_url    text,
-  dauer_min    integer,
-  trainer      text,
-  created_at   timestamptz default now()
-);
-
-create table videoanalysen (
-  id           uuid primary key default gen_random_uuid(),
-  club_id      text references clubs(club_id) on delete cascade,
-  game_id      uuid references games(id) on delete set null,
-  titel        text not null,
-  kategorie    text,
-  video_url    text,
-  notizen      text,
-  tags         text[],
-  erstellt_von text,
-  created_at   timestamptz default now()
-);
-
--- Mitgliedsausweise
-create table mitgliedsausweise (
+create table training_units (
   id          uuid primary key default gen_random_uuid(),
-  club_id     text references clubs(club_id) on delete cascade,
-  user_id     uuid references auth.users(id) on delete cascade,
-  ausgestellt date default current_date,
-  gueltig_bis date,
-  aktiv       boolean default true,
+  team_id     uuid references teams(id) on delete set null,
+  title       text not null,
+  description text,
+  category    text,
+  video_url   text,
+  duration_min integer,
+  trainer     text,
   created_at  timestamptz default now()
 );
 
--- ── SCHRITT 3: Indexes ───────────────────────────────────────
-create index on games(club_id, datum);
-create index on players(club_id, team_id);
+create table video_analyses (
+  id          uuid primary key default gen_random_uuid(),
+  game_id     uuid references games(id) on delete set null,
+  title       text not null,
+  category    text,
+  video_url   text,
+  notes       text,
+  tags        text[],
+  created_by  text,
+  created_at  timestamptz default now()
+);
+
+-- Membership Cards
+create table membership_cards (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete cascade,
+  issued_at   date default current_date,
+  valid_until date,
+  active      boolean default true,
+  created_at  timestamptz default now()
+);
+
+-- Step 3: Indexes
+create index on games(team_id, date);
+create index on players(team_id);
 create index on players(user_id);
 create index on players(email);
-create index on scorer(club_id, player_id);
-create index on finanzen(club_id, datum desc);
-create index on news(club_id);
-create index on teams(club_id);
-create index on user_profiles(club_id);
+create index on scorer(player_id);
+create index on finance(date desc);
+create index on news(created_at desc);
 create index on user_profiles(auth_user_id);
 create index on user_profiles(email);
-create index on anwesenheit(club_id, training_datum);
+create index on attendance(player_id);
 
--- ── SCHRITT 4: Row Level Security ────────────────────────────
-alter table clubs                 enable row level security;
-alter table user_profiles         enable row level security;
-alter table user_club_memberships enable row level security;
-alter table teams                 enable row level security;
-alter table players               enable row level security;
-alter table games                 enable row level security;
-alter table events                enable row level security;
-alter table news                  enable row level security;
-alter table social_posts          enable row level security;
-alter table scorer                enable row level security;
-alter table anwesenheit           enable row level security;
-alter table finanzen              enable row level security;
-alter table sponsoren             enable row level security;
-alter table sponsor_leistungen    enable row level security;
-alter table inventar              enable row level security;
-alter table inventar_ausleihen    enable row level security;
-alter table trainingseinheiten    enable row level security;
-alter table videoanalysen         enable row level security;
-alter table mitgliedsausweise     enable row level security;
+-- Step 4: Row Level Security
+alter table teams              enable row level security;
+alter table user_profiles      enable row level security;
+alter table memberships        enable row level security;
+alter table players            enable row level security;
+alter table games              enable row level security;
+alter table events             enable row level security;
+alter table news               enable row level security;
+alter table social_posts       enable row level security;
+alter table scorer             enable row level security;
+alter table attendance         enable row level security;
+alter table finance            enable row level security;
+alter table sponsors           enable row level security;
+alter table sponsor_services   enable row level security;
+alter table inventory          enable row level security;
+alter table inventory_loans    enable row level security;
+alter table training_units     enable row level security;
+alter table video_analyses     enable row level security;
+alter table membership_cards   enable row level security;
 
--- Öffentlich lesbar (auch ohne Login)
-create policy "p_clubs_r"   on clubs   for select using (true);
-create policy "p_teams_r"   on teams   for select using (true);
-create policy "p_games_r"   on games   for select using (true);
-create policy "p_players_r" on players for select using (true);
-create policy "p_news_r"    on news    for select using (true);
+-- Open policies (app uses anon key, security via app logic)
+create policy "open_teams"           on teams            for all using (true) with check (true);
+create policy "open_profiles"        on user_profiles    for all using (true) with check (true);
+create policy "open_memberships"     on memberships      for all using (true) with check (true);
+create policy "open_players"         on players          for all using (true) with check (true);
+create policy "open_games"           on games            for all using (true) with check (true);
+create policy "open_events"          on events           for all using (true) with check (true);
+create policy "open_news"            on news             for all using (true) with check (true);
+create policy "open_posts"           on social_posts     for all using (true) with check (true);
+create policy "open_scorer"          on scorer           for all using (true) with check (true);
+create policy "open_attendance"      on attendance       for all using (true) with check (true);
+create policy "open_finance"         on finance          for all using (true) with check (true);
+create policy "open_sponsors"        on sponsors         for all using (true) with check (true);
+create policy "open_sponsor_svc"     on sponsor_services for all using (true) with check (true);
+create policy "open_inventory"       on inventory        for all using (true) with check (true);
+create policy "open_inv_loans"       on inventory_loans  for all using (true) with check (true);
+create policy "open_training"        on training_units   for all using (true) with check (true);
+create policy "open_video"           on video_analyses   for all using (true) with check (true);
+create policy "open_cards"           on membership_cards for all using (true) with check (true);
 
--- Voller Zugriff für alle (App nutzt anon-key, Sicherheit via App-Logik)
--- Für Produktion: Policies auf auth.uid() einschränken
-create policy "p_profiles"    on user_profiles         for all using (true) with check (true);
-create policy "p_memberships" on user_club_memberships for all using (true) with check (true);
-create policy "p_events"      on events                for all using (true) with check (true);
-create policy "p_posts"       on social_posts          for all using (true) with check (true);
-create policy "p_scorer"      on scorer                for all using (true) with check (true);
-create policy "p_anw"         on anwesenheit           for all using (true) with check (true);
-create policy "p_finanzen"    on finanzen              for all using (true) with check (true);
-create policy "p_sponsor"     on sponsoren             for all using (true) with check (true);
-create policy "p_sponlei"     on sponsor_leistungen    for all using (true) with check (true);
-create policy "p_inventar"    on inventar              for all using (true) with check (true);
-create policy "p_invausl"     on inventar_ausleihen    for all using (true) with check (true);
-create policy "p_training"    on trainingseinheiten    for all using (true) with check (true);
-create policy "p_video"       on videoanalysen         for all using (true) with check (true);
-create policy "p_ausweise"    on mitgliedsausweise     for all using (true) with check (true);
-create policy "p_teams_w"     on teams                 for all using (true) with check (true);
-create policy "p_games_w"     on games                 for all using (true) with check (true);
-create policy "p_players_w"   on players               for all using (true) with check (true);
-create policy "p_clubs_w"     on clubs                 for all using (true) with check (true);
-create policy "p_news_w"      on news                  for all using (true) with check (true);
+-- Step 5: Storage bucket
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('stackflow', 'stackflow', true, 524288000)
+on conflict (id) do update set public = true;
 
--- ── SCHRITT 5: Vereinsdaten ────────────────────────────────
--- Verein wird automatisch angelegt:
-insert into clubs (club_id, name, short_name, primary_color) values
-  ('uhc-jonschwil', 'UHC Jonschwil Vipers', 'Vipers', '#d4f04a')
-on conflict (club_id) do nothing;
-
--- ── SCHRITT 6: Storage Bucket ────────────────────────────────
--- Bucket "stackflow" für alle Uploads (Belege, Videos, Logos, Fotos)
--- WICHTIG: Supabase führt Storage-Policies nicht via SQL aus.
--- Bitte manuell im Supabase Dashboard:
---   Storage → New bucket → Name: "stackflow" → Public: ON
---   (Public ON damit Dateien ohne Auth gelesen werden können)
---
--- Alternativ via SQL (falls Storage-Extension aktiv):
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values (
-  'stackflow', 
-  'stackflow', 
-  true,
-  524288000,  -- 500 MB
-  array['image/jpeg','image/png','image/webp','image/svg+xml',
-        'application/pdf',
-        'video/mp4','video/quicktime','video/webm']
-)
-on conflict (id) do update set
-  public = true,
-  file_size_limit = 524288000;
-
--- Storage Policy: alle dürfen hochladen und lesen
-insert into storage.policies (name, bucket_id, definition)
-values (
-  'stackflow_open',
-  'stackflow',
-  '{"statement":"allow all","version":"1"}'
-)
-on conflict do nothing;
-
-
-select '✓ Setup erfolgreich abgeschlossen! Tabellen bereit.' as status;
+select '✓ Stackflow database setup complete!' as status;

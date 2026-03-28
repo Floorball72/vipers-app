@@ -49,10 +49,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 .game-info{flex:1}
 .game-title{font-size:13px;font-weight:500}
 .game-meta{font-size:11px;color:var(--text3);margin-top:2px}
-.kamera-toggle{display:flex;align-items:center;gap:8px}
-.kamera-on{background:rgba(212,240,74,.15);border:1px solid rgba(212,240,74,.3);color:var(--accent);font-size:11px;padding:4px 12px;border-radius:20px;cursor:pointer;font-family:"DM Sans",sans-serif;font-weight:600;transition:all .12s}
-.kamera-off{background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:11px;padding:4px 12px;border-radius:20px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .12s}
-.kamera-off:hover{border-color:rgba(212,240,74,.3);color:var(--accent)}
+.camera-toggle{display:flex;align-items:center;gap:8px}
+.camera-on{background:rgba(212,240,74,.15);border:1px solid rgba(212,240,74,.3);color:var(--accent);font-size:11px;padding:4px 12px;border-radius:20px;cursor:pointer;font-family:"DM Sans",sans-serif;font-weight:600;transition:all .12s}
+.camera-off{background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:11px;padding:4px 12px;border-radius:20px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .12s}
+.camera-off:hover{border-color:rgba(212,240,74,.3);color:var(--accent)}
 .fairness-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
 .fairness-row:last-child{border-bottom:none}
 .fairness-bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
@@ -82,21 +82,21 @@ async function initDB(){
   db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
   CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
   const[g,t]=await Promise.all([
-    db.from('games').select("*,teams(name)").order("datum").order("anstoss"),
-    db.from('teams').select("*").eq("aktiv",true).order("name"),
+    db.from('games').select("*,teams(name)").order("date").order("kickoff"),
+    db.from('teams').select("*").eq("active",true).order("name"),
   ]);
   games=g.data||[];teams=t.data||[];
-  // Kamera-Daten aus games.notizen laden (temporaer bis eigene Spalte)
-  games.forEach(g=>{if(g.notizen&&g.notizen.includes("[KAMERA]"))kamera[g.id]=true;});
+  // Kamera-Daten aus games.notes laden (temporaer bis eigene Spalte)
+  games.forEach(g=>{if(g.notes&&g.notes.includes("[KAMERA]"))kamera[g.id]=true;});
   render();
 }
 
 function groupByWeekend(){
   const today=new Date().toISOString().split("T")[0];
-  const upcoming=games.filter(g=>g.datum>=today);
+  const upcoming=games.filter(g=>g.date>=today);
   const weekends={};
   upcoming.forEach(g=>{
-    const d=new Date(g.datum+"T12:00:00");
+    const d=new Date(g.date+"T12:00:00");
     const dow=d.getDay();
     const diff=dow===6?0:dow===0?-1:dow===5?1:(6-dow);
     const sat=new Date(d);sat.setDate(d.getDate()+diff);
@@ -117,7 +117,7 @@ function render(){
     const d=new Date(sat+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"long",year:"numeric"});
     const hasKamera=gs.some(g=>kamera[g.id]);
     return "<div class='wochenend-block'><div class='we-header'><span class='we-date'>Spieltag "+d+"</span><span class='we-team-badge "+(hasKamera?"we-assigned":"we-unassigned")+"'>"+(hasKamera?"Kamera zugeteilt":"Keine Kamera")+"</span></div>"+
-      gs.map(g=>"<div class='game-kamera-row'><div class='game-info'><div class='game-title'>"+(g.teams?.name||"Team")+" "+(g.heimspiel?"vs.":"@")+" "+g.gegner+"</div><div class='game-meta'>"+new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short",day:"numeric",month:"short"})+" "+g.anstoss?.slice(0,5)+" &middot; "+(g.heimspiel?"Heimspiel":"Auswaerts")+"</div></div><div class='kamera-toggle'><button class='"+(kamera[g.id]?"kamera-on":"kamera-off")+"' onclick=\"toggleKamera('"+g.id+"')\">"+( kamera[g.id]?"Kamera: AN":"Kamera: AUS")+"</button></div></div>").join("")+
+      gs.map(g=>"<div class='game-kamera-row'><div class='game-info'><div class='game-title'>"+(g.teams?.name||"Team")+" "+(g.home_game?"vs.":"@")+" "+g.opponent+"</div><div class='game-meta'>"+new Date(g.date+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short",day:"numeric",month:"short"})+" "+g.kickoff?.slice(0,5)+" &middot; "+(g.home_game?"Heimspiel":"Auswaerts")+"</div></div><div class='kamera-toggle'><button class='"+(kamera[g.id]?"kamera-on":"kamera-off")+"' onclick=\"toggleKamera('"+g.id+"')\">"+( kamera[g.id]?"Kamera: AN":"Kamera: AUS")+"</button></div></div>").join("")+
     "</div>";
   }).join("");
   renderFairness();
@@ -138,11 +138,11 @@ async function toggleKamera(gid){
   kamera[gid]=!kamera[gid];
   // In notizen Feld speichern als einfacher Marker
   const g=games.find(x=>x.id===gid);
-  let notizen=g.notizen||"";
+  let notizen=g.notes||"";
   if(kamera[gid]){if(!notizen.includes("[KAMERA]"))notizen=(notizen+" [KAMERA]").trim();}
   else{notizen=notizen.replace("[KAMERA]","").trim();}
   await db.from("games").update({notizen}).eq("id",gid);
-  g.notizen=notizen;
+  g.notes=notizen;
   render();
 }
 
@@ -184,5 +184,5 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
   </div>
 </div>
 <script>document.addEventListener("DOMContentLoaded",()=>{const el=document.getElementById("club-name-sub");if(el)el.textContent=APP_CONFIG.ACTIVE_CLUB.name;});</script>
-<script src="nav.js"></script><script>renderNav("kamera");</script>
+<script src="nav.js"></script><script>renderNav("camera");</script>
 </body></html>

@@ -98,8 +98,8 @@ async function initDB(){
   db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
   CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
   const[m,t]=await Promise.all([
-    db.from("user_profiles").select("*").order("nachname"),
-    db.from('teams').select("*").eq("aktiv",true),
+    db.from("user_profiles").select("*").order("last_name"),
+    db.from('teams').select("*").eq("active",true),
   ]);
   mitglieder=m.data||[];teams=t.data||[];
   render();updateStats();
@@ -112,7 +112,7 @@ async function initDB(){
 
 function updateStats(){
   const roles={admin:0,trainer:0,spieler:0,eltern:0};
-  mitglieder.forEach(m=>{if(roles[m.rolle]!==undefined)roles[m.rolle]++;});
+  mitglieder.forEach(m=>{if(roles[m.role]!==undefined)roles[m.role]++;});
   document.getElementById("s-total").textContent=mitglieder.length;
   document.getElementById("s-admin").textContent=roles.admin;
   document.getElementById("s-trainer").textContent=roles.trainer;
@@ -122,8 +122,8 @@ function updateStats(){
 
 function getFiltered(){
   return mitglieder.filter(m=>{
-    if(filterRolle!=="all"&&m.rolle!==filterRolle)return false;
-    if(searchQ){const q=searchQ.toLowerCase();if(!(m.vorname+m.nachname+m.email).toLowerCase().includes(q))return false;}
+    if(filterRolle!=="all"&&m.role!==filterRolle)return false;
+    if(searchQ){const q=searchQ.toLowerCase();if(!(m.first_name+m.last_name+m.email).toLowerCase().includes(q))return false;}
     return true;
   });
 }
@@ -141,14 +141,14 @@ function renderListe(){
   if(!data.length){cont.innerHTML="<div class='empty'><div class='empty-title'>Keine Mitglieder gefunden</div></div>";return;}
   cont.innerHTML="<div class='card'><table><thead><tr><th>Name</th><th>Rolle</th><th>Team(s)</th><th>Geburtsjahr</th><th>Mitglied seit</th><th>Status</th><th>Login</th><th></th></tr></thead><tbody>"+
   data.map(m=>{
-    const init=((m.vorname||"?")[0]+(m.nachname||"?")[0]).toUpperCase();
+    const init=((m.first_name||"?")[0]+(m.last_name||"?")[0]).toUpperCase();
     const teamNames=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace("UHC Jonschwil ",""))||[];
     return "<tr onclick=\"openDetail('"+m.id+"')\">"+
-      "<td><div style='display:flex;align-items:center;gap:10px'><div class='avatar' style='background:"+( AVATAR_COLORS[m.rolle]||"var(--bg3)")+";color:var(--text)'>"+init+"</div><div><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div><div style='font-size:11px;color:var(--text3)'>"+( m.email||"–")+"</div></div></div></td>"+
-      "<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||m.rolle)+"</span></td>"+
-      "<td style='font-size:12px;color:var(--text2)'>"+(teamNames.slice(0,2).join(", ")||"–")+"</td>"+"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.geburtsdatum?new Date(m.geburtsdatum+"T12:00:00").getFullYear():"–")+"</td>"+
-      "<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.mitglied_seit||"–")+"</td>"+
-      "<td><span class='status-dot' style='background:"+(m.aktiv?"var(--green)":"var(--text3)")+"'></span>"+( m.aktiv?"Aktiv":"Inaktiv")+"</td>"+
+      "<td><div style='display:flex;align-items:center;gap:10px'><div class='avatar' style='background:"+( AVATAR_COLORS[m.role]||"var(--bg3)")+";color:var(--text)'>"+init+"</div><div><div style='font-weight:500'>"+m.first_name+" "+m.last_name+"</div><div style='font-size:11px;color:var(--text3)'>"+( m.email||"–")+"</div></div></div></td>"+
+      "<td><span class='role-badge "+(ROLLE_COLORS[m.role]||"")+"'>"+(ROLLE_LABELS[m.role]||m.role)+"</span></td>"+
+      "<td style='font-size:12px;color:var(--text2)'>"+(teamNames.slice(0,2).join(", ")||"–")+"</td>"+"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.birth_date?new Date(m.birth_date+"T12:00:00").getFullYear():"–")+"</td>"+
+      "<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.member_since||"–")+"</td>"+
+      "<td><span class='status-dot' style='background:"+(m.active?"var(--green)":"var(--text3)")+"'></span>"+( m.active?"Aktiv":"Inaktiv")+"</td>"+
       "<td><div class='row-actions'>"+
         "<button class='icon-btn' onclick='event.stopPropagation();openEdit(\""+m.id+"\")' title='Bearbeiten'><svg width='13' height='13' viewBox='0 0 16 16' fill='none'><path d='M11 2l3 3L5 14H2v-3L11 2Z' stroke='currentColor' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"+
         "<button class='icon-btn del' onclick='event.stopPropagation();deleteMitglied(\""+m.id+"\")' title='Entfernen'><svg width='13' height='13' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"+
@@ -158,10 +158,10 @@ function renderListe(){
 
 function renderRollen(){
   const cont=document.getElementById("main-content");
-  const roles=["admin","trainer","spieler","eltern"];
+  const roles=["admin","trainer","player","parent"];
   cont.innerHTML="<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px'>"+
   roles.map(rolle=>{
-    const members=mitglieder.filter(m=>m.rolle===rolle);
+    const members=mitglieder.filter(m=>m.role===rolle);
     const perms={
       admin:["Vollzugriff auf alle Module","Mitglieder verwalten","Finanzen & Sponsoring","Rollen vergeben"],
       trainer:["Spielplan lesen & bearbeiten","Scorer & Statistiken","Training & Video","Eigenes Team verwalten","Kein Zugriff auf Finanzen"],
@@ -178,27 +178,27 @@ function renderRollen(){
       (perms[rolle]||[]).map(p=>"<div style='font-size:12px;color:var(--text2);padding:3px 0;display:flex;align-items:center;gap:6px'><span style='color:"+colors[rolle]+";font-size:14px'>✓</span>"+p+"</div>").join("")+
       "</div>"+
       "<div style='padding:12px 20px'>"+
-      (members.length?members.slice(0,4).map(m=>"<div style='font-size:12px;color:var(--text2);padding:2px 0'>"+m.vorname+" "+m.nachname+"</div>").join("")+(members.length>4?"<div style='font-size:11px;color:var(--text3)'>+"+( members.length-4)+" weitere</div>":""):"<div style='font-size:12px;color:var(--text3)'>Noch keine Mitglieder</div>")+
+      (members.length?members.slice(0,4).map(m=>"<div style='font-size:12px;color:var(--text2);padding:2px 0'>"+m.first_name+" "+m.last_name+"</div>").join("")+(members.length>4?"<div style='font-size:11px;color:var(--text3)'>+"+( members.length-4)+" weitere</div>":""):"<div style='font-size:12px;color:var(--text3)'>Noch keine Mitglieder</div>")+
       "</div></div>";
   }).join("")+"</div>";
 }
 
 function renderAusweise(){
   const cont=document.getElementById("main-content");
-  const active=mitglieder.filter(m=>m.aktiv);
+  const active=mitglieder.filter(m=>m.active);
   if(!active.length){cont.innerHTML="<div class='empty'><div class='empty-title'>Keine Mitglieder</div></div>";return;}
   cont.innerHTML="<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px'>"+
   active.map(m=>{
-    const init=((m.vorname||"?")[0]+(m.nachname||"?")[0]).toUpperCase();
-    const farbe={admin:"#d4f04a",trainer:"#9b8fff",spieler:"#5bbfff",eltern:"#4dd68c"}[m.rolle]||"#888";
+    const init=((m.first_name||"?")[0]+(m.last_name||"?")[0]).toUpperCase();
+    const farbe={admin:"#d4f04a",trainer:"#9b8fff",spieler:"#5bbfff",eltern:"#4dd68c"}[m.role]||"#888";
     const teamName=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace("UHC Jonschwil ","")).filter(Boolean)[0]||"";
     return "<div class='ausweis'><div style='display:flex;align-items:center;justify-content:space-between'><div class='ausweis-logo'>UHC JONSCHWIL VIPERS</div><div style='width:40px;height:40px;border-radius:50%;background:"+farbe+"22;display:flex;align-items:center;justify-content:center;font-family:\"Syne\",sans-serif;font-weight:700;color:"+farbe+";font-size:14px'>"+init+"</div></div>"+
-    "<div class='ausweis-name'>"+m.vorname+" "+m.nachname+"</div>"+
-    "<div class='ausweis-detail' style='color:"+farbe+"'>"+ROLLE_LABELS[m.rolle]+"</div>"+
+    "<div class='ausweis-name'>"+m.first_name+" "+m.last_name+"</div>"+
+    "<div class='ausweis-detail' style='color:"+farbe+"'>"+ROLLE_LABELS[m.role]+"</div>"+
     (teamName?"<div class='ausweis-detail'>"+teamName+"</div>":"")+
-    "<div class='ausweis-nr'>Mitglied seit "+( m.mitglied_seit||"–")+"</div>"+
+    "<div class='ausweis-nr'>Mitglied seit "+( m.member_since||"–")+"</div>"+
     "<div style='margin-top:12px;display:flex;gap:8px'>"+
-    "<button class='btn btn-ghost' style='font-size:11px;padding:5px 12px' onclick='printAusweis(\""+m.vorname+" "+m.nachname+"\")'>Drucken</button>"+
+    "<button class='btn btn-ghost' style='font-size:11px;padding:5px 12px' onclick='printAusweis(\""+m.first_name+" "+m.last_name+"\")'>Drucken</button>"+
     "</div></div>";
   }).join("")+"</div>";
 }
@@ -207,9 +207,9 @@ function renderFreigaben(){
   const cont=document.getElementById("main-content");
   // Mitglieder mit pending login_status oder ausstehender Rollenzuweisung
   const ausstehend=mitglieder.filter(m=>
-    m.login_status==="pending"||m.login_status==="invited"||!m.rolle
+    m.login_status==="pending"||m.login_status==="invited"||!m.role
   );
-  const aktiv=mitglieder.filter(m=>m.login_status==="active"&&m.rolle);
+  const aktiv=mitglieder.filter(m=>m.login_status==="active"&&m.role);
   if(!ausstehend.length&&!aktiv.length){
     cont.innerHTML="<div class='empty'><div class='empty-title'>Keine ausstehenden Freigaben</div><div style='font-size:13px;color:var(--text3);margin-top:6px'>Alle Mitglieder sind korrekt zugewiesen.</div></div>";
     return;
@@ -223,12 +223,12 @@ function renderFreigaben(){
       const stLabel=st==="invited"?"Eingeladen, wartet auf Registrierung":"Erfasst, noch nicht eingeladen";
       const stColor=st==="invited"?"var(--amber)":"var(--text3)";
       return "<tr>"
-        +"<td><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div></td>"
+        +"<td><div style='font-weight:500'>"+m.first_name+" "+m.last_name+"</div></td>"
         +"<td style='font-size:12px;color:var(--text2)'>"+(m.email||"<span style='color:var(--text3)'>Keine E-Mail</span>")+"</td>"
-        +"<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||"–")+"</span></td>"
+        +"<td><span class='role-badge "+(ROLLE_COLORS[m.role]||"")+"'>"+(ROLLE_LABELS[m.role]||"–")+"</span></td>"
         +"<td><span style='font-size:11px;color:"+stColor+"'>"+stLabel+"</span></td>"
         +"<td><div style='display:flex;gap:6px;flex-wrap:wrap'>"
-        +(m.email?"<button onclick='sendInviteFromFreigaben(""+m.id+"",""+m.email+"",""+m.vorname+" "+m.nachname+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(91,191,255,.3);background:rgba(91,191,255,.08);color:var(--blue);cursor:pointer;font-family:"DM Sans",sans-serif'>Einladen</button>":"")
+        +(m.email?"<button onclick='sendInviteFromFreigaben(""+m.id+"",""+m.email+"",""+m.first_name+" "+m.last_name+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(91,191,255,.3);background:rgba(91,191,255,.08);color:var(--blue);cursor:pointer;font-family:"DM Sans",sans-serif'>Einladen</button>":"")
         +"<button onclick='setRolle(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:"DM Sans",sans-serif'>Rolle ändern</button>"
         +"<button onclick='approveMitglied(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(77,214,140,.3);background:rgba(77,214,140,.08);color:var(--green);cursor:pointer;font-family:"DM Sans",sans-serif'>✓ Freigeben</button>"
         +"</div></td></tr>";
@@ -240,8 +240,8 @@ function renderFreigaben(){
     html+=aktiv.map(m=>{
       const teamNames=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace(/UHC Jonschwil /g,"")).filter(Boolean);
       return "<tr>"
-        +"<td><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div><div style='font-size:11px;color:var(--text3)'>"+(m.email||"")+"</div></td>"
-        +"<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||"–")+"</span></td>"
+        +"<td><div style='font-weight:500'>"+m.first_name+" "+m.last_name+"</div><div style='font-size:11px;color:var(--text3)'>"+(m.email||"")+"</div></td>"
+        +"<td><span class='role-badge "+(ROLLE_COLORS[m.role]||"")+"'>"+(ROLLE_LABELS[m.role]||"–")+"</span></td>"
         +"<td style='font-size:12px;color:var(--text2)'>"+(teamNames.join(", ")||"–")+"</td>"
         +"<td><span style='font-size:11px;color:var(--green)'>✓ Aktiv</span></td>"
         +"<td><div style='display:flex;gap:6px'>"
@@ -257,24 +257,24 @@ function renderFreigaben(){
 }
 
 async function approveMitglied(id){
-  await db.from("user_profiles").update({login_status:"active",aktiv:true}).eq("id",id);
-  const m=mitglieder.find(x=>x.id===id);if(m){m.login_status="active";m.aktiv=true;}
+  await db.from("user_profiles").update({login_status:"active",active:true}).eq("id",id);
+  const m=mitglieder.find(x=>x.id===id);if(m){m.login_status="active";m.active=true;}
   renderFreigaben();updateStats();
 }
 async function deaktivieren(id){
   if(!confirm("Mitglied deaktivieren?"))return;
-  await db.from("user_profiles").update({aktiv:false}).eq("id",id);
-  const m=mitglieder.find(x=>x.id===id);if(m)m.aktiv=false;
+  await db.from("user_profiles").update({active:false}).eq("id",id);
+  const m=mitglieder.find(x=>x.id===id);if(m)m.active=false;
   renderFreigaben();updateStats();
 }
 async function setRolle(id){
   const m=mitglieder.find(x=>x.id===id);if(!m)return;
-  const rollen=["admin","trainer","spieler","eltern"];
-  const aktuelle=m.rolle||"spieler";
-  const neu=prompt("Neue Rolle für "+m.vorname+" "+m.nachname+"\n(admin/trainer/spieler/eltern):",aktuelle);
+  const rollen=["admin","trainer","player","parent"];
+  const aktuelle=m.role||"player";
+  const neu=prompt("Neue Rolle für "+m.first_name+" "+m.last_name+"\n(admin/trainer/spieler/eltern):",aktuelle);
   if(!neu||!rollen.includes(neu))return;
-  await db.from("user_profiles").update({rolle:neu}).eq("id",id);
-  m.rolle=neu;
+  await db.from("user_profiles").update({role:neu}).eq("id",id);
+  m.role=neu;
   renderFreigaben();updateStats();
 }
 function sendInviteFromFreigaben(id,email,name){
@@ -294,29 +294,29 @@ function openModal(){
    "mf-shirt","mf-hose","mf-stuelpengr","mf-trikotnummer"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value="";
   });
-  const _rolle=document.getElementById("mf-rolle");if(_rolle)_rolle.value="spieler";
+  const _rolle=document.getElementById("mf-rolle");if(_rolle)_rolle.value="player";
   const _seit=document.getElementById("mf-seit");if(_seit)_seit.value=new Date().toISOString().split("T")[0];
   const _aktiv=document.getElementById("mf-aktiv");if(_aktiv)_aktiv.value="true";
   setClubAnzeige();
-  toggleSpielerFelder("spieler");
+  toggleSpielerFelder("player");
   renderTeamCheckboxes([]);
   document.getElementById("mitgliedModal").classList.add("open");
 }
 function openEdit(id){
   const m=mitglieder.find(x=>x.id===id);if(!m)return;editId=id;
-  document.getElementById("mf-vorname").value=m.vorname||"";
-  document.getElementById("mf-nachname").value=m.nachname||"";
+  document.getElementById("mf-vorname").value=m.first_name||"";
+  document.getElementById("mf-nachname").value=m.last_name||"";
   document.getElementById("mf-email").value=m.email||"";
-  document.getElementById("mf-telefon").value=m.telefon||"";
-  document.getElementById("mf-adresse").value=m.adresse||"";
-  document.getElementById("mf-geburtsdatum").value=m.geburtsdatum||"";
-  document.getElementById("mf-rolle").value=m.rolle||"spieler";
-  document.getElementById("mf-seit").value=m.mitglied_seit||"";
-  document.getElementById("mf-aktiv").value=String(m.aktiv!==false);
+  document.getElementById("mf-telefon").value=m.phone||"";
+  document.getElementById("mf-adresse").value=m.address||"";
+  document.getElementById("mf-geburtsdatum").value=m.birth_date||"";
+  document.getElementById("mf-rolle").value=m.role||"player";
+  document.getElementById("mf-seit").value=m.member_since||"";
+  document.getElementById("mf-aktiv").value=String(m.active!==false);
   setClubAnzeige();
-  toggleSpielerFelder(m.rolle||"spieler");
+  toggleSpielerFelder(m.role||"player");
   // Spieler-Felder
-  if(m.rolle==="spieler"){
+  if(m.role==="player"){
     loadPlayerFields(m.id);
   }
   renderTeamCheckboxes(m.team_ids||[]);
@@ -328,12 +328,12 @@ function openDetail(id){openEdit(id);}
 async function loadPlayerFields(userId){
   const{data:p}=await db.from("players").select("*").eq("user_id",userId).single();
   if(!p)return;
-  document.getElementById("mf-shirt").value=p.trikot_shirt||"";
-  document.getElementById("mf-hose").value=p.trikot_hose||"";
-  document.getElementById("mf-stuelpengr").value=p.trikot_stuelpengr||"";
+  document.getElementById("mf-shirt").value=p.shirt_size||"";
+  document.getElementById("mf-hose").value=p.shorts_size||"";
+  document.getElementById("mf-stuelpengr").value=p.socks_size||"";
   // Trikotnummer in players ist schon im Spielerprofil - zeige sie an
   const numEl=document.getElementById("mf-trikotnummer");
-  if(numEl) numEl.value=p.nummer||"";
+  if(numEl) numEl.value=p.jersey_number||"";
 }
 
 function renderTeamCheckboxes(selected){
@@ -353,7 +353,7 @@ function renderTeamCheckboxes(selected){
 function toggleSpielerFelder(rolle){
   try{
     const el=document.getElementById("spieler-felder");
-    if(el) el.style.display=rolle==="spieler"?"block":"none";
+    if(el) el.style.display=rolle==="player"?"block":"none";
   }catch(e){console.warn("toggleSpielerFelder:",e);}
 }
 function setClubAnzeige(){
@@ -375,23 +375,21 @@ async function saveMitglied(){
   const rolle=document.getElementById("mf-rolle").value;
   const teamIds=Array.from(document.querySelectorAll("#mf-teams-grid input:checked")).map(cb=>cb.value);
   const profileData={
-    vorname:vn, nachname:nn,
+    first_name:vn, last_name:nn,
     email:email||null,
-    telefon:document.getElementById("mf-telefon").value||null,
-    adresse:document.getElementById("mf-adresse").value||null,
-    geburtsdatum:document.getElementById("mf-geburtsdatum").value||null,
-    rolle, club_id:CLUB_ID,
-    team_ids:teamIds.length?teamIds:null,
-    mitglied_seit:document.getElementById("mf-seit").value||null,
-    aktiv:document.getElementById("mf-aktiv").value==="true",
+    phone:document.getElementById("mf-telefon").value||null,
+    address:document.getElementById("mf-adresse").value||null,
+    birth_date:document.getElementById("mf-geburtsdatum").value||null,
+    rolle,team_ids:teamIds.length?teamIds:null,
+    member_since:document.getElementById("mf-seit").value||null,
+    active:document.getElementById("mf-aktiv").value==="true",
     login_status:"pending",  // pending | invited | active
   };
-  const trikotData=rolle==="spieler"?{
+  const trikotData=rolle==="player"?{
     shirt:document.getElementById("mf-shirt").value||null,
     hose:document.getElementById("mf-hose").value||null,
     stuelpengr:document.getElementById("mf-stuelpengr").value||null,
-    nummer:parseInt(document.getElementById("mf-trikotnummer")?.value)||null,
-  }:null;
+    jersey_number:parseInt(document.getElementById("mf-trikotnummer")?.value)||null}:null;
 
 
   if(editId){
@@ -400,46 +398,43 @@ async function saveMitglied(){
     if(trikotData){
       const{data:ex}=await db.from("players").select("id").eq("user_id",editId).maybeSingle();
       if(ex){
-        await db.from("players").update({trikot_shirt:trikotData.shirt,trikot_hose:trikotData.hose,trikot_stuelpengr:trikotData.stuelpengr,nummer:trikotData.nummer,team_id:teamIds[0]||null}).eq("id",ex.id);
+        await db.from("players").update({shirt_size:trikotData.shirt,shorts_size:trikotData.hose,socks_size:trikotData.stuelpengr,jersey_number:trikotData.jersey_number,team_id:teamIds[0]||null}).eq("id",ex.id);
       }
     }
     closeModal();
   } else {
     // ── Neu erstellen ────────────────────────────────────────
     // Profil ohne Auth-ID erstellen — Verknüpfung erfolgt beim Login per E-Mail
-    const{data:newProf,error:profErr}=await db.from("user_profiles").insert([{club_id:CLUB_ID,...profileData}]).select("id").single();
+    const{data:newProf,error:profErr}=await db.from("user_profiles").insert([{...profileData}]).select("id").single();
     if(profErr){alert("Fehler: "+profErr.message);return;}
     const profileId=newProf.id;
     // Spieler-Eintrag anlegen
     if(trikotData){
-      await db.from("players").insert([{
-        club_id:CLUB_ID,user_id:null,  // user_id wird beim Login gesetzt
-        vorname:vn,nachname:nn,
+      await db.from("players").insert([{user_id:null,  // user_id wird beim Login gesetzt
+        first_name:vn,last_name:nn,
         team_id:teamIds[0]||null,
-        nummer:trikotData.nummer,
-        trikot_shirt:trikotData.shirt,trikot_hose:trikotData.hose,trikot_stuelpengr:trikotData.stuelpengr,
-        aktiv:true,
+        jersey_number:trikotData.jersey_number,
+        shirt_size:trikotData.shirt,shorts_size:trikotData.hose,socks_size:trikotData.stuelpengr,
+        active:true,
         // Email für spätere Verknüpfung merken
-        email:email||null,
-      }]);
+        email:email||null}]);
     }
     // Einladungs-E-Mail senden wenn E-Mail vorhanden
     if(email){
       const{error:invErr}=await db.auth.admin?.inviteUserByEmail?.(email,{
-        data:{vorname:vn,nachname:nn,rolle,club_id:CLUB_ID},
-        redirectTo:APP_CONFIG.APP_URL+"/login.html",
-      }).catch(()=>({error:{message:"Admin-API nicht verfügbar"}})) || {error:null};
+        data:{first_name:vn,last_name:nn,rolle},
+        redirectTo:APP_CONFIG.APP_URL+"/login.html"}).catch(()=>({error:{message:"Admin-API nicht verfügbar"}})) || {error:null};
       // Hinweis: inviteUserByEmail braucht service_role — stattdessen zeigen wir Anleitung
       await db.from("user_profiles").update({login_status:"invited"}).eq("id",profileId);
       closeModal();
       showInviteInfo(vn,nn,email,rolle);
-      const{data:m}=await db.from("user_profiles").select("*").order("nachname");
+      const{data:m}=await db.from("user_profiles").select("*").order("last_name");
       mitglieder=m||[];render();updateStats();
       return;
     }
     closeModal();
   }
-  const{data:m}=await db.from("user_profiles").select("*").order("nachname");
+  const{data:m}=await db.from("user_profiles").select("*").order("last_name");
   mitglieder=m||[];render();updateStats();
 }
 
@@ -463,7 +458,7 @@ function loginStatusBadge(m){
   if(st==="active"){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(77,214,140,.12);color:var(--green);border:1px solid rgba(77,214,140,.2)'>Eingeloggt</span>";}
   if(st==="invited"){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)'>Eingeladen</span>";}
   if(!has_email){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text3);border:1px solid var(--border2)'>Kein Login</span>";}
-  const mid=m.id, memail=(m.email||""), mname=((m.vorname||"")+" "+(m.nachname||"")).trim();
+  const mid=m.id, memail=(m.email||""), mname=((m.first_name||"")+" "+(m.last_name||"")).trim();
   return "<button onclick=\"event.stopPropagation();resendInvite(this)\" data-id='"+mid+"' data-email='"+memail+"' data-name='"+mname+"' style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2);cursor:pointer;font-family:\"DM Sans\",sans-serif'>Einladen</button>";
 }
 
@@ -507,8 +502,8 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
         <button class="filter-pill active" onclick="setFilter('all',this)">Alle</button>
         <button class="filter-pill" onclick="setFilter('admin',this)">Admins</button>
         <button class="filter-pill" onclick="setFilter('trainer',this)">Trainer</button>
-        <button class="filter-pill" onclick="setFilter('spieler',this)">Spieler</button>
-        <button class="filter-pill" onclick="setFilter('eltern',this)">Eltern</button>
+        <button class="filter-pill" onclick="setFilter('player',this)">Spieler</button>
+        <button class="filter-pill" onclick="setFilter('parent',this)">Eltern</button>
         <input class="search-input" type="text" placeholder="Name oder E-Mail suchen..." oninput="onSearch(this.value)">
       </div>
       <div id="main-content"><div style="text-align:center;padding:40px;color:var(--text3)">Lade...</div></div>
@@ -535,8 +530,8 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
       <div class="form-row-3">
         <div><label class="form-label">Rolle</label>
           <select class="form-input" id="mf-rolle" onchange="toggleSpielerFelder(this.value)">
-            <option value="spieler">Spieler</option><option value="trainer">Trainer</option>
-            <option value="admin">Admin</option><option value="eltern">Eltern</option>
+            <option value="player">Spieler</option><option value="trainer">Trainer</option>
+            <option value="admin">Admin</option><option value="parent">Eltern</option>
           </select>
         </div>
         <div><label class="form-label">Mitglied seit</label><input class="form-input" type="date" id="mf-seit"></div>

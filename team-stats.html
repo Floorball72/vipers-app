@@ -74,9 +74,9 @@ async function initDB(){
   if(!teamId){location.href='spielplan.html';return;}
   const[t,g,s,p]=await Promise.all([
     db.from('teams').select('*').eq('id',teamId).single(),
-    db.from('games').select('*').eq('team_id',teamId).order('datum'),
-    db.from('scorer').select('*,players(vorname,nachname,nummer)').eq('saison',''),
-    db.from('players').select('*').eq('team_id',teamId).eq('aktiv',true).order('nummer'),
+    db.from('games').select('*').eq('team_id',teamId).order('date'),
+    db.from('scorer').select('*,players(vorname,nachname,nummer)').eq('season',''),
+    db.from('players').select('*').eq('team_id',teamId).eq('active',true).order('jersey_number'),
   ]);
   team=t.data;games=g.data||[];scorer=s.data||[];players=p.data||[];
   render();
@@ -84,17 +84,17 @@ async function initDB(){
 
 function render(){
   document.getElementById('team-name').textContent=team?.name||'Team';
-  document.getElementById('team-liga').textContent=team?.liga||'';
+  document.getElementById('team-liga').textContent=team?.league||'';
 
-  const played=games.filter(g=>g.resultat_heim!=null);
-  const wins=played.filter(g=>g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim).length;
-  const losses=played.filter(g=>g.heimspiel?g.resultat_heim<g.resultat_gast:g.resultat_gast<g.resultat_heim).length;
+  const played=games.filter(g=>g.score_home!=null);
+  const wins=played.filter(g=>g.home_game?g.score_home>g.score_away:g.score_away>g.score_home).length;
+  const losses=played.filter(g=>g.home_game?g.score_home<g.score_away:g.score_away<g.score_home).length;
   const draws=played.length-wins-losses;
-  const totalFor=played.reduce((s,g)=>s+(g.heimspiel?g.resultat_heim:g.resultat_gast),0);
-  const totalAgainst=played.reduce((s,g)=>s+(g.heimspiel?g.resultat_gast:g.resultat_heim),0);
+  const totalFor=played.reduce((s,g)=>s+(g.home_game?g.score_home:g.score_away),0);
+  const totalAgainst=played.reduce((s,g)=>s+(g.home_game?g.score_away:g.score_home),0);
   const avgFor=played.length?+(totalFor/played.length).toFixed(1):0;
   const avgAgainst=played.length?+(totalAgainst/played.length).toFixed(1):0;
-  const totalStraf=scorer.filter(s=>s.players?.team_id===teamId).reduce((s,x)=>s+(x.strafminuten||0),0);
+  const totalStraf=scorer.filter(s=>s.players?.team_id===teamId).reduce((s,x)=>s+(x.penalty_minutes||0),0);
 
   document.getElementById('stat-gespielt').textContent=played.length;
   document.getElementById('stat-siege').textContent=wins;
@@ -120,13 +120,13 @@ function render(){
   document.getElementById('games-list').innerHTML=played.length===0?
     '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Noch keine Resultate</td></tr>':
     [...played].reverse().map(g=>{
-      const won=g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim;
-      const d=new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
+      const won=g.home_game?g.score_home>g.score_away:g.score_away>g.score_home;
+      const d=new Date(g.date+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
       return `<tr>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${d}</td>
-        <td>${g.heimspiel?'vs.':'@'} <strong>${g.gegner}</strong></td>
-        <td><span style="font-size:10px;padding:2px 7px;border-radius:4px;background:${g.heimspiel?'rgba(77,214,140,.1)':'rgba(91,191,255,.1)'};color:${g.heimspiel?'var(--green)':'var(--blue)'}">${g.heimspiel?'Heim':'Ausw.'}</span></td>
-        <td class="r" style="color:${won?'var(--green)':'var(--red)'}">${g.resultat_heim}:${g.resultat_gast}</td>
+        <td>${g.home_game?'vs.':'@'} <strong>${g.opponent}</strong></td>
+        <td><span style="font-size:10px;padding:2px 7px;border-radius:4px;background:${g.home_game?'rgba(77,214,140,.1)':'rgba(91,191,255,.1)'};color:${g.home_game?'var(--green)':'var(--blue)'}">${g.home_game?'Heim':'Ausw.'}</span></td>
+        <td class="r" style="color:${won?'var(--green)':'var(--red)'}">${g.score_home}:${g.score_away}</td>
         <td class="r"><span class="win-dot" style="background:${won?'var(--green)':losses?'var(--red)':'var(--amber)'}"></span>${won?'Sieg':'Niederlage'}</td>
       </tr>`;
     }).join('');
@@ -134,20 +134,20 @@ function render(){
   // Spieler Scorer
   const teamScorer={};
   scorer.filter(s=>players.find(p=>p.id===s.player_id)).forEach(s=>{
-    if(!teamScorer[s.player_id]) teamScorer[s.player_id]={player:s.players,tore:0,assists:0,strafmin:0,spiele:0};
-    teamScorer[s.player_id].tore+=s.tore||0;
+    if(!teamScorer[s.player_id]) teamScorer[s.player_id]={player:s.players,goals:0,assists:0,strafmin:0,spiele:0};
+    teamScorer[s.player_id].goals+=s.goals||0;
     teamScorer[s.player_id].assists+=s.assists||0;
-    teamScorer[s.player_id].strafmin+=s.strafminuten||0;
+    teamScorer[s.player_id].strafmin+=s.penalty_minutes||0;
     teamScorer[s.player_id].spiele++;
   });
-  const sorted=Object.values(teamScorer).sort((a,b)=>(b.tore+b.assists)-(a.tore+a.assists));
+  const sorted=Object.values(teamScorer).sort((a,b)=>(b.goals+b.assists)-(a.goals+a.assists));
   document.getElementById('scorer-list').innerHTML=sorted.length===0?
     '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Keine Scorer-Daten</td></tr>':
     sorted.map((d,i)=>`<tr onclick="location.href='spieler.html?id=${players.find(p=>p.id===Object.keys(teamScorer)[i])?.id||''}'">
-      <td><strong>${d.player?.vorname||''} ${d.player?.nachname||''}</strong><div style="font-size:11px;color:var(--text3)">#${d.player?.nummer||'–'}</div></td>
-      <td class="r" style="color:var(--amber)">${d.tore}</td>
+      <td><strong>${d.player?.first_name||''} ${d.player?.last_name||''}</strong><div style="font-size:11px;color:var(--text3)">#${d.player?.jersey_number||'–'}</div></td>
+      <td class="r" style="color:var(--amber)">${d.goals}</td>
       <td class="r" style="color:var(--blue)">${d.assists}</td>
-      <td class="r"><strong>${d.tore+d.assists}</strong></td>
+      <td class="r"><strong>${d.goals+d.assists}</strong></td>
       <td class="r" style="color:var(--text3)">${d.strafmin}'</td>
     </tr>`).join('');
 }

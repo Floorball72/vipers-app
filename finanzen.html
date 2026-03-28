@@ -33,19 +33,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 .content{padding:20px 28px}
 
 /* ── Konten-Tabs ── */
-.konto-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border)}
-.konto-tab{display:flex;align-items:center;gap:8px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;white-space:nowrap}
-.konto-tab:hover{color:var(--text)}
-.konto-tab.active{color:var(--text);border-bottom-color:var(--accent)}
-.konto-tab-dot{width:8px;height:8px;border-radius:50%}
-.konto-tab-saldo{font-family:"DM Mono",monospace;font-size:11px;padding:1px 7px;border-radius:20px;margin-left:2px}
-.konto-tab-saldo.pos{background:rgba(77,214,140,.12);color:var(--green)}
-.konto-tab-saldo.neg{background:rgba(255,107,107,.1);color:var(--red)}
-.konto-tab-saldo.neu{background:var(--bg3);color:var(--text3);cursor:pointer}
-.konto-tab-saldo.neu:hover{border-color:var(--accent);color:var(--accent)}
+.account-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.account-tab{display:flex;align-items:center;gap:8px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;white-space:nowrap}
+.account-tab:hover{color:var(--text)}
+.account-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.account-tab-dot{width:8px;height:8px;border-radius:50%}
+.account-tab-saldo{font-family:"DM Mono",monospace;font-size:11px;padding:1px 7px;border-radius:20px;margin-left:2px}
+.account-tab-saldo.pos{background:rgba(77,214,140,.12);color:var(--green)}
+.account-tab-saldo.neg{background:rgba(255,107,107,.1);color:var(--red)}
+.account-tab-saldo.neu{background:var(--bg3);color:var(--text3);cursor:pointer}
+.account-tab-saldo.neu:hover{border-color:var(--accent);color:var(--accent)}
 
 /* ── Konto-Header ── */
-.konto-header{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.account-header{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
 .stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
 .stat-val{font-family:"DM Mono",monospace;font-size:24px;font-weight:400}
@@ -86,9 +86,9 @@ tr:hover .row-actions{opacity:1}
 .kat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .kat-bar-bg{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
 .kat-bar{height:100%;border-radius:2px;transition:width .4s}
-.konto-uebersicht-row{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .12s}
-.konto-uebersicht-row:last-child{border-bottom:none}
-.konto-uebersicht-row:hover{background:rgba(255,255,255,.02)}
+.account-uebersicht-row{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .12s}
+.account-uebersicht-row:last-child{border-bottom:none}
+.account-uebersicht-row:hover{background:rgba(255,255,255,.02)}
 
 /* ── Modals ── */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
@@ -113,7 +113,7 @@ let db = null, CLUB_ID = "uhc-jonschwil";
 let buchungen = [], konten = [], filterTyp = "all", activeKonto = "__alle__", belegUrl = null;
 
 // ── Vordefinierte Konten (erweiterbar) ──
-// "konto" Feld in finanzen-Tabelle speichert den Kontonamen
+// "account" Feld in finanzen-Tabelle speichert den Kontonamen
 // Wird aus buchungen dynamisch ergänzt
 
 const KONTO_COLORS = [
@@ -128,14 +128,13 @@ async function initDB() {
 }
 
 async function loadAll() {
-  const { data } = await db.from("finanzen").select("*").order("datum", { ascending: false });
+  const { data } = await db.from("finance").select("*").order("date", { ascending: false });
   buchungen = data || [];
   // Konten aus buchungen ableiten — "Allgemein" immer vorhanden
-  const namen = [...new Set(["Allgemein", ...buchungen.map(b => b.konto || "Allgemein")])].sort((a,b)=>a==="Allgemein"?-1:b==="Allgemein"?1:a.localeCompare(b));
+  const namen = [...new Set(["Allgemein", ...buchungen.map(b => b.account || "Allgemein")])].sort((a,b)=>a==="Allgemein"?-1:b==="Allgemein"?1:a.localeCompare(b));
   konten = namen.map((n, i) => ({
     name: n,
-    color: KONTO_COLORS[i % KONTO_COLORS.length],
-  }));
+    color: KONTO_COLORS[i % KONTO_COLORS.length]}));
   renderTabs();
   render();
 }
@@ -146,15 +145,15 @@ function CHF(n) {
 
 function getBuchungen(konto, typ) {
   let b = buchungen;
-  if (konto && konto !== "__alle__") b = b.filter(x => (x.konto || "Allgemein") === konto);
-  if (typ && typ !== "all") b = b.filter(x => x.typ === typ);
+  if (konto && konto !== "__alle__") b = b.filter(x => (x.account || "Allgemein") === konto);
+  if (typ && typ !== "all") b = b.filter(x => x.type === typ);
   return b;
 }
 
 function getSaldo(konto) {
   const b = getBuchungen(konto);
-  const ein = b.filter(x => x.typ === "einnahme").reduce((s, x) => s + parseFloat(x.betrag), 0);
-  const aus = b.filter(x => x.typ === "ausgabe").reduce((s, x) => s + parseFloat(x.betrag), 0);
+  const ein = b.filter(x => x.type === "income").reduce((s, x) => s + parseFloat(x.amount), 0);
+  const aus = b.filter(x => x.type === "expense").reduce((s, x) => s + parseFloat(x.amount), 0);
   return ein - aus;
 }
 
@@ -191,18 +190,18 @@ function renderTabs() {
 function setKonto(name) {
   activeKonto = name;
   filterTyp = "all";
-  document.querySelectorAll(".filter-pill").forEach(p => p.classList.toggle("active", p.dataset.typ === "all"));
+  document.querySelectorAll(".filter-pill").forEach(p => p.classList.toggle("active", p.dataset.type === "all"));
   renderTabs();
   render();
 }
 
 async function deleteKonto(name) {
   if (name === "Allgemein") { alert("Das Allgemein-Konto kann nicht gelöscht werden."); return; }
-  const buchungenImKonto = buchungen.filter(b => (b.konto || "Allgemein") === name);
+  const buchungenImKonto = buchungen.filter(b => (b.account || "Allgemein") === name);
   if (buchungenImKonto.length > 0) {
     if (!confirm("Das Konto "" + name + "" hat " + buchungenImKonto.length + " Buchungen. Diese werden auf 'Allgemein' verschoben. Fortfahren?")) return;
     // Buchungen auf Allgemein verschieben
-    await Promise.all(buchungenImKonto.map(b => db.from("finanzen").update({ konto: "Allgemein" }).eq("id", b.id)));
+    await Promise.all(buchungenImKonto.map(b => db.from("finance").update({ account: "Allgemein" }).eq("id", b.id)));
   } else {
     if (!confirm('Konto "' + name + '" löschen?')) return;
   }
@@ -216,8 +215,8 @@ function render() {
   const kObj = isGesamt ? null : konten.find(k => k.name === activeKonto);
   const filtered = getBuchungen(kName, filterTyp);
   const allInKonto = getBuchungen(kName);
-  const ein = allInKonto.filter(b => b.typ === "einnahme").reduce((s, b) => s + parseFloat(b.betrag), 0);
-  const aus = allInKonto.filter(b => b.typ === "ausgabe").reduce((s, b) => s + parseFloat(b.betrag), 0);
+  const ein = allInKonto.filter(b => b.type === "income").reduce((s, b) => s + parseFloat(b.amount), 0);
+  const aus = allInKonto.filter(b => b.type === "expense").reduce((s, b) => s + parseFloat(b.amount), 0);
   const saldo = ein - aus;
 
   // Topbar
@@ -237,19 +236,19 @@ function render() {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">Keine Buchungen in diesem Konto</td></tr>`;
   } else {
     tbody.innerHTML = filtered.map(b => {
-      const d = new Date(b.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "2-digit" });
-      const plus = b.typ === "einnahme";
-      const konto = b.konto || "Allgemein";
+      const d = new Date(b.date + "T12:00:00").toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "2-digit" });
+      const plus = b.type === "income";
+      const konto = b.account || "Allgemein";
       const kObj2 = konten.find(k => k.name === konto);
       return `<tr>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${d}</td>
         <td><span class="badge-${plus ? "ein" : "aus"}">${plus ? "Einnahme" : "Ausgabe"}</span></td>
-        <td style="font-weight:500">${b.beschreibung || "–"}</td>
-        <td style="font-size:12px;color:var(--text2)">${b.kategorie || "–"}</td>
+        <td style="font-weight:500">${b.description || "–"}</td>
+        <td style="font-size:12px;color:var(--text2)">${b.category || "–"}</td>
         ${isGesamt ? `<td><span style="font-size:11px;padding:1px 7px;border-radius:20px;background:${kObj2?.color || "var(--border2)"}22;color:${kObj2?.color || "var(--text3)"};">${konto}</span></td>` : "<td></td>"}
-        <td class="r ${plus ? "amt-plus" : "amt-minus"}">${plus ? "+" : "–"}${CHF(b.betrag)}</td>
+        <td class="r ${plus ? "amt-plus" : "amt-minus"}">${plus ? "+" : "–"}${CHF(b.amount)}</td>
         <td><div class="row-actions">
-          ${b.beleg_url ? `<a href="${b.beleg_url}" target="_blank" class="icon-btn" title="Beleg"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3H3v10h10V10M10 2h4v4M14 2L8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>` : ""}
+          ${b.receipt_url ? `<a href="${b.receipt_url}" target="_blank" class="icon-btn" title="Beleg"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3H3v10h10V10M10 2h4v4M14 2L8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>` : ""}
           <button class="icon-btn del" onclick="deleteBuchung('${b.id}')" title="Löschen"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 5h10M6 5V3h4v2M6 8v4M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
         </div></td>
       </tr>`;
@@ -283,9 +282,9 @@ function render() {
 }
 
 function renderKategorien(konto) {
-  const b = getBuchungen(konto).filter(x => x.typ === "ausgabe");
+  const b = getBuchungen(konto).filter(x => x.type === "expense");
   const cats = {};
-  b.forEach(x => { const k = x.kategorie || "Sonstiges"; cats[k] = (cats[k] || 0) + parseFloat(x.betrag); });
+  b.forEach(x => { const k = x.category || "Sonstiges"; cats[k] = (cats[k] || 0) + parseFloat(x.amount); });
   const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
   const max = sorted[0]?.[1] || 1;
   const COLORS = ["var(--red)","var(--amber)","var(--purple)","var(--blue)","var(--green)"];
@@ -312,7 +311,7 @@ function setFilter(typ, el) {
 function openModal(typ) {
   belegUrl = null;
   const kName = activeKonto === "__alle__" ? (konten[0]?.name || "Allgemein") : activeKonto;
-  document.getElementById("bf-typ").value = typ || "ausgabe";
+  document.getElementById("bf-typ").value = typ || "expense";
   document.getElementById("bf-betrag").value = "";
   document.getElementById("bf-beschreibung").value = "";
   document.getElementById("bf-datum").value = new Date().toISOString().split("T")[0];
@@ -338,17 +337,14 @@ async function saveBuchung() {
   if (!betrag || betrag <= 0) { alert("Bitte gültigen Betrag eingeben."); return; }
   const datum = document.getElementById("bf-datum").value;
   if (!datum) { alert("Bitte Datum eingeben."); return; }
-  const data = {
-    club_id: CLUB_ID,
-    typ: document.getElementById("bf-typ").value,
+  const data = {type: document.getElementById("bf-typ").value,
     betrag,
-    beschreibung: document.getElementById("bf-beschreibung").value || null,
-    kategorie: document.getElementById("bf-kategorie").value || null,
-    konto: document.getElementById("bf-konto").value || "Allgemein",
+    description: document.getElementById("bf-beschreibung").value || null,
+    category: document.getElementById("bf-kategorie").value || null,
+    account: document.getElementById("bf-konto").value || "Allgemein",
     datum,
-    beleg_url: belegUrl || null,
-  };
-  const { error } = await db.from("finanzen").insert([data]);
+    receipt_url: belegUrl || null};
+  const { error } = await db.from("finance").insert([data]);
   if (error) { alert("Fehler beim Speichern: " + error.message); return; }
   closeModal();
   await loadAll();
@@ -356,7 +352,7 @@ async function saveBuchung() {
 
 async function deleteBuchung(id) {
   if (!confirm("Buchung wirklich löschen?")) return;
-  await db.from("finanzen").delete().eq("id", id);
+  await db.from("finance").delete().eq("id", id);
   await loadAll();
 }
 
@@ -383,7 +379,7 @@ async function saveNeuesKonto() {
   activeKonto = name;
   renderTabs();
   render();
-  openModal("ausgabe");
+  openModal("expense");
 }
 
 document.addEventListener("click", e => {
@@ -405,8 +401,8 @@ initDB().catch(e => {
         <div class="page-sub" id="page-sub">Vereinsplattform</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost" onclick="openModal('einnahme')">+ Einnahme</button>
-        <button class="btn btn-accent" onclick="openModal('ausgabe')">+ Ausgabe</button>
+        <button class="btn btn-ghost" onclick="openModal('income')">+ Einnahme</button>
+        <button class="btn btn-accent" onclick="openModal('expense')">+ Ausgabe</button>
       </div>
     </div>
     <div class="content">
@@ -442,8 +438,8 @@ initDB().catch(e => {
             <span class="card-title">Buchungen</span>
             <div class="filter-row">
               <button class="filter-pill active" data-typ="all" onclick="setFilter('all',this)">Alle</button>
-              <button class="filter-pill" data-typ="einnahme" onclick="setFilter('einnahme',this)">Einnahmen</button>
-              <button class="filter-pill" data-typ="ausgabe" onclick="setFilter('ausgabe',this)">Ausgaben</button>
+              <button class="filter-pill" data-typ="income" onclick="setFilter('income',this)">Einnahmen</button>
+              <button class="filter-pill" data-typ="expense" onclick="setFilter('expense',this)">Ausgaben</button>
             </div>
           </div>
           <div style="overflow-x:auto">
@@ -493,8 +489,8 @@ initDB().catch(e => {
       <div class="form-row-2">
         <div><label class="form-label">Typ</label>
           <select class="form-input" id="bf-typ">
-            <option value="ausgabe">Ausgabe</option>
-            <option value="einnahme">Einnahme</option>
+            <option value="expense">Ausgabe</option>
+            <option value="income">Einnahme</option>
           </select>
         </div>
         <div><label class="form-label">Betrag (CHF)</label>
@@ -559,7 +555,7 @@ document.addEventListener("DOMContentLoaded", () => {
     folder: "belege",
     onSuccess: (url) => {
       if (url) {
-        openModal("ausgabe");
+        openModal("expense");
         setTimeout(() => {
           belegUrl = url;
           UPLOAD.render("beleg-upload", { folder: "belege", existingUrl: url, onSuccess: (u) => { belegUrl = u; } });

@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { label: 'Spielplan',           href: 'spielplan.html',   icon: '<circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><polyline points="8,5.5 8,8 10,9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>', id: 'spielplan' },
   { label: 'Teams',               href: 'teams.html',        icon: '<circle cx="5" cy="6" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="6" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 13c0-2 1.8-3.5 4-3.5s4 1.5 4 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M9 13c0-2 1.8-3.5 4-3.5s2 1 2 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>', id: 'teams' },
   { label: 'Scorer',              href: 'scorer.html',      icon: '<line x1="4" y1="12" x2="4" y2="6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="12" x2="8" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="12" y1="12" x2="12" y2="8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>', id: 'scorer' },
-  { label: 'Kameraplanung',       href: 'kamera.html',      icon: '<rect x="1" y="5" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><polyline points="11,7.5 15,5.5 15,12.5 11,10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>', id: 'kamera' },
+  { label: 'Kameraplanung',       href: 'kamera.html',      icon: '<rect x="1" y="5" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><polyline points="11,7.5 15,5.5 15,12.5 11,10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>', id: 'camera' },
   { section: 'Team & Training' },
   { label: 'Training & Video',    href: 'training.html',    icon: '<rect x="2" y="3" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><polygon points="7,6.5 10.5,8.5 7,10.5" fill="currentColor"/>', id: 'training' },
   { label: 'Anwesenheit',         href: 'anwesenheit.html', icon: '<rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>', id: 'anwesenheit' },
@@ -26,13 +26,12 @@ const NAV_ITEMS = [
 const ROLE_HIDDEN = {
   admin:   [],
   trainer: ['finanzen','sponsoring','mitglieder','inventar'],
-  spieler: ['finanzen','sponsoring','mitglieder','inventar','kamera','anwesenheit','training'],
-  eltern:  ['finanzen','sponsoring','mitglieder','inventar','kamera','anwesenheit','training','scorer','social'],
-};
+  spieler: ['finanzen','sponsoring','mitglieder','inventar','camera','anwesenheit','training'],
+  eltern:  ['finanzen','sponsoring','mitglieder','inventar','camera','anwesenheit','training','scorer','social']};
 
 // Aktiver Verein — liest aus localStorage, Fallback auf ersten Verein
 function getActiveClub() {
-  if (typeof APP_CONFIG === 'undefined') return { club_id:'uhc-jonschwil', name:'UHC Jonschwil Vipers', short:'Vipers', primaryColor:'#d4f04a' };
+  if (typeof APP_CONFIG === 'undefined') return { name:'UHC Jonschwil Vipers', short:'Vipers', primaryColor:'#d4f04a' };
   return APP_CONFIG.ACTIVE_CLUB;
 }
 function setActiveClub(clubId) {
@@ -47,7 +46,7 @@ function renderNav(activeId) {
   var user = null;
   try { user = JSON.parse(localStorage.getItem('vipers_user') || 'null'); } catch(e) {}
   var club = getActiveClub();
-  var rolle = (user && user.rolle) ? user.rolle : 'admin';
+  var rolle = (user && user.role) ? user.role : 'admin';
   var hidden = ROLE_HIDDEN[rolle] || [];
   var clubs = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.CLUBS : [];
 
@@ -144,7 +143,7 @@ function renderNav(activeId) {
 
   var roleColor  = {admin: club.primaryColor||'#d4f04a', trainer:'#9b8fff', spieler:'#5bbfff', eltern:'#4dd68c'}[rolle] || '#888';
   var roleLabel  = {admin:'Admin', trainer:'Trainer', spieler:'Spieler', eltern:'Eltern'}[rolle] || rolle;
-  var initials   = user ? ((user.vorname||'?')[0]+(user.nachname||'?')[0]).toUpperCase() : '??';
+  var initials   = user ? ((user.first_name||'?')[0]+(user.last_name||'?')[0]).toUpperCase() : '??';
 
   // Nav Items
   var navHtml = '';
@@ -184,7 +183,7 @@ function renderNav(activeId) {
     footerHtml = '<div class="nav-user-box">'
       +'<div class="nav-user-row">'
       +'<div class="nav-avatar" style="background:'+roleColor+'22;color:'+roleColor+'">'+initials+'</div>'
-      +'<div style="flex:1;min-width:0"><div class="nav-uname">'+user.vorname+' '+user.nachname+'</div>'
+      +'<div style="flex:1;min-width:0"><div class="nav-uname">'+user.first_name+' '+user.last_name+'</div>'
       +'<div class="nav-urole" style="color:'+roleColor+'">'+roleLabel+'</div></div></div>'
       +'<div class="nav-btns">'
       +'<a href="profil.html" class="nav-btn">Profil</a>'

@@ -84,19 +84,19 @@ async function initDB(){
   db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
   CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
   currentUser=JSON.parse(localStorage.getItem("vipers_user")||"null");
-  currentRolle=currentUser?.rolle||"admin";
+  currentRolle=currentUser?.role||"admin";
   const[t,p,g,e,a]=await Promise.all([
-    db.from('teams').select("*").eq("aktiv",true).order("name"),
-    db.from('players').select("*").eq("aktiv",true).order("nachname"),
-    db.from('games').select("*,teams(name)").order("datum",{ascending:false}).limit(30),
-    db.from('events').select("*").order("datum",{ascending:false}).limit(20),
-    db.from('anwesenheit').select("*").order("created_at",{ascending:false}),
+    db.from('teams').select("*").eq("active",true).order("name"),
+    db.from('players').select("*").eq("active",true).order("last_name"),
+    db.from('games').select("*,teams(name)").order("date",{ascending:false}).limit(30),
+    db.from('events').select("*").order("date",{ascending:false}).limit(20),
+    db.from('attendance').select("*").order("created_at",{ascending:false}),
   ]);
   teams=t.data||[];players=p.data||[];games=g.data||[];events=e.data||[];anwesenheit=a.data||[];
   if(teams.length&&!selTeam)selTeam=teams[0].id;
   selDatum=new Date().toISOString().split("T")[0];
   buildControls();
-  if(currentRolle==="spieler")renderSpielersicht();
+  if(currentRolle==="player")renderSpielersicht();
   else render();
 }
 
@@ -112,18 +112,18 @@ function updateEventSelect(){
   const es=document.getElementById("sel-event");
   if(!es)return;
   selTyp=document.getElementById("sel-typ")?.value||"training";
-  if(selTyp==="spiel"){
+  if(selTyp==="game"){
     const teamGames=games.filter(g=>g.team_id===selTeam);
     es.innerHTML="<option value=''>-- Spiel waehlen --</option>"+teamGames.map(g=>{
-      const d=new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short",day:"numeric",month:"short"});
-      return "<option value='"+g.id+"'>"+d+" vs. "+g.gegner+"</option>";
+      const d=new Date(g.date+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short",day:"numeric",month:"short"});
+      return "<option value='"+g.id+"'>"+d+" vs. "+g.opponent+"</option>";
     }).join("");
     es.style.display="";
     document.getElementById("sel-datum").style.display="none";
   } else if(selTyp==="event"){
     es.innerHTML="<option value=''>-- Event waehlen --</option>"+events.map(ev=>{
-      const d=new Date(ev.datum+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
-      return "<option value='"+ev.id+"'>"+d+" "+ev.titel+"</option>";
+      const d=new Date(ev.date+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
+      return "<option value='"+ev.id+"'>"+d+" "+ev.title+"</option>";
     }).join("");
     es.style.display="";
     document.getElementById("sel-datum").style.display="none";
@@ -135,12 +135,12 @@ function updateEventSelect(){
 }
 
 function getContextDatum(){
-  if(selTyp==="spiel"){return games.find(g=>g.id===document.getElementById("sel-event")?.value)?.datum||selDatum;}
-  if(selTyp==="event"){return events.find(e=>e.id===document.getElementById("sel-event")?.value)?.datum||selDatum;}
+  if(selTyp==="game"){return games.find(g=>g.id===document.getElementById("sel-event")?.value)?.date||selDatum;}
+  if(selTyp==="event"){return events.find(e=>e.id===document.getElementById("sel-event")?.value)?.date||selDatum;}
   return document.getElementById("sel-datum")?.value||selDatum;
 }
 function getContextKey(){
-  if(selTyp==="spiel"){const gid=document.getElementById("sel-event")?.value;return gid||selDatum;}
+  if(selTyp==="game"){const gid=document.getElementById("sel-event")?.value;return gid||selDatum;}
   if(selTyp==="event"){const eid=document.getElementById("sel-event")?.value;return eid||selDatum;}
   return document.getElementById("sel-datum")?.value||selDatum;
 }
@@ -151,13 +151,13 @@ function render(){
   const key=getContextKey();
   // Hole Anwesenheiten für dieses Datum/Spiel/Event
   const relevant=anwesenheit.filter(a=>{
-    if(selTyp==="spiel")return a.game_id===key&&a.typ==="spiel";
-    if(selTyp==="event")return a.event_id===key&&a.typ==="event";
-    return a.training_datum===key&&a.typ==="training";
+    if(selTyp==="game")return a.game_id===key&&a.type==="game";
+    if(selTyp==="event")return a.event_id===key&&a.type==="event";
+    return a.training_date===key&&a.type==="training";
   });
-  const anw=relevant.filter(a=>a.status==="anwesend").length;
-  const abs=relevant.filter(a=>a.status==="abwesend").length;
-  const ent=relevant.filter(a=>a.status==="entschuldigt").length;
+  const anw=relevant.filter(a=>a.status==="present").length;
+  const abs=relevant.filter(a=>a.status==="absent").length;
+  const ent=relevant.filter(a=>a.status==="excused").length;
   const off=teamPlayers.length-anw-abs-ent;
   document.getElementById("s-anwesend").textContent=anw;
   document.getElementById("s-abwesend").textContent=abs;
@@ -165,8 +165,8 @@ function render(){
   document.getElementById("s-offen").textContent=Math.max(0,off);
   // Context anzeigen
   let ctxTitle="Training",ctxMeta="";
-  if(selTyp==="spiel"){const g=games.find(x=>x.id===key);ctxTitle=g?"vs. "+g.gegner+" (Spiel)":"Spiel";ctxMeta=g?new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long"})+" "+( g.anstoss?.slice(0,5)):""}
-  else if(selTyp==="event"){const ev=events.find(x=>x.id===key);ctxTitle=ev?ev.titel+" (Event)":"Event";ctxMeta=ev?new Date(ev.datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long"}):""}
+  if(selTyp==="game"){const g=games.find(x=>x.id===key);ctxTitle=g?"vs. "+g.opponent+" (Spiel)":"Spiel";ctxMeta=g?new Date(g.date+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long"})+" "+( g.kickoff?.slice(0,5)):""}
+  else if(selTyp==="event"){const ev=events.find(x=>x.id===key);ctxTitle=ev?ev.title+" (Event)":"Event";ctxMeta=ev?new Date(ev.date+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long"}):""}
   else{ctxTitle="Training";ctxMeta=new Date(datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
   document.getElementById("ctx-title").textContent=ctxTitle;
   document.getElementById("ctx-meta").textContent=ctxMeta+" · "+teamPlayers.length+" Spieler";
@@ -176,10 +176,10 @@ function render(){
   const allAtt=anwesenheit.filter(a=>teamPlayers.find(p=>p.id===a.player_id));
   tbody.innerHTML=teamPlayers.map(p=>{
     const rec=relevant.find(a=>a.player_id===p.id);
-    const st=rec?.status||"offen";
+    const st=rec?.status||"open";
     const pAll=allAtt.filter(a=>a.player_id===p.id);
-    const pct=pAll.length?Math.round(pAll.filter(a=>a.status==="anwesend").length/pAll.length*100):null;
-    return "<tr><td><div style='font-weight:500'>"+p.vorname+" "+p.nachname+"</div>"
+    const pct=pAll.length?Math.round(pAll.filter(a=>a.status==="present").length/pAll.length*100):null;
+    return "<tr><td><div style='font-weight:500'>"+p.first_name+" "+p.last_name+"</div>"
       +(pct!==null?"<div class='bar-bg'><div class='bar-fill' style='width:"+pct+"%'></div></div><div style='font-size:10px;color:var(--text3)'>"+pct+"% Anwesenheitsquote</div>":"")
       +"</td>"
       +"<td style='text-align:center'><button class='att-btn att-"+st+"' onclick='toggleAtt(\""+p.id+"\",\""+key+"\",\""+st+"\")'>"+{anwesend:"✓ Anwesend",abwesend:"✗ Abwesend",entschuldigt:"E Entschuldigt",offen:"? Offen"}[st]+"</button></td>"
@@ -189,23 +189,23 @@ function render(){
 }
 
 async function toggleAtt(playerId,key,currentStatus){
-  const order=["offen","anwesend","abwesend","entschuldigt"];
+  const order=["open","present","absent","excused"];
   const next=order[(order.indexOf(currentStatus)+1)%order.length];
   const datum=getContextDatum();
-  let insertData={club_id:CLUB_ID,player_id:playerId,team_id:selTeam,typ:selTyp,status:next};
-  if(selTyp==="spiel")insertData.game_id=key;
+  let insertData={player_id:playerId,team_id:selTeam,type:selTyp,status:next};
+  if(selTyp==="game")insertData.game_id=key;
   else if(selTyp==="event")insertData.event_id=key;
-  else insertData.training_datum=key;
+  else insertData.training_date=key;
   const existing=anwesenheit.find(a=>{
-    if(selTyp==="spiel")return a.player_id===playerId&&a.game_id===key;
+    if(selTyp==="game")return a.player_id===playerId&&a.game_id===key;
     if(selTyp==="event")return a.player_id===playerId&&a.event_id===key;
-    return a.player_id===playerId&&a.training_datum===key&&a.typ==="training";
+    return a.player_id===playerId&&a.training_date===key&&a.type==="training";
   });
   if(existing){
-    await db.from("anwesenheit").update({status:next}).eq("id",existing.id);
+    await db.from("attendance").update({status:next}).eq("id",existing.id);
     existing.status=next;
   } else {
-    const{data}=await db.from("anwesenheit").insert([insertData]).select().single();
+    const{data}=await db.from("attendance").insert([insertData]).select().single();
     if(data)anwesenheit.push(data);
   }
   render();
@@ -220,28 +220,28 @@ function renderSpielersicht(){
   const myPlayerId=players.find(p=>p.user_id===currentUser?.id)?.id;
   // Kommende Spiele und Trainings
   const today=new Date().toISOString().split("T")[0];
-  const upcoming=games.filter(g=>g.datum>=today).slice(0,8);
-  const evts=events.filter(e=>e.datum>=today).slice(0,5);
+  const upcoming=games.filter(g=>g.date>=today).slice(0,8);
+  const evts=events.filter(e=>e.date>=today).slice(0,5);
   const cont=document.getElementById("spieler-events");
   let html="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:14px 18px 8px'>Kommende Spiele & Events</div>";
-  [...upcoming,...evts].sort((a,b)=>a.datum>b.datum?1:-1).slice(0,10).forEach(item=>{
-    const isGame=!!item.gegner;
-    const d=new Date(item.datum+"T12:00:00");
+  [...upcoming,...evts].sort((a,b)=>a.date>b.date?1:-1).slice(0,10).forEach(item=>{
+    const isGame=!!item.opponent;
+    const d=new Date(item.date+"T12:00:00");
     const myAtt=anwesenheit.find(a=>a.player_id===myPlayerId&&(isGame?a.game_id===item.id:a.event_id===item.id));
-    const st=myAtt?.status||"offen";
+    const st=myAtt?.status||"open";
     // Teilnehmeranzahl
-    const anwCount=anwesenheit.filter(a=>(isGame?a.game_id===item.id:a.event_id===item.id)&&a.status==="anwesend").length;
+    const anwCount=anwesenheit.filter(a=>(isGame?a.game_id===item.id:a.event_id===item.id)&&a.status==="present").length;
     html+="<div class='event-list-item'>"
       +"<div class='event-date-box'><div class='event-date-day'>"+d.getDate()+"</div><div class='event-date-mon'>"+MONATE[d.getMonth()]+"</div></div>"
       +"<div class='event-info'>"
-      +"<div class='event-name'>"+(isGame?"vs. "+item.gegner:item.titel)+"</div>"
-      +"<div class='event-meta2'>"+(item.teams?.name?.replace("UHC Jonschwil ","")||"")+(isGame?" · "+(item.heimspiel?"Heimspiel":"Auswaerts"):"")+(item.anstoss?" · "+item.anstoss.slice(0,5):"")+"</div>"
+      +"<div class='event-name'>"+(isGame?"vs. "+item.opponent:item.title)+"</div>"
+      +"<div class='event-meta2'>"+(item.teams?.name?.replace("UHC Jonschwil ","")||"")+(isGame?" · "+(item.home_game?"Heimspiel":"Auswaerts"):"")+(item.kickoff?" · "+item.kickoff.slice(0,5):"")+"</div>"
       +"<div class='event-participants'>"+anwCount+" Angemeldete</div>"
       +"</div>"
       +(myPlayerId?"<div style='display:flex;gap:6px'>"
-        +"<button class='att-btn "+(st==="anwesend"?"att-anwesend":"att-offen")+"' onclick='myToggle(\""+item.id+"\",\""+( isGame?"spiel":"event")+"\",\"anwesend\",\""+( isGame?item.team_id:"")+"\")'>"+(st==="anwesend"?"✓ Dabei":"Dabei")+
+        +"<button class='att-btn "+(st==="present"?"att-anwesend":"att-offen")+"' onclick='myToggle(\""+item.id+"\",\""+( isGame?"game":"event")+"\",\"anwesend\",\""+( isGame?item.team_id:"")+"\")'>"+(st==="present"?"✓ Dabei":"Dabei")+
         "</button>"
-        +"<button class='att-btn "+(st==="abwesend"?"att-abwesend":"att-offen")+"' onclick='myToggle(\""+item.id+"\",\""+( isGame?"spiel":"event")+"\",\"abwesend\",\""+( isGame?item.team_id:"")+"\")'>"+(st==="abwesend"?"✗ Fehle":"Fehle")+
+        +"<button class='att-btn "+(st==="absent"?"att-abwesend":"att-offen")+"' onclick='myToggle(\""+item.id+"\",\""+( isGame?"game":"event")+"\",\"abwesend\",\""+( isGame?item.team_id:"")+"\")'>"+(st==="absent"?"✗ Fehle":"Fehle")+
         "</button></div>":"<span style='font-size:12px;color:var(--text3)'>Kein Spielerprofil</span>")
       +"</div>";
   });
@@ -251,15 +251,15 @@ function renderSpielersicht(){
 async function myToggle(itemId,typ,newStatus,teamId){
   const myPlayerId=players.find(p=>p.user_id===currentUser?.id)?.id;
   if(!myPlayerId)return;
-  const existing=anwesenheit.find(a=>a.player_id===myPlayerId&&(typ==="spiel"?a.game_id===itemId:a.event_id===itemId));
-  const insertData={club_id:CLUB_ID,player_id:myPlayerId,typ,status:newStatus,team_id:teamId||null};
-  if(typ==="spiel")insertData.game_id=itemId;else insertData.event_id=itemId;
+  const existing=anwesenheit.find(a=>a.player_id===myPlayerId&&(typ==="game"?a.game_id===itemId:a.event_id===itemId));
+  const insertData={player_id:myPlayerId,typ,status:newStatus,team_id:teamId||null};
+  if(typ==="game")insertData.game_id=itemId;else insertData.event_id=itemId;
   if(existing){
-    const ns=existing.status===newStatus?"offen":newStatus;
-    await db.from("anwesenheit").update({status:ns}).eq("id",existing.id);
+    const ns=existing.status===newStatus?"open":newStatus;
+    await db.from("attendance").update({status:ns}).eq("id",existing.id);
     existing.status=ns;
   } else {
-    const{data}=await db.from("anwesenheit").insert([insertData]).select().single();
+    const{data}=await db.from("attendance").insert([insertData]).select().single();
     if(data)anwesenheit.push(data);
   }
   renderSpielersicht();
@@ -286,7 +286,7 @@ initDB().catch(e=>{console.error(e);const el=document.getElementById("main-conte
           <div class="ctrl-label" style="margin-bottom:4px">Typ</div>
           <select class="ctrl-select" id="sel-typ" onchange="updateEventSelect();render()">
             <option value="training">Training</option>
-            <option value="spiel">Spiel</option>
+            <option value="game">Spiel</option>
             <option value="event">Event</option>
           </select>
         </div>

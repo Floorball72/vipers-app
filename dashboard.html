@@ -81,24 +81,24 @@ async function initDB(){
 async function loadDashboard(){
   const today=new Date().toISOString().split('T')[0];
   const[teams,games,events,players,finanzen,scorer]=await Promise.all([
-    db.from('teams').select('id').eq('aktiv',true),
-    db.from('games').select('id,datum,anstoss,gegner,heimspiel,resultat_heim,resultat_gast,teams(name)').order('datum'),
-    db.from('events').select('id,datum,titel,typ').gte('datum',today).order('datum').limit(5),
-    db.from('players').select('id').eq('aktiv',true),
-    db.from('finanzen').select('typ,betrag'),
-    db.from('scorer').select('tore').order('tore',{ascending:false}).limit(1),
+    db.from('teams').select('id').eq('active',true),
+    db.from('games').select('id,datum,anstoss,gegner,heimspiel,resultat_heim,resultat_gast,teams(name)').order('date'),
+    db.from('events').select('id,datum,titel,typ').gte('date',today).order('date').limit(5),
+    db.from('players').select('id').eq('active',true),
+    db.from('finance').select('typ,betrag'),
+    db.from('scorer').select('goals').order('goals',{ascending:false}).limit(1),
   ]);
 
   const t=teams.data||[],g=games.data||[],e=events.data||[],p=players.data||[],f=finanzen.data||[];
-  const upcoming=g.filter(x=>x.datum>=today);
-  const past=g.filter(x=>x.datum<today&&x.resultat_heim!=null);
+  const upcoming=g.filter(x=>x.date>=today);
+  const past=g.filter(x=>x.date<today&&x.score_home!=null);
 
   // Stats
   document.getElementById('stat-teams').textContent=t.length;
   document.getElementById('stat-spieler').textContent=p.length;
   document.getElementById('stat-spiele').textContent=upcoming.length;
-  const ein=f.filter(x=>x.typ==='einnahme').reduce((s,x)=>s+parseFloat(x.betrag),0);
-  const aus=f.filter(x=>x.typ==='ausgabe').reduce((s,x)=>s+parseFloat(x.betrag),0);
+  const ein=f.filter(x=>x.type==='income').reduce((s,x)=>s+parseFloat(x.amount),0);
+  const aus=f.filter(x=>x.type==='expense').reduce((s,x)=>s+parseFloat(x.amount),0);
   const saldo=ein-aus;
   document.getElementById('stat-saldo').textContent='CHF '+(saldo>=0?'+':'')+saldo.toFixed(0);
   document.getElementById('stat-saldo').style.color=saldo>=0?'var(--green)':'var(--red)';
@@ -106,11 +106,11 @@ async function loadDashboard(){
   // Nächstes Spiel
   const next=upcoming[0];
   if(next){
-    const d=new Date(next.datum+'T'+next.anstoss);
+    const d=new Date(next.date+'T'+next.kickoff);
     const diff=Math.ceil((d-new Date())/(1000*60*60*24));
-    document.getElementById('next-game-title').textContent=(next.heimspiel?'vs. ':'@ ')+next.gegner;
+    document.getElementById('next-game-title').textContent=(next.home_game?'vs. ':'@ ')+next.opponent;
     document.getElementById('next-game-team').textContent=next.teams?.name||'';
-    document.getElementById('next-game-date').textContent=d.toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'})+', '+next.anstoss?.slice(0,5)+' Uhr';
+    document.getElementById('next-game-date').textContent=d.toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'})+', '+next.kickoff?.slice(0,5)+' Uhr';
     document.getElementById('next-countdown').textContent=diff<=0?'Heute!':diff===1?'Morgen':diff+' Tage';
   } else {
     document.getElementById('next-game-wrap').innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Kein Spiel geplant</div>';
@@ -133,12 +133,12 @@ async function loadDashboard(){
   document.getElementById('results-list').innerHTML=recentResults.length===0?
     '<div class="list-row" style="color:var(--text3)">Noch keine Resultate</div>':
     recentResults.map(g=>{
-      const won=g.heimspiel?(g.resultat_heim>g.resultat_gast):(g.resultat_gast>g.resultat_heim);
-      const d=new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
+      const won=g.home_game?(g.score_home>g.score_away):(g.score_away>g.score_home);
+      const d=new Date(g.date+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
       return `<div class="list-row">
         <div class="list-dot" style="background:${won?'var(--green)':'var(--red)'}"></div>
-        <div class="list-label">${g.heimspiel?'vs. ':'@ '}${g.gegner}</div>
-        <div style="font-family:'DM Mono',monospace;font-size:12px;color:${won?'var(--green)':'var(--red)'}">${g.resultat_heim}:${g.resultat_gast}</div>
+        <div class="list-label">${g.home_game?'vs. ':'@ '}${g.opponent}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:${won?'var(--green)':'var(--red)'}">${g.score_home}:${g.score_away}</div>
         <div class="list-val">${d}</div>
       </div>`;
     }).join('');
@@ -147,11 +147,11 @@ async function loadDashboard(){
   document.getElementById('events-list').innerHTML=e.length===0?
     '<div class="list-row" style="color:var(--text3)">Keine Events geplant</div>':
     e.slice(0,4).map(ev=>{
-      const d=new Date(ev.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
+      const d=new Date(ev.date+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
       const colors={cup:'var(--amber)',turnier:'var(--purple)',gv:'var(--blue)',event:'var(--green)',training:'var(--accent)'};
       return `<div class="list-row">
-        <div class="list-dot" style="background:${colors[ev.typ]||'var(--green)'}"></div>
-        <div class="list-label">${ev.titel}</div>
+        <div class="list-dot" style="background:${colors[ev.type]||'var(--green)'}"></div>
+        <div class="list-label">${ev.title}</div>
         <div class="list-val">${d}</div>
       </div>`;
     }).join('');
