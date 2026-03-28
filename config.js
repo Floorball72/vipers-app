@@ -1,7 +1,7 @@
 // config.js — Stackflow Vereinsplattform
 const APP_CONFIG = {
-  SUPABASE_URL:      'https://kpskzbqrfvihxfynwvpv.supabase.co',
-  SUPABASE_ANON_KEY: 'sb_publishable_eyDYEuo2aQKLLWX_0c8n-g_AttYd0La',
+  SUPABASE_URL:      'https://codalrrehqlwygzewxiy.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_dF2IJ0Ai2xBmUABkaP5_YQ_W1KkzF-5',
   APP_URL:           'https://vipers-app.vercel.app',
   SWISS_UH_API_KEY:  '',
 
