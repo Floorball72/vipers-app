@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+a{text-decoration:none}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:20px 28px;border-bottom:1px solid var(--border)}
+.greeting{font-family:'Syne',sans-serif;font-size:24px;font-weight:700}
+.greeting-sub{font-size:13px;color:var(--text3);margin-top:4px}
+.content{padding:24px 28px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;text-decoration:none;display:block;transition:border-color .15s}
+.stat:hover{border-color:var(--border2)}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.stat-val{font-family:'DM Mono',monospace;font-size:28px;font-weight:400}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600}
+.card-link{font-size:11px;color:var(--text3);text-decoration:none;transition:color .12s}
+.card-link:hover{color:var(--accent)}
+.card-body{padding:14px 18px}
+.list-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.list-row:last-child{border-bottom:none}
+.list-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.list-label{flex:1;color:var(--text2)}
+.list-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)}
+.next-game{background:linear-gradient(135deg,rgba(212,240,74,.06) 0%,transparent 60%);border-color:rgba(212,240,74,.2)}
+.next-game-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px}
+.next-game-meta{font-size:12px;color:var(--text2);margin-bottom:12px}
+.countdown{font-family:'DM Mono',monospace;font-size:32px;color:var(--accent)}
+.countdown-label{font-size:11px;color:var(--text3);margin-top:2px}
+.post-alert{background:rgba(255,190,71,.06);border:1px solid rgba(255,190,71,.2);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.post-alert-icon{width:32px;height:32px;border-radius:8px;background:rgba(255,190,71,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.post-alert-title{font-size:13px;font-weight:500;color:var(--amber)}
+.post-alert-sub{font-size:11px;color:var(--text3)}
+.module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.module-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;text-decoration:none;display:block;transition:all .15s}
+.module-btn:hover{border-color:var(--border2);background:rgba(255,255,255,.03)}
+.module-btn-title{font-size:12px;font-weight:500;color:var(--text);margin-top:8px}
+.module-btn-sub{font-size:11px;color:var(--text3);margin-top:2px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+// Config aus config.js
+const CONFIG = APP_CONFIG;
+let db=null,CLUB_ID="uhc-jonschwil";
+
+async function initDB(){
+  const mod=await import('https://esm.sh/@supabase/supabase-js@2.39.0');
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  await loadDashboard();
+}
+
+async function loadDashboard(){
+  const today=new Date().toISOString().split('T')[0];
+  const[teams,games,events,players,finanzen,scorer]=await Promise.all([
+    db.from('teams').select('id').eq('aktiv',true),
+    db.from('games').select('id,datum,anstoss,gegner,heimspiel,resultat_heim,resultat_gast,teams(name)').order('datum'),
+    db.from('events').select('id,datum,titel,typ').gte('datum',today).order('datum').limit(5),
+    db.from('players').select('id').eq('aktiv',true),
+    db.from('finanzen').select('typ,betrag'),
+    db.from('scorer').select('tore').order('tore',{ascending:false}).limit(1),
+  ]);
+
+  const t=teams.data||[],g=games.data||[],e=events.data||[],p=players.data||[],f=finanzen.data||[];
+  const upcoming=g.filter(x=>x.datum>=today);
+  const past=g.filter(x=>x.datum<today&&x.resultat_heim!=null);
+
+  // Stats
+  document.getElementById('stat-teams').textContent=t.length;
+  document.getElementById('stat-spieler').textContent=p.length;
+  document.getElementById('stat-spiele').textContent=upcoming.length;
+  const ein=f.filter(x=>x.typ==='einnahme').reduce((s,x)=>s+parseFloat(x.betrag),0);
+  const aus=f.filter(x=>x.typ==='ausgabe').reduce((s,x)=>s+parseFloat(x.betrag),0);
+  const saldo=ein-aus;
+  document.getElementById('stat-saldo').textContent='CHF '+(saldo>=0?'+':'')+saldo.toFixed(0);
+  document.getElementById('stat-saldo').style.color=saldo>=0?'var(--green)':'var(--red)';
+
+  // Nächstes Spiel
+  const next=upcoming[0];
+  if(next){
+    const d=new Date(next.datum+'T'+next.anstoss);
+    const diff=Math.ceil((d-new Date())/(1000*60*60*24));
+    document.getElementById('next-game-title').textContent=(next.heimspiel?'vs. ':'@ ')+next.gegner;
+    document.getElementById('next-game-team').textContent=next.teams?.name||'';
+    document.getElementById('next-game-date').textContent=d.toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'})+', '+next.anstoss?.slice(0,5)+' Uhr';
+    document.getElementById('next-countdown').textContent=diff<=0?'Heute!':diff===1?'Morgen':diff+' Tage';
+  } else {
+    document.getElementById('next-game-wrap').innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Kein Spiel geplant</div>';
+  }
+
+  // Post-Alert: Freitag oder Mittwoch diese Woche
+  const dow=new Date().getDay();
+  const daysToFri=dow<=5?(5-dow):(7-(dow-5));
+  const alertEl=document.getElementById('post-alert');
+  if(daysToFri===0){
+    alertEl.innerHTML='<div class="post-alert-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="var(--amber)" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="var(--amber)" stroke-width="1.3" stroke-linecap="round"/></svg></div><div><div class="post-alert-title">Heute: Vorschau-Post veröffentlichen!</div><div class="post-alert-sub">Jetzt → <a href="index.html" style="color:var(--amber)">Social Media Planer öffnen</a></div></div>';
+  } else if(dow===3){
+    alertEl.innerHTML='<div class="post-alert-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="var(--green)" stroke-width="1.3"/><path d="M5 8l2 2.5L11 5.5" stroke="var(--green)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="post-alert-title" style="color:var(--green)">Heute: Resultat-Post veröffentlichen!</div><div class="post-alert-sub">Jetzt → <a href="index.html" style="color:var(--green)">Social Media Planer öffnen</a></div></div>';
+  } else {
+    alertEl.innerHTML=`<div class="post-alert-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1" stroke="var(--amber)" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="var(--amber)" stroke-width="1.3"/></svg></div><div><div class="post-alert-title">Nächster Post in ${daysToFri} Tagen</div><div class="post-alert-sub">Freitag, 12:00 Uhr · <a href="index.html" style="color:var(--amber)">Social Media Planer</a></div></div>`;
+  }
+
+  // Letzte Resultate
+  const recentResults=[...past].reverse().slice(0,4);
+  document.getElementById('results-list').innerHTML=recentResults.length===0?
+    '<div class="list-row" style="color:var(--text3)">Noch keine Resultate</div>':
+    recentResults.map(g=>{
+      const won=g.heimspiel?(g.resultat_heim>g.resultat_gast):(g.resultat_gast>g.resultat_heim);
+      const d=new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
+      return `<div class="list-row">
+        <div class="list-dot" style="background:${won?'var(--green)':'var(--red)'}"></div>
+        <div class="list-label">${g.heimspiel?'vs. ':'@ '}${g.gegner}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:${won?'var(--green)':'var(--red)'}">${g.resultat_heim}:${g.resultat_gast}</div>
+        <div class="list-val">${d}</div>
+      </div>`;
+    }).join('');
+
+  // Kommende Events
+  document.getElementById('events-list').innerHTML=e.length===0?
+    '<div class="list-row" style="color:var(--text3)">Keine Events geplant</div>':
+    e.slice(0,4).map(ev=>{
+      const d=new Date(ev.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
+      const colors={cup:'var(--amber)',turnier:'var(--purple)',gv:'var(--blue)',event:'var(--green)',training:'var(--accent)'};
+      return `<div class="list-row">
+        <div class="list-dot" style="background:${colors[ev.typ]||'var(--green)'}"></div>
+        <div class="list-label">${ev.titel}</div>
+        <div class="list-val">${d}</div>
+      </div>`;
+    }).join('');
+}
+
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="greeting" id="greeting">Guten Tag</div>
+      <div class="greeting-sub">UHC Jonschwil Vipers ·  Vereinsplattform</div>
+    </div>
+    <div class="content">
+
+      <!-- Stats -->
+      <div class="stat-grid">
+        <a href="spielplan.html" class="stat">
+          <div class="stat-label">Teams</div>
+          <div class="stat-val" id="stat-teams">–</div>
+          <div class="stat-sub">aktive Teams</div>
+        </a>
+        <a href="spielplan.html" class="stat">
+          <div class="stat-label">Spieler</div>
+          <div class="stat-val" id="stat-spieler">–</div>
+          <div class="stat-sub">registriert</div>
+        </a>
+        <a href="spielplan.html" class="stat">
+          <div class="stat-label">Kommende Spiele</div>
+          <div class="stat-val" id="stat-spiele">–</div>
+          <div class="stat-sub">diese Saison</div>
+        </a>
+        <a href="finanzen.html" class="stat">
+          <div class="stat-label">Finanzen Saldo</div>
+          <div class="stat-val" id="stat-saldo">–</div>
+          <div class="stat-sub">aktuell</div>
+        </a>
+      </div>
+
+      <!-- Post Alert -->
+      <div class="post-alert" id="post-alert" style="cursor:pointer"></div>
+
+      <div class="two-col">
+        <!-- Nächstes Spiel -->
+        <div class="card next-game" id="next-game-wrap">
+          <div class="card-header">
+            <span class="card-title">Nächstes Spiel</span>
+            <a href="spielplan.html" class="card-link">Alle Spiele →</a>
+          </div>
+          <div class="card-body">
+            <div class="next-game-title" id="next-game-title">–</div>
+            <div class="next-game-meta" id="next-game-team"></div>
+            <div class="next-game-meta" id="next-game-date"></div>
+            <div class="countdown" id="next-countdown">–</div>
+            <div class="countdown-label">bis zum Spiel</div>
+          </div>
+        </div>
+
+        <!-- Letzte Resultate -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Letzte Resultate</span>
+            <a href="spielplan.html" class="card-link">Alle →</a>
+          </div>
+          <div class="card-body" style="padding:0 18px" id="results-list"></div>
+        </div>
+      </div>
+
+      <div class="two-col" style="margin-top:14px">
+        <!-- Events -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Kommende Events</span>
+            <a href="events.html" class="card-link">Alle →</a>
+          </div>
+          <div class="card-body" style="padding:0 18px" id="events-list"></div>
+        </div>
+
+        <!-- Schnellzugriff -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Schnellzugriff</span></div>
+          <div style="padding:14px 18px">
+            <div class="module-grid">
+              <a href="spielplan.html" class="module-btn"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="color:var(--purple)"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5.5V8L10 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><div class="module-btn-title">Spielplan</div><div class="module-btn-sub">Spiele & Teams</div></a>
+              <a href="scorer.html" class="module-btn"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="color:var(--amber)"><path d="M4 12V6M8 12V4M12 12V8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><div class="module-btn-title">Scorer</div><div class="module-btn-sub">Statistiken</div></a>
+              <a href="events.html" class="module-btn"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="color:var(--blue)"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 8H11M5 5.5H11M5 10.5H8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><div class="module-btn-title">Events</div><div class="module-btn-sub">Anlässe</div></a>
+              <a href="finanzen.html" class="module-btn"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="color:var(--green)"><path d="M2 12V4l6-2 6 2v8l-6 2-6-2Z" stroke="currentColor" stroke-width="1.3"/></svg><div class="module-btn-title">Finanzen</div><div class="module-btn-sub">Ein- & Ausgaben</div></a>
+              <a href="training.html" class="module-btn"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="color:var(--accent)"><circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><div class="module-btn-title">Training</div><div class="module-btn-sub">Übungen & Video</div></a>
+              <a href="kalender.html" class="module-btn"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="color:var(--red)"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/></svg><div class="module-btn-title">Kalender</div><div class="module-btn-sub">Alle Termine</div></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const h=new Date().getHours();
+document.getElementById('greeting').textContent=h<12?'Guten Morgen':h<18?'Guten Tag':'Guten Abend';
+</script>
+<script src="nav.js"></script><script>renderNav('dashboard');</script>
+</body></html>

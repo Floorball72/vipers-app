@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalender — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+a{text-decoration:none}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.page-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);text-decoration:none}.btn-ghost:hover{color:var(--text)}
+.content{padding:20px 28px}
+.cal-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.cal-month{font-family:'Syne',sans-serif;font-size:18px;font-weight:600;flex:1;text-align:center}
+.cal-nav-btn{width:32px;height:32px;border-radius:8px;background:var(--bg2);border:1px solid var(--border2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .12s}
+.cal-nav-btn:hover{color:var(--text);border-color:var(--border)}
+.cal-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-head{padding:10px;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+.cal-cell{min-height:100px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;cursor:pointer;transition:background .12s;vertical-align:top}
+.cal-cell:hover{background:var(--bg3)}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-num{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.cal-cell.today .cal-num{background:var(--accent);color:#0c0d0f;font-weight:700}
+.cal-cell.other .cal-num{color:var(--text3)}
+.cal-ev{font-size:9px;border-radius:3px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.ev-spiel{background:rgba(155,143,255,.2);color:#b8afff}
+.ev-post{background:rgba(255,190,71,.2);color:#ffd37a}
+.ev-result{background:rgba(77,214,140,.15);color:#7de5ad}
+.ev-event{background:rgba(91,191,255,.15);color:#8dd0ff}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+// Config aus config.js
+const CONFIG = APP_CONFIG;
+let db=null,CLUB_ID="uhc-jonschwil",games=[],events=[];
+const MONATE=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WOCHENTAGE=['Mo','Di','Mi','Do','Fr','Sa','So'];
+let viewYear=new Date().getFullYear(), viewMonth=new Date().getMonth();
+
+async function initDB(){
+  const mod=await import('https://esm.sh/@supabase/supabase-js@2.39.0');
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  await loadData();
+}
+async function loadData(){
+  const[g,e]=await Promise.all([
+    db.from('games').select('datum,gegner,heimspiel,teams(name)').order('datum'),
+    db.from('events').select('datum,titel,typ').order('datum'),
+  ]);
+  games=g.data||[];events=e.data||[];
+  renderCal();
+}
+
+function getCalEvents(dateStr){
+  const evs=[];
+  // Spiele
+  games.filter(g=>g.datum===dateStr).forEach(g=>{
+    evs.push({type:'ev-spiel',label:(g.heimspiel?'vs. ':'@ ')+g.gegner});
+  });
+  // Events
+  events.filter(e=>e.datum===dateStr).forEach(e=>{
+    evs.push({type:'ev-event',label:e.titel});
+  });
+  // Freitag = Vorschau-Post
+  const d=new Date(dateStr+'T12:00:00');
+  if(d.getDay()===5) evs.push({type:'ev-post',label:'Post: Vorschau'});
+  // Mittwoch = Resultat-Post
+  if(d.getDay()===3) evs.push({type:'ev-result',label:'Post: Resultate'});
+  return evs;
+}
+
+function renderCal(){
+  document.getElementById('cal-month-label').textContent=MONATE[viewMonth]+' '+viewYear;
+  const firstDay=new Date(viewYear,viewMonth,1);
+  const lastDay=new Date(viewYear,viewMonth+1,0);
+  // Montag = 0, adjust
+  let startDow=(firstDay.getDay()+6)%7; // 0=Mon
+  const today=new Date();
+  const todayStr=today.toISOString().split('T')[0];
+
+  let html='';
+  WOCHENTAGE.forEach(d=>{html+=`<div class="cal-head">${d}</div>`;});
+
+  // Vormonat-Tage
+  const prevLast=new Date(viewYear,viewMonth,0).getDate();
+  for(let i=startDow-1;i>=0;i--){
+    html+=`<div class="cal-cell other"><div class="cal-num">${prevLast-i}</div></div>`;
+  }
+
+  // Aktueller Monat
+  for(let day=1;day<=lastDay.getDate();day++){
+    const dateStr=`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday=dateStr===todayStr;
+    const calEvs=getCalEvents(dateStr);
+    html+=`<div class="cal-cell${isToday?' today':''}">
+      <div class="cal-num">${day}</div>
+      ${calEvs.slice(0,3).map(e=>`<div class="cal-ev ${e.type}">${e.label}</div>`).join('')}
+      ${calEvs.length>3?`<div style="font-size:9px;color:var(--text3)">+${calEvs.length-3} mehr</div>`:''}
+    </div>`;
+  }
+
+  // Nächster Monat
+  const total=startDow+lastDay.getDate();
+  const rem=total%7===0?0:7-(total%7);
+  for(let i=1;i<=rem;i++){html+=`<div class="cal-cell other"><div class="cal-num">${i}</div></div>`;}
+
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function goToday(){viewYear=new Date().getFullYear();viewMonth=new Date().getMonth();renderCal();}
+function prevMonth(){if(viewMonth===0){viewMonth=11;viewYear--;}else viewMonth--;renderCal();}
+function nextMonth(){if(viewMonth===11){viewMonth=0;viewYear++;}else viewMonth++;renderCal();}
+
+document.addEventListener('click',e=>{if(e.target.classList.contains('overlay'))e.target.classList.remove('open');});
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Kalender</div>
+        <div class="page-sub">UHC Jonschwil Vipers ·  Spiele, Events & Post-Erinnerungen</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a href="spielplan.html" class="btn btn-ghost">+ Spiel</a>
+        <a href="events.html" class="btn btn-accent">+ Event</a>
+      </div>
+    </div>
+    <div class="content">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="prevMonth()">‹</button>
+        <button class="cal-nav-btn" onclick="goToday()" style="font-size:11px;width:auto;padding:0 10px;font-family:'DM Sans',sans-serif;font-weight:500">Heute</button>
+        <div class="cal-month" id="cal-month-label">–</div>
+        <button class="cal-nav-btn" onclick="nextMonth()">›</button>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(155,143,255,.4)"></div>Spiel</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,190,71,.4)"></div>Vorschau-Post (Fr)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(77,214,140,.3)"></div>Resultat-Post (Mi)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(91,191,255,.3)"></div>Event</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="nav.js"></script><script>renderNav('kalender');</script>
+</body></html>

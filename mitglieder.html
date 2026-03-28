@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mitglieder — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;text-align:center}
+.stat-val{font-family:"DM Mono",monospace;font-size:26px;font-weight:400}
+.stat-label{font-size:10px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:transparent;transition:all .12s;font-family:"DM Sans",sans-serif}
+.filter-pill.active{background:rgba(212,240,74,.1);border-color:rgba(212,240,74,.4);color:var(--accent)}
+.search-input{flex:1;max-width:260px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none}
+.search-input:focus{border-color:var(--accent)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02);cursor:pointer}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.role-badge{display:inline-flex;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em}
+.role-admin{background:rgba(212,240,74,.15);color:var(--accent);border:1px solid rgba(212,240,74,.3)}
+.role-trainer{background:rgba(155,143,255,.15);color:var(--purple);border:1px solid rgba(155,143,255,.3)}
+.role-spieler{background:rgba(91,191,255,.12);color:var(--blue);border:1px solid rgba(91,191,255,.25)}
+.role-eltern{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.row-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s}
+tr:hover .row-actions{opacity:1}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.icon-btn:hover{color:var(--text)}.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+/* Mitgliedsausweis */
+.ausweis{background:linear-gradient(135deg,var(--bg3) 0%,var(--bg2) 100%);border:1px solid rgba(212,240,74,.25);border-radius:16px;padding:20px;width:340px;position:relative;overflow:hidden}
+.ausweis-logo{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.08em;margin-bottom:12px}
+.ausweis-name{font-family:"Syne",sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.ausweis-detail{font-size:12px;color:var(--text2);margin-bottom:2px}
+.ausweis-nr{font-family:"DM Mono",monospace;font-size:11px;color:var(--text3);margin-top:12px}
+.qr-placeholder{width:64px;height:64px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-top:12px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:26px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;margin-bottom:20px}
+.form-grid{display:grid;gap:14px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.info-box{background:rgba(91,191,255,.08);border:1px solid rgba(91,191,255,.2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--blue);line-height:1.6}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+// Config aus config.js
+const CONFIG = APP_CONFIG;
+let db=null,CLUB_ID="uhc-jonschwil",mitglieder=[],teams=[],filterRolle="all",searchQ="",activeTab="liste",editId=null;
+
+const ROLLE_COLORS={admin:"role-admin",trainer:"role-trainer",spieler:"role-spieler",eltern:"role-eltern"};
+const ROLLE_LABELS={admin:"Admin",trainer:"Trainer",spieler:"Spieler",eltern:"Eltern"};
+const AVATAR_COLORS={admin:"rgba(212,240,74,.2)",trainer:"rgba(155,143,255,.2)",spieler:"rgba(91,191,255,.15)",eltern:"rgba(77,214,140,.12)"};
+
+async function initDB(){
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  const[m,t]=await Promise.all([
+    db.from("user_profiles").select("*").order("nachname"),
+    db.from('teams').select("*").eq("aktiv",true),
+  ]);
+  mitglieder=m.data||[];teams=t.data||[];
+  render();updateStats();
+  const _ps=document.getElementById("m-page-sub");if(_ps)_ps.textContent=APP_CONFIG.ACTIVE_CLUB.name+" · Verwaltung aller Mitglieder";
+  // Freigaben-Badge aus geladenen Mitgliedern berechnen
+  const _ausstehend=(m.data||[]).filter(x=>x.login_status==="pending"||x.login_status==="invited").length;
+  const _badge=document.getElementById("freigaben-badge");
+  if(_badge){_badge.style.display=_ausstehend>0?"inline":"none";if(_ausstehend>0)_badge.textContent=_ausstehend;}
+}
+
+function updateStats(){
+  const roles={admin:0,trainer:0,spieler:0,eltern:0};
+  mitglieder.forEach(m=>{if(roles[m.rolle]!==undefined)roles[m.rolle]++;});
+  document.getElementById("s-total").textContent=mitglieder.length;
+  document.getElementById("s-admin").textContent=roles.admin;
+  document.getElementById("s-trainer").textContent=roles.trainer;
+  document.getElementById("s-spieler").textContent=roles.spieler;
+  document.getElementById("s-eltern").textContent=roles.eltern;
+}
+
+function getFiltered(){
+  return mitglieder.filter(m=>{
+    if(filterRolle!=="all"&&m.rolle!==filterRolle)return false;
+    if(searchQ){const q=searchQ.toLowerCase();if(!(m.vorname+m.nachname+m.email).toLowerCase().includes(q))return false;}
+    return true;
+  });
+}
+
+function render(){
+  if(activeTab==="liste")renderListe();
+  else if(activeTab==="rollen")renderRollen();
+  else if(activeTab==="ausweise")renderAusweise();
+  else if(activeTab==="freigaben")renderFreigaben();
+}
+
+function renderListe(){
+  const data=getFiltered();
+  const cont=document.getElementById("main-content");
+  if(!data.length){cont.innerHTML="<div class='empty'><div class='empty-title'>Keine Mitglieder gefunden</div></div>";return;}
+  cont.innerHTML="<div class='card'><table><thead><tr><th>Name</th><th>Rolle</th><th>Team(s)</th><th>Geburtsjahr</th><th>Mitglied seit</th><th>Status</th><th>Login</th><th></th></tr></thead><tbody>"+
+  data.map(m=>{
+    const init=((m.vorname||"?")[0]+(m.nachname||"?")[0]).toUpperCase();
+    const teamNames=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace("UHC Jonschwil ",""))||[];
+    return "<tr onclick=\"openDetail('"+m.id+"')\">"+
+      "<td><div style='display:flex;align-items:center;gap:10px'><div class='avatar' style='background:"+( AVATAR_COLORS[m.rolle]||"var(--bg3)")+";color:var(--text)'>"+init+"</div><div><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div><div style='font-size:11px;color:var(--text3)'>"+( m.email||"–")+"</div></div></div></td>"+
+      "<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||m.rolle)+"</span></td>"+
+      "<td style='font-size:12px;color:var(--text2)'>"+(teamNames.slice(0,2).join(", ")||"–")+"</td>"+"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.geburtsdatum?new Date(m.geburtsdatum+"T12:00:00").getFullYear():"–")+"</td>"+
+      "<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(m.mitglied_seit||"–")+"</td>"+
+      "<td><span class='status-dot' style='background:"+(m.aktiv?"var(--green)":"var(--text3)")+"'></span>"+( m.aktiv?"Aktiv":"Inaktiv")+"</td>"+
+      "<td><div class='row-actions'>"+
+        "<button class='icon-btn' onclick='event.stopPropagation();openEdit(\""+m.id+"\")' title='Bearbeiten'><svg width='13' height='13' viewBox='0 0 16 16' fill='none'><path d='M11 2l3 3L5 14H2v-3L11 2Z' stroke='currentColor' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"+
+        "<button class='icon-btn del' onclick='event.stopPropagation();deleteMitglied(\""+m.id+"\")' title='Entfernen'><svg width='13' height='13' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"+
+      "</div></td></tr>";
+  }).join("")+"</tbody></table></div>";
+}
+
+function renderRollen(){
+  const cont=document.getElementById("main-content");
+  const roles=["admin","trainer","spieler","eltern"];
+  cont.innerHTML="<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px'>"+
+  roles.map(rolle=>{
+    const members=mitglieder.filter(m=>m.rolle===rolle);
+    const perms={
+      admin:["Vollzugriff auf alle Module","Mitglieder verwalten","Finanzen & Sponsoring","Rollen vergeben"],
+      trainer:["Spielplan lesen & bearbeiten","Scorer & Statistiken","Training & Video","Eigenes Team verwalten","Kein Zugriff auf Finanzen"],
+      spieler:["Eigenes Profil sehen","Spielplan lesen","Eigene Statistiken","Training lesen"],
+      eltern:["Kind-Profil einsehen","Spielplan lesen","Events & Kalender","Keine Vereinsinterna"]
+    };
+    const colors={admin:"var(--accent)",trainer:"var(--purple)",spieler:"var(--blue)",eltern:"var(--green)"};
+    return "<div class='card'><div style='padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between'>"+
+      "<div><div style='font-family:\"Syne\",sans-serif;font-size:15px;font-weight:600;color:"+colors[rolle]+"'>"+ROLLE_LABELS[rolle]+"</div>"+
+      "<div style='font-size:12px;color:var(--text3);margin-top:2px'>"+members.length+" Mitglieder</div></div>"+
+      "<span class='role-badge "+ROLLE_COLORS[rolle]+"'>"+members.length+"x</span></div>"+
+      "<div style='padding:14px 20px;border-bottom:1px solid var(--border)'>"+
+      "<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px'>Berechtigungen</div>"+
+      (perms[rolle]||[]).map(p=>"<div style='font-size:12px;color:var(--text2);padding:3px 0;display:flex;align-items:center;gap:6px'><span style='color:"+colors[rolle]+";font-size:14px'>✓</span>"+p+"</div>").join("")+
+      "</div>"+
+      "<div style='padding:12px 20px'>"+
+      (members.length?members.slice(0,4).map(m=>"<div style='font-size:12px;color:var(--text2);padding:2px 0'>"+m.vorname+" "+m.nachname+"</div>").join("")+(members.length>4?"<div style='font-size:11px;color:var(--text3)'>+"+( members.length-4)+" weitere</div>":""):"<div style='font-size:12px;color:var(--text3)'>Noch keine Mitglieder</div>")+
+      "</div></div>";
+  }).join("")+"</div>";
+}
+
+function renderAusweise(){
+  const cont=document.getElementById("main-content");
+  const active=mitglieder.filter(m=>m.aktiv);
+  if(!active.length){cont.innerHTML="<div class='empty'><div class='empty-title'>Keine Mitglieder</div></div>";return;}
+  cont.innerHTML="<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px'>"+
+  active.map(m=>{
+    const init=((m.vorname||"?")[0]+(m.nachname||"?")[0]).toUpperCase();
+    const farbe={admin:"#d4f04a",trainer:"#9b8fff",spieler:"#5bbfff",eltern:"#4dd68c"}[m.rolle]||"#888";
+    const teamName=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace("UHC Jonschwil ","")).filter(Boolean)[0]||"";
+    return "<div class='ausweis'><div style='display:flex;align-items:center;justify-content:space-between'><div class='ausweis-logo'>UHC JONSCHWIL VIPERS</div><div style='width:40px;height:40px;border-radius:50%;background:"+farbe+"22;display:flex;align-items:center;justify-content:center;font-family:\"Syne\",sans-serif;font-weight:700;color:"+farbe+";font-size:14px'>"+init+"</div></div>"+
+    "<div class='ausweis-name'>"+m.vorname+" "+m.nachname+"</div>"+
+    "<div class='ausweis-detail' style='color:"+farbe+"'>"+ROLLE_LABELS[m.rolle]+"</div>"+
+    (teamName?"<div class='ausweis-detail'>"+teamName+"</div>":"")+
+    "<div class='ausweis-nr'>Mitglied seit "+( m.mitglied_seit||"–")+"</div>"+
+    "<div style='margin-top:12px;display:flex;gap:8px'>"+
+    "<button class='btn btn-ghost' style='font-size:11px;padding:5px 12px' onclick='printAusweis(\""+m.vorname+" "+m.nachname+"\")'>Drucken</button>"+
+    "</div></div>";
+  }).join("")+"</div>";
+}
+
+function renderFreigaben(){
+  const cont=document.getElementById("main-content");
+  // Mitglieder mit pending login_status oder ausstehender Rollenzuweisung
+  const ausstehend=mitglieder.filter(m=>
+    m.login_status==="pending"||m.login_status==="invited"||!m.rolle
+  );
+  const aktiv=mitglieder.filter(m=>m.login_status==="active"&&m.rolle);
+  if(!ausstehend.length&&!aktiv.length){
+    cont.innerHTML="<div class='empty'><div class='empty-title'>Keine ausstehenden Freigaben</div><div style='font-size:13px;color:var(--text3);margin-top:6px'>Alle Mitglieder sind korrekt zugewiesen.</div></div>";
+    return;
+  }
+  let html="";
+  if(ausstehend.length){
+    html+="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px'>Ausstehend ("+ausstehend.length+")</div>";
+    html+="<div class='card' style='margin-bottom:20px'><table><thead><tr><th>Name</th><th>E-Mail</th><th>Rolle</th><th>Status</th><th>Aktion</th></tr></thead><tbody>";
+    html+=ausstehend.map(m=>{
+      const st=m.login_status||"pending";
+      const stLabel=st==="invited"?"Eingeladen, wartet auf Registrierung":"Erfasst, noch nicht eingeladen";
+      const stColor=st==="invited"?"var(--amber)":"var(--text3)";
+      return "<tr>"
+        +"<td><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div></td>"
+        +"<td style='font-size:12px;color:var(--text2)'>"+(m.email||"<span style='color:var(--text3)'>Keine E-Mail</span>")+"</td>"
+        +"<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||"–")+"</span></td>"
+        +"<td><span style='font-size:11px;color:"+stColor+"'>"+stLabel+"</span></td>"
+        +"<td><div style='display:flex;gap:6px;flex-wrap:wrap'>"
+        +(m.email?"<button onclick='sendInviteFromFreigaben(""+m.id+"",""+m.email+"",""+m.vorname+" "+m.nachname+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(91,191,255,.3);background:rgba(91,191,255,.08);color:var(--blue);cursor:pointer;font-family:"DM Sans",sans-serif'>Einladen</button>":"")
+        +"<button onclick='setRolle(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:"DM Sans",sans-serif'>Rolle ändern</button>"
+        +"<button onclick='approveMitglied(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(77,214,140,.3);background:rgba(77,214,140,.08);color:var(--green);cursor:pointer;font-family:"DM Sans",sans-serif'>✓ Freigeben</button>"
+        +"</div></td></tr>";
+    }).join("")+"</tbody></table></div>";
+  }
+  if(aktiv.length){
+    html+="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px'>Aktive Mitglieder ("+aktiv.length+")</div>";
+    html+="<div class='card'><table><thead><tr><th>Name</th><th>Rolle</th><th>Teams</th><th>Login-Status</th><th>Aktion</th></tr></thead><tbody>";
+    html+=aktiv.map(m=>{
+      const teamNames=(m.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace(/UHC Jonschwil /g,"")).filter(Boolean);
+      return "<tr>"
+        +"<td><div style='font-weight:500'>"+m.vorname+" "+m.nachname+"</div><div style='font-size:11px;color:var(--text3)'>"+(m.email||"")+"</div></td>"
+        +"<td><span class='role-badge "+(ROLLE_COLORS[m.rolle]||"")+"'>"+(ROLLE_LABELS[m.rolle]||"–")+"</span></td>"
+        +"<td style='font-size:12px;color:var(--text2)'>"+(teamNames.join(", ")||"–")+"</td>"
+        +"<td><span style='font-size:11px;color:var(--green)'>✓ Aktiv</span></td>"
+        +"<td><div style='display:flex;gap:6px'>"
+        +"<button onclick='setRolle(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:"DM Sans",sans-serif'>Rolle ändern</button>"
+        +"<button onclick='deaktivieren(""+m.id+"")' style='font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,107,107,.25);background:rgba(255,107,107,.06);color:var(--red);cursor:pointer;font-family:"DM Sans",sans-serif'>Deaktivieren</button>"
+        +"</div></td></tr>";
+    }).join("")+"</tbody></table></div>";
+  }
+  cont.innerHTML=html;
+  // Badge aktualisieren
+  const badge=document.getElementById("freigaben-badge");
+  if(badge){if(ausstehend.length>0){badge.style.display="inline";badge.textContent=ausstehend.length;}else{badge.style.display="none";}}
+}
+
+async function approveMitglied(id){
+  await db.from("user_profiles").update({login_status:"active",aktiv:true}).eq("id",id);
+  const m=mitglieder.find(x=>x.id===id);if(m){m.login_status="active";m.aktiv=true;}
+  renderFreigaben();updateStats();
+}
+async function deaktivieren(id){
+  if(!confirm("Mitglied deaktivieren?"))return;
+  await db.from("user_profiles").update({aktiv:false}).eq("id",id);
+  const m=mitglieder.find(x=>x.id===id);if(m)m.aktiv=false;
+  renderFreigaben();updateStats();
+}
+async function setRolle(id){
+  const m=mitglieder.find(x=>x.id===id);if(!m)return;
+  const rollen=["admin","trainer","spieler","eltern"];
+  const aktuelle=m.rolle||"spieler";
+  const neu=prompt("Neue Rolle für "+m.vorname+" "+m.nachname+"\n(admin/trainer/spieler/eltern):",aktuelle);
+  if(!neu||!rollen.includes(neu))return;
+  await db.from("user_profiles").update({rolle:neu}).eq("id",id);
+  m.rolle=neu;
+  renderFreigaben();updateStats();
+}
+function sendInviteFromFreigaben(id,email,name){
+  const parts=name.split(" ");
+  showInviteInfo(parts[0],parts.slice(1).join(" "),email,"");
+  db.from("user_profiles").update({login_status:"invited"}).eq("id",id);
+}
+
+function setTab(tab,el){activeTab=tab;document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));el.classList.add("active");render();}
+function setFilter(rolle,el){filterRolle=rolle;document.querySelectorAll(".filter-pill").forEach(p=>p.classList.remove("active"));el.classList.add("active");render();}
+function onSearch(v){searchQ=v;render();}
+
+function openModal(){
+  editId=null;
+  // Alle Felder leeren
+  ["mf-vorname","mf-nachname","mf-email","mf-telefon","mf-adresse","mf-geburtsdatum",
+   "mf-shirt","mf-hose","mf-stuelpengr","mf-trikotnummer"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value="";
+  });
+  document.getElementById("mf-rolle").value="spieler";
+  document.getElementById("mf-seit").value=new Date().toISOString().split("T")[0];
+  document.getElementById("mf-aktiv").value="true";
+  setClubAnzeige();
+  toggleSpielerFelder("spieler");
+  renderTeamCheckboxes([]);
+  document.getElementById("mitgliedModal").classList.add("open");
+}
+function openEdit(id){
+  const m=mitglieder.find(x=>x.id===id);if(!m)return;editId=id;
+  document.getElementById("mf-vorname").value=m.vorname||"";
+  document.getElementById("mf-nachname").value=m.nachname||"";
+  document.getElementById("mf-email").value=m.email||"";
+  document.getElementById("mf-telefon").value=m.telefon||"";
+  document.getElementById("mf-adresse").value=m.adresse||"";
+  document.getElementById("mf-geburtsdatum").value=m.geburtsdatum||"";
+  document.getElementById("mf-rolle").value=m.rolle||"spieler";
+  document.getElementById("mf-seit").value=m.mitglied_seit||"";
+  document.getElementById("mf-aktiv").value=String(m.aktiv!==false);
+  setClubAnzeige();
+  toggleSpielerFelder(m.rolle||"spieler");
+  // Spieler-Felder
+  if(m.rolle==="spieler"){
+    loadPlayerFields(m.id);
+  }
+  renderTeamCheckboxes(m.team_ids||[]);
+  document.getElementById("mitgliedModal").classList.add("open");
+}
+function openDetail(id){openEdit(id);}
+
+// Spieler-Felder aus players-Tabelle laden
+async function loadPlayerFields(userId){
+  const{data:p}=await db.from("players").select("*").eq("user_id",userId).single();
+  if(!p)return;
+  document.getElementById("mf-shirt").value=p.trikot_shirt||"";
+  document.getElementById("mf-hose").value=p.trikot_hose||"";
+  document.getElementById("mf-stuelpengr").value=p.trikot_stuelpengr||"";
+  // Trikotnummer in players ist schon im Spielerprofil - zeige sie an
+  const numEl=document.getElementById("mf-trikotnummer");
+  if(numEl) numEl.value=p.nummer||"";
+}
+
+function renderTeamCheckboxes(selected){
+  try{
+  const cont=document.getElementById("mf-teams-grid");
+  if(!cont)return;
+  const clubTeams=teams.filter(t=>t.club_id===CLUB_ID);
+  if(!clubTeams.length){cont.innerHTML="<div style='font-size:12px;color:var(--text3)'>Keine Teams im Verein.</div>";return;}
+  cont.innerHTML=clubTeams.map(t=>{
+    const sel=selected.includes(t.id);
+    const short=t.name.replace(/UHC Jonschwil /g,"");
+    return `<label style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--bg3);border:1px solid ${sel?"rgba(212,240,74,.35)":"var(--border2)"};border-radius:7px;cursor:pointer;font-size:12px;transition:all .12s">
+      <input type="checkbox" value="${t.id}" ${sel?"checked":""} style="accent-color:var(--accent);width:14px;height:14px">
+      <span style="color:${sel?"var(--accent)":"var(--text2)"}">${short}</span>
+    </label>`;
+  }).join("");
+}
+
+function toggleSpielerFelder(rolle){
+  try{
+    const el=document.getElementById("spieler-felder");
+    if(el) el.style.display=rolle==="spieler"?"block":"none";
+  }catch(e){console.warn("toggleSpielerFelder:",e);}
+}
+function setClubAnzeige(){
+  try{
+    const club=APP_CONFIG.ACTIVE_CLUB;
+    const anzeige=document.getElementById("mf-club-anzeige");
+    if(anzeige) anzeige.value=club.name;
+    const hidden=document.getElementById("mf-club");
+    if(hidden) hidden.value=club.club_id;
+  }catch(e){console.warn("setClubAnzeige:",e);}
+}
+function closeModal(){document.getElementById("mitgliedModal").classList.remove("open");editId=null;}
+
+async function saveMitglied(){
+  const vn=document.getElementById("mf-vorname").value.trim();
+  const nn=document.getElementById("mf-nachname").value.trim();
+  const email=document.getElementById("mf-email").value.trim();
+  if(!vn||!nn){alert("Bitte Vor- und Nachname eingeben.");return;}
+  const rolle=document.getElementById("mf-rolle").value;
+  const teamIds=Array.from(document.querySelectorAll("#mf-teams-grid input:checked")).map(cb=>cb.value);
+  const profileData={
+    vorname:vn, nachname:nn,
+    email:email||null,
+    telefon:document.getElementById("mf-telefon").value||null,
+    adresse:document.getElementById("mf-adresse").value||null,
+    geburtsdatum:document.getElementById("mf-geburtsdatum").value||null,
+    rolle, club_id:CLUB_ID,
+    team_ids:teamIds.length?teamIds:null,
+    mitglied_seit:document.getElementById("mf-seit").value||null,
+    aktiv:document.getElementById("mf-aktiv").value==="true",
+    login_status:"pending",  // pending | invited | active
+  };
+  const trikotData=rolle==="spieler"?{
+    shirt:document.getElementById("mf-shirt").value||null,
+    hose:document.getElementById("mf-hose").value||null,
+    stuelpengr:document.getElementById("mf-stuelpengr").value||null,
+    nummer:parseInt(document.getElementById("mf-trikotnummer")?.value)||null,
+  }:null;
+
+
+  if(editId){
+    // ── Bearbeiten ──────────────────────────────────────────
+    await db.from("user_profiles").update(profileData).eq("id",editId);
+    if(trikotData){
+      const{data:ex}=await db.from("players").select("id").eq("user_id",editId).maybeSingle();
+      if(ex){
+        await db.from("players").update({trikot_shirt:trikotData.shirt,trikot_hose:trikotData.hose,trikot_stuelpengr:trikotData.stuelpengr,nummer:trikotData.nummer,team_id:teamIds[0]||null}).eq("id",ex.id);
+      }
+    }
+    closeModal();
+  } else {
+    // ── Neu erstellen ────────────────────────────────────────
+    // Profil ohne Auth-ID erstellen — Verknüpfung erfolgt beim Login per E-Mail
+    const{data:newProf,error:profErr}=await db.from("user_profiles").insert([{club_id:CLUB_ID,...profileData}]).select("id").single();
+    if(profErr){alert("Fehler: "+profErr.message);return;}
+    const profileId=newProf.id;
+    // Spieler-Eintrag anlegen
+    if(trikotData){
+      await db.from("players").insert([{
+        club_id:CLUB_ID,user_id:null,  // user_id wird beim Login gesetzt
+        vorname:vn,nachname:nn,
+        team_id:teamIds[0]||null,
+        nummer:trikotData.nummer,
+        trikot_shirt:trikotData.shirt,trikot_hose:trikotData.hose,trikot_stuelpengr:trikotData.stuelpengr,
+        aktiv:true,
+        // Email für spätere Verknüpfung merken
+        email:email||null,
+      }]);
+    }
+    // Einladungs-E-Mail senden wenn E-Mail vorhanden
+    if(email){
+      const{error:invErr}=await db.auth.admin?.inviteUserByEmail?.(email,{
+        data:{vorname:vn,nachname:nn,rolle,club_id:CLUB_ID},
+        redirectTo:APP_CONFIG.APP_URL+"/login.html",
+      }).catch(()=>({error:{message:"Admin-API nicht verfügbar"}})) || {error:null};
+      // Hinweis: inviteUserByEmail braucht service_role — stattdessen zeigen wir Anleitung
+      await db.from("user_profiles").update({login_status:"invited"}).eq("id",profileId);
+      closeModal();
+      showInviteInfo(vn,nn,email,rolle);
+      const{data:m}=await db.from("user_profiles").select("*").order("nachname");
+      mitglieder=m||[];render();updateStats();
+      return;
+    }
+    closeModal();
+  }
+  const{data:m}=await db.from("user_profiles").select("*").order("nachname");
+  mitglieder=m||[];render();updateStats();
+}
+
+// Zeigt dem Admin einen kopierbaren Einladungslink / Anleitung
+function showInviteInfo(vn,nn,email,rolle){
+  const inviteLink=APP_CONFIG.APP_URL+"/login.html";
+  const modal=document.getElementById("inviteInfoModal");
+  document.getElementById("ii-name").textContent=vn+" "+nn;
+  document.getElementById("ii-email").textContent=email;
+  document.getElementById("ii-rolle").textContent={admin:"Admin",trainer:"Trainer",spieler:"Spieler",eltern:"Eltern"}[rolle]||rolle;
+  document.getElementById("ii-link").value=inviteLink;
+  modal.classList.add("open");
+}
+async function deleteMitglied(id){if(!confirm("Mitglied wirklich entfernen?"))return;await db.from("user_profiles").delete().eq("id",id);mitglieder=mitglieder.filter(m=>m.id!==id);render();updateStats();}
+function printAusweis(name){alert("Ausweis für "+name+" wird gedruckt (PDF-Export folgt in nächster Version).");}
+document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
+
+function loginStatusBadge(m){
+  const st=m.login_status||"pending";
+  const has_email=!!m.email;
+  if(st==="active"){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(77,214,140,.12);color:var(--green);border:1px solid rgba(77,214,140,.2)'>Eingeloggt</span>";}
+  if(st==="invited"){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)'>Eingeladen</span>";}
+  if(!has_email){return "<span style='font-size:10px;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text3);border:1px solid var(--border2)'>Kein Login</span>";}
+  const mid=m.id, memail=(m.email||""), mname=((m.vorname||"")+" "+(m.nachname||"")).trim();
+  return "<button onclick=\"event.stopPropagation();resendInvite(this)\" data-id='"+mid+"' data-email='"+memail+"' data-name='"+mname+"' style='font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2);cursor:pointer;font-family:\"DM Sans\",sans-serif'>Einladen</button>";
+}
+
+function copyInviteLink(){
+  const el=document.getElementById("ii-link");
+  el.select();
+  document.execCommand("copy");
+  const btn=el.nextElementSibling;
+  btn.textContent="Kopiert!";
+  btn.style.background="var(--green)";
+  setTimeout(()=>{btn.textContent="Kopieren";btn.style.background="";},2000);
+}
+
+function resendInvite(btn){const id=btn.dataset.id,email=btn.dataset.email,name=btn.dataset.name||"";const parts=name.split(" ");showInviteInfo(parts[0]||"",parts.slice(1).join(" ")||"",email,"");}
+
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="page-title">Mitglieder & Rollen</div><div class="page-sub" id="m-page-sub">Mitglieder & Rollen</div></div>
+      <button class="btn btn-accent" onclick="openModal()">+ Mitglied hinzufügen</button>
+    </div>
+    <div class="content">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-val" id="s-total">–</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--accent)" id="s-admin">–</div><div class="stat-label">Admins</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--purple)" id="s-trainer">–</div><div class="stat-label">Trainer</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--blue)" id="s-spieler">–</div><div class="stat-label">Spieler</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--green)" id="s-eltern">–</div><div class="stat-label">Eltern</div></div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="setTab('liste',this)">Mitgliederliste</div>
+        <div class="tab" onclick="setTab('rollen',this)">Rollen & Rechte</div>
+        <div class="tab" onclick="setTab('ausweise',this)">Digitale Ausweise</div>
+        <div class="tab" id="tab-freigaben" onclick="setTab('freigaben',this)">Freigaben <span id="freigaben-badge" style="display:none;background:var(--amber);color:#0c0d0f;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px"></span></div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-pill active" onclick="setFilter('all',this)">Alle</button>
+        <button class="filter-pill" onclick="setFilter('admin',this)">Admins</button>
+        <button class="filter-pill" onclick="setFilter('trainer',this)">Trainer</button>
+        <button class="filter-pill" onclick="setFilter('spieler',this)">Spieler</button>
+        <button class="filter-pill" onclick="setFilter('eltern',this)">Eltern</button>
+        <input class="search-input" type="text" placeholder="Name oder E-Mail suchen..." oninput="onSearch(this.value)">
+      </div>
+      <div id="main-content"><div style="text-align:center;padding:40px;color:var(--text3)">Lade...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="mitgliedModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-title">Mitglied erfassen</div>
+    <div class="form-grid">
+      <div class="form-row-2">
+        <div><label class="form-label">Vorname</label><input class="form-input" type="text" id="mf-vorname" placeholder="Max"></div>
+        <div><label class="form-label">Nachname</label><input class="form-input" type="text" id="mf-nachname" placeholder="Muster"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">E-Mail</label><input class="form-input" type="email" id="mf-email"></div>
+        <div><label class="form-label">Telefon</label><input class="form-input" type="tel" id="mf-telefon"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Adresse</label><input class="form-input" type="text" id="mf-adresse" placeholder="Musterstrasse 1, 9243 Jonschwil"></div>
+        <div><label class="form-label">Geburtsdatum</label><input class="form-input" type="date" id="mf-geburtsdatum"></div>
+      </div>
+      <div class="form-row-3">
+        <div><label class="form-label">Rolle</label>
+          <select class="form-input" id="mf-rolle" onchange="toggleSpielerFelder(this.value)">
+            <option value="spieler">Spieler</option><option value="trainer">Trainer</option>
+            <option value="admin">Admin</option><option value="eltern">Eltern</option>
+          </select>
+        </div>
+        <div><label class="form-label">Mitglied seit</label><input class="form-input" type="date" id="mf-seit"></div>
+        <div><label class="form-label">Status</label>
+          <select class="form-input" id="mf-aktiv">
+            <option value="true">Aktiv</option><option value="false">Inaktiv</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Verein</label>
+        <input class="form-input" type="text" id="mf-club-anzeige" readonly style="opacity:.6;cursor:not-allowed">
+        <input type="hidden" id="mf-club">
+      </div>
+      <div>
+        <label class="form-label">Teams</label>
+        <div id="mf-teams-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px"></div>
+      </div>
+      <div id="spieler-felder">
+        <div style="height:1px;background:var(--border);margin:4px 0 10px"></div>
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Spieler-Details</div>
+        <div class="form-row-2" style="margin-bottom:10px">
+          <div><label class="form-label">Trikotnummer</label><input class="form-input" type="number" id="mf-trikotnummer" min="1" max="99" placeholder="z.B. 17"></div>
+          <div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);font-weight:500;margin-bottom:7px">Trikotgroesse</div>
+        <div class="form-row-3">
+          <div><label class="form-label">Shirt</label>
+            <select class="form-input" id="mf-shirt">
+              <option value="">– –</option>
+              <option>XXS</option><option>XS</option><option>S</option><option>M</option>
+              <option>L</option><option>XL</option><option>XXL</option><option>XXXL</option>
+            </select>
+          </div>
+          <div><label class="form-label">Hose</label>
+            <select class="form-input" id="mf-hose">
+              <option value="">– –</option>
+              <option>XXS</option><option>XS</option><option>S</option><option>M</option>
+              <option>L</option><option>XL</option><option>XXL</option><option>XXXL</option>
+            </select>
+          </div>
+          <div><label class="form-label">Stuelpen</label>
+            <select class="form-input" id="mf-stuelpengr">
+              <option value="">– –</option>
+              <option>XS</option><option>S</option><option>M</option>
+              <option>L</option><option>XL</option><option>XXL</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveMitglied()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: Einladungsinfo -->
+<div class="overlay" id="inviteInfoModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">Mitglied einladen</div>
+    <div style="background:rgba(77,214,140,.07);border:1px solid rgba(77,214,140,.2);border-radius:10px;padding:16px 18px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:4px">Mitglied erfolgreich erfasst!</div>
+      <div style="font-size:13px;color:var(--text2)"><span id="ii-name"></span> wurde als <strong><span id="ii-rolle"></span></strong> angelegt.</div>
+    </div>
+    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+      Sende <strong><span id="ii-email"></span></strong> diesen Link, damit die Person einen Account erstellt und sich mit dem Mitgliedsprofil verknüpft:
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input class="form-input" type="text" id="ii-link" readonly style="flex:1;font-size:12px;font-family:'DM Mono',monospace;opacity:.8">
+      <button class="btn btn-accent" style="flex-shrink:0;padding:8px 14px" onclick="copyInviteLink()">Kopieren</button>
+    </div>
+    <div style="background:rgba(91,191,255,.07);border:1px solid rgba(91,191,255,.15);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--blue);line-height:1.6">
+      <strong>Wie funktioniert die Verknüpfung?</strong><br>
+      Wenn sich die Person unter dieser E-Mail-Adresse registriert, wird ihr Account automatisch mit dem erfassten Mitgliedsprofil, der Rolle und den Teams verknüpft.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="document.getElementById('inviteInfoModal').classList.remove('open')">Verstanden</button>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js"></script><script>renderNav("mitglieder");</script>
+</body></html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newsfeed — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px;max-width:780px}
+.news-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:14px;transition:border-color .15s}
+.news-card.pinned{border-color:rgba(212,240,74,.25)}
+.news-card:hover{border-color:var(--border2)}
+.typ-badge{display:inline-flex;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.typ-info{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+.typ-wichtig{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.typ-training{background:rgba(212,240,74,.1);color:var(--accent);border:1px solid rgba(212,240,74,.2)}
+.typ-spiel{background:rgba(155,143,255,.1);color:var(--purple);border:1px solid rgba(155,143,255,.2)}
+.typ-event{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.team-tag{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);margin-right:4px;margin-bottom:4px}
+.news-title{font-size:16px;font-weight:600;margin-bottom:8px;line-height:1.3}
+.news-body{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px}
+.news-footer{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text3)}
+.news-actions{display:flex;gap:6px}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.icon-btn:hover{color:var(--text)}.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:26px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;margin-bottom:20px}
+.form-grid{display:grid;gap:14px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+/* Team-Checkboxen */
+.team-check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.team-check-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--border2);cursor:pointer;transition:all .12s}
+.team-check-item:hover{border-color:var(--border)}
+.team-check-item.selected{border-color:rgba(212,240,74,.4);background:rgba(212,240,74,.06)}
+.team-check-item input{width:15px;height:15px;cursor:pointer;accent-color:var(--accent)}
+.team-check-label{font-size:12px;color:var(--text2)}
+.all-toggle{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);cursor:pointer;margin-bottom:8px;font-size:13px;color:var(--text2)}
+.all-toggle.active{border-color:rgba(212,240,74,.4);background:rgba(212,240,74,.06);color:var(--accent)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+const CONFIG = APP_CONFIG;
+let db=null,CLUB_ID="uhc-jonschwil",news=[],teams=[],editId=null;
+let currentUser=null,currentRolle='admin';
+const TYP={info:"Info",wichtig:"Wichtig",training:"Training",spiel:"Spiel",event:"Event"};
+
+async function initDB(){
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  currentUser=JSON.parse(localStorage.getItem("vipers_user")||"null");
+  currentRolle=currentUser?.rolle||"admin";
+  const[n,t]=await Promise.all([
+    db.from('news').select("*").order("gepinnt",{ascending:false}).order("erstellt_am",{ascending:false}),
+    db.from('teams').select("id,name").eq("aktiv",true).order("name"),
+  ]);
+  teams=t.data||[];
+  let allNews=n.data||[];
+  // Filterung nach Rolle/Teams
+  if(currentRolle==="admin"){
+    news=allNews;
+  } else if(currentRolle==="spieler"&&currentUser?.team_ids?.length){
+    const myTeams=currentUser.team_ids;
+    news=allNews.filter(n=>{
+      if((n.zielgruppe||[]).includes("alle"))return true;
+      if((n.zielgruppe||[]).includes("spieler"))return true;
+      if(n.team_ids?.some(tid=>myTeams.includes(tid)))return true;
+      return false;
+    });
+  } else if(currentRolle==="trainer"){
+    news=allNews.filter(n=>(n.zielgruppe||[]).includes("alle")||(n.zielgruppe||[]).includes("trainer")||!n.team_ids?.length);
+  } else if(currentRolle==="eltern"){
+    news=allNews.filter(n=>(n.zielgruppe||[]).includes("alle")||(n.zielgruppe||[]).includes("eltern"));
+  } else {
+    news=allNews;
+  }
+  render();
+}
+
+function render(){
+  const cont=document.getElementById("news-list");
+  if(!news.length){cont.innerHTML="<div style='text-align:center;padding:60px;color:var(--text3)'><div style='font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px'>Noch keine Beitraege</div>"+(currentRolle==="admin"||currentRolle==="trainer"?"<button class='btn btn-accent' onclick='openModal()'>+ Ersten Beitrag verfassen</button>":"")+"</div>";return;}
+  cont.innerHTML=news.map(n=>{
+    const d=new Date(n.erstellt_am).toLocaleDateString("de-CH",{day:"numeric",month:"short",year:"numeric"});
+    const teamNames=(n.team_ids||[]).map(id=>teams.find(t=>t.id===id)?.name?.replace("UHC Jonschwil ","")).filter(Boolean);
+    const showAll=(n.zielgruppe||[]).includes("alle");
+    return "<div class='news-card"+(n.gepinnt?" pinned":"")+"'>"
+      +"<div style='display:flex;align-items:center;gap:6px;margin-bottom:10px'>"
+      +"<span class='typ-badge typ-"+(n.typ||"info")+( n.gepinnt?"'":"'")+">"+(TYP[n.typ]||n.typ)+"</span>"
+      +(n.gepinnt?"<span style='font-size:10px;color:var(--accent);font-weight:600'>GEPINNT</span>":"")
+      +"<div style='flex:1'></div>"
+      +(showAll?"<span class='team-tag'>Alle Teams</span>"
+        :teamNames.map(tn=>"<span class='team-tag'>"+tn+"</span>").join(""))
+      +"</div>"
+      +"<div class='news-title'>"+n.titel+"</div>"
+      +(n.inhalt?"<div class='news-body'>"+n.inhalt+"</div>":"")
+      +"<div class='news-footer'><span>"+d+"</span>"
+      +(currentRolle==="admin"||currentRolle==="trainer"
+        ?"<div class='news-actions'>"
+        +"<button class='icon-btn' onclick='togglePin(\""+n.id+"\","+n.gepinnt+")' title='Pinnen'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M10 2l4 4-6 6H4v-4L10 2Z' stroke='"+(n.gepinnt?"var(--accent)":"currentColor")+"' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"
+        +"<button class='icon-btn' onclick='openEdit(\""+n.id+"\")' title='Bearbeiten'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M11 2l3 3L5 14H2v-3L11 2Z' stroke='currentColor' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg></button>"
+        +"<button class='icon-btn del' onclick='deleteNews(\""+n.id+"\")' title='Loeschen'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"
+        +"</div>":"")
+      +"</div></div>";
+  }).join("");
+  // Schreib-Button nur für Admin/Trainer
+  const addBtn=document.getElementById("add-btn");
+  if(addBtn)addBtn.style.display=(currentRolle==="admin"||currentRolle==="trainer")?"flex":"none";
+}
+
+function renderTeamChecks(selectedTeamIds,forAll){
+  return "<div class='all-toggle"+(forAll?" active":"")+"' id='all-toggle' onclick='toggleAll()'>"
+    +"<input type='checkbox' id='tc-all'"+(forAll?" checked":"")+" onchange='toggleAll()'> Alle Teams"
+    +"</div>"
+    +"<div class='team-check-grid' id='team-checks' style='"+(forAll?"opacity:.4;pointer-events:none":"")+"'>"
+    +teams.map(t=>{
+      const sel=selectedTeamIds.includes(t.id);
+      return "<label class='team-check-item"+(sel?" selected":"")+"' id='tcl-"+t.id+"'>"
+        +"<input type='checkbox' value='"+t.id+"' "+(sel?"checked":"")+" onchange='toggleTeam(\""+t.id+"\")'>"
+        +"<span class='team-check-label'>"+t.name.replace("UHC Jonschwil ","")+"</span></label>";
+    }).join("")
+    +"</div>";
+}
+
+function toggleAll(){
+  const cb=document.getElementById("tc-all");
+  cb.checked=!cb.checked;
+  const tog=document.getElementById("all-toggle");
+  const checks=document.getElementById("team-checks");
+  if(cb.checked){tog.classList.add("active");checks.style.opacity=".4";checks.style.pointerEvents="none";}
+  else{tog.classList.remove("active");checks.style.opacity="1";checks.style.pointerEvents="auto";}
+}
+function toggleTeam(id){
+  const lbl=document.getElementById("tcl-"+id);
+  lbl.classList.toggle("selected",document.querySelector("input[value='"+id+"']").checked);
+}
+
+function openModal(){editId=null;document.getElementById("nf-titel").value="";document.getElementById("nf-inhalt").value="";document.getElementById("nf-typ").value="info";document.getElementById("nf-pinned").checked=false;document.getElementById("team-select-area").innerHTML=renderTeamChecks([],true);document.getElementById("newsModal").classList.add("open");}
+function openEdit(id){
+  const n=news.find(x=>x.id===id);if(!n)return;editId=id;
+  document.getElementById("nf-titel").value=n.titel||"";document.getElementById("nf-inhalt").value=n.inhalt||"";document.getElementById("nf-typ").value=n.typ||"info";document.getElementById("nf-pinned").checked=!!n.gepinnt;
+  const showAll=(n.zielgruppe||[]).includes("alle");
+  document.getElementById("team-select-area").innerHTML=renderTeamChecks(n.team_ids||[],showAll);
+  document.getElementById("newsModal").classList.add("open");
+}
+function closeModal(){document.getElementById("newsModal").classList.remove("open");editId=null;}
+
+async function saveNews(){
+  const titel=document.getElementById("nf-titel").value;if(!titel){alert("Bitte Titel eingeben.");return;}
+  const forAll=document.getElementById("tc-all")?.checked!==false;
+  let teamIds=[];
+  let zielgruppe=["alle"];
+  if(!forAll){
+    teamIds=Array.from(document.querySelectorAll("#team-checks input:checked")).map(cb=>cb.value);
+    if(!teamIds.length){alert("Bitte mindestens ein Team waehlen oder 'Alle Teams' aktivieren.");return;}
+    zielgruppe=["spieler","trainer"];
+  }
+  const data={titel,inhalt:document.getElementById("nf-inhalt").value||null,typ:document.getElementById("nf-typ").value,zielgruppe,team_ids:forAll?null:teamIds,gepinnt:document.getElementById("nf-pinned").checked,erstellt_am:new Date().toISOString()};
+  let _nErr;
+  if(editId){const r=await db.from("news").update(data).eq("id",editId);_nErr=r.error;}
+  else{const r=await db.from("news").insert([{club_id:CLUB_ID,...data}]);_nErr=r.error;}
+  if(_nErr){alert("Fehler beim Speichern: "+_nErr.message);return;}
+  closeModal();await initDB();
+}
+async function togglePin(id,pinned){await db.from("news").update({gepinnt:!pinned}).eq("id",id);await initDB();}
+async function deleteNews(id){if(!confirm("Beitrag loeschen?"))return;await db.from("news").delete().eq("id",id);await initDB();}
+document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="page-title">Newsfeed</div><div class="page-sub"><span id="club-name-sub"></span> · Ankuendigungen & Mitteilungen</div></div>
+      <button class="btn btn-accent" id="add-btn" onclick="openModal()">+ Beitrag verfassen</button>
+    </div>
+    <div class="content"><div id="news-list"><div style="text-align:center;padding:40px;color:var(--text3)">Lade...</div></div></div>
+  </div>
+</div>
+
+<div class="overlay" id="newsModal">
+  <div class="modal">
+    <div class="modal-title">Beitrag verfassen</div>
+    <div class="form-grid">
+      <div><label class="form-label">Titel</label><input class="form-input" type="text" id="nf-titel" placeholder="z.B. Training faellt aus"></div>
+      <div><label class="form-label">Inhalt (optional)</label><textarea class="form-input" id="nf-inhalt" rows="3" placeholder="Weitere Informationen..."></textarea></div>
+      <div class="form-row-2">
+        <div><label class="form-label">Typ</label>
+          <select class="form-input" id="nf-typ">
+            <option value="info">Info</option><option value="wichtig">Wichtig</option>
+            <option value="training">Training</option><option value="spiel">Spiel</option><option value="event">Event</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding-top:22px">
+          <input type="checkbox" id="nf-pinned" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+          <label for="nf-pinned" style="font-size:13px;color:var(--text2);cursor:pointer">Beitrag pinnen</label>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Zielgruppe — Teams</label>
+        <div id="team-select-area"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveNews()">Veroeffentlichen</button>
+    </div>
+  </div>
+</div>
+<script>document.addEventListener("DOMContentLoaded",()=>{const el=document.getElementById("club-name-sub");if(el)el.textContent=APP_CONFIG.ACTIVE_CLUB.name;});</script>
+<script src="nav.js"></script><script>renderNav("news");</script>
+</body></html>

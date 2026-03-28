@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anmelden — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.16);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(212,240,74,.04) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(155,143,255,.04) 0%,transparent 60%);pointer-events:none}
+.container{width:100%;max-width:440px}
+.logo-area{text-align:center;margin-bottom:32px}
+.logo-icon{width:52px;height:52px;background:var(--accent);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px}
+.logo-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.logo-sub{font-size:13px;color:var(--text3);margin-top:3px}
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:32px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg3);border-radius:10px;padding:4px;margin-bottom:28px}
+.auth-tab{padding:9px;text-align:center;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-radius:8px;transition:all .15s;border:none;background:transparent;font-family:"DM Sans",sans-serif}
+.auth-tab.active{background:var(--bg2);color:var(--text);border:1px solid var(--border2)}
+.panel{display:none}.panel.active{display:block}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:11px 14px;font-size:14px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+select.form-input option{background:var(--bg3)}
+.btn-submit{width:100%;background:var(--accent);color:#0c0d0f;border:none;border-radius:9px;padding:12px;font-size:14px;font-weight:600;font-family:"DM Sans",sans-serif;cursor:pointer;transition:all .15s;margin-top:4px}
+.btn-submit:hover{background:var(--accent2)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.role-card{background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:12px;cursor:pointer;transition:all .15s;text-align:center}
+.role-card:hover{border-color:var(--border)}
+.role-card.selected{border-color:var(--accent);background:rgba(212,240,74,.06)}
+.role-card-icon{font-size:20px;margin-bottom:5px}
+.role-card-label{font-size:13px;font-weight:500}
+.role-card-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.player-search{position:relative}
+.player-results{position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;margin-top:4px;overflow:hidden;z-index:10;display:none;max-height:200px;overflow-y:auto}
+.player-results.open{display:block}
+.player-result-item{padding:10px 14px;cursor:pointer;font-size:13px;transition:background .12s;display:flex;align-items:center;gap:10px}
+.player-result-item:hover{background:var(--bg3)}
+.player-avatar{width:28px;height:28px;border-radius:50%;background:rgba(91,191,255,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--blue);flex-shrink:0}
+.alert{padding:12px 14px;border-radius:9px;font-size:13px;margin-bottom:16px;line-height:1.5;display:none}
+.alert.success{background:rgba(77,214,140,.1);border:1px solid rgba(77,214,140,.25);color:var(--green)}
+.alert.error{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);color:var(--red)}
+.alert.info{background:rgba(91,191,255,.1);border:1px solid rgba(91,191,255,.25);color:var(--blue)}
+.step-indicator{display:flex;align-items:center;gap:8px;margin-bottom:24px}
+.step{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;transition:all .2s}
+.step.done{background:var(--green);color:#0c0d0f}
+.step.active{background:var(--accent);color:#0c0d0f}
+.step.pending{background:var(--bg3);color:var(--text3);border:1px solid var(--border2)}
+.step-line{flex:1;height:1px;background:var(--border)}
+.step-line.done{background:var(--green)}
+.back-link{text-align:center;margin-top:20px;font-size:13px;color:var(--text3)}
+.back-link a{color:var(--text2)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+const CONFIG = APP_CONFIG;
+let db = null, auth = null;
+let registerStep = 1;
+let selectedRolle = 'spieler';
+let selectedPlayerId = null;
+let allPlayers = [];
+
+async function init() {
+  try {
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2.39.0');
+    const client = mod.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    db = client;
+    auth = client.auth;
+
+    // Vereinsname setzen
+    document.getElementById('logo-club').textContent = APP_CONFIG.ACTIVE_CLUB.name;
+
+    // Bereits eingeloggt?
+    const { data: { session } } = await auth.getSession();
+    if (session) {
+      await loadUserAndRedirect(session.user);
+      return;
+    }
+
+    // Spielerliste für Verknüpfung laden
+    const { data } = await db
+      .from('players')
+      .select('id,vorname,nachname,nummer,teams(name)')
+      
+      .eq('aktiv', true)
+      .order('nachname');
+    allPlayers = data || [];
+
+  } catch(e) {
+    console.error('Init error:', e);
+    showAlert('l-alert', 'error', 'Verbindungsfehler. Seite neu laden.');
+  }
+}
+
+async function loadUserAndRedirect(user) {
+  try {
+    // Profil per auth_user_id suchen
+    let { data: profile } = await db
+      .from('user_profiles')
+      .select('*')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    // Fallback: per id (alte Profile)
+    if (!profile) {
+      const { data: p2 } = await db
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      profile = p2;
+    }
+
+    // Fallback: per email
+    if (!profile) {
+      const { data: p3 } = await db
+        .from('user_profiles')
+        .select('*')
+        .eq('email', user.email)
+        .maybeSingle();
+      if (p3) {
+        // auth_user_id nachträglich setzen
+        await db.from('user_profiles').update({ auth_user_id: user.id, login_status: 'active' }).eq('id', p3.id);
+        profile = p3;
+      }
+    }
+
+    const rolle = profile?.rolle || 'spieler';
+    const userData = {
+      id: profile?.id || user.id,
+      auth_user_id: user.id,
+      email: user.email,
+      vorname: profile?.vorname || user.user_metadata?.vorname || '',
+      nachname: profile?.nachname || user.user_metadata?.nachname || '',
+      rolle,
+      club_id: profile?.club_id || APP_CONFIG.ACTIVE_CLUB.club_id,
+      login_status: 'active',
+    };
+
+    // Login-Status aktualisieren
+    if (profile) {
+      await db.from('user_profiles')
+        .update({ login_status: 'active', auth_user_id: user.id })
+        .eq('id', profile.id);
+    }
+
+    localStorage.setItem('vipers_user', JSON.stringify(userData));
+    window.location.href = 'dashboard.html';
+  } catch(e) {
+    console.error('Redirect error:', e);
+    // Trotzdem weiterleiten mit Basis-Daten
+    localStorage.setItem('vipers_user', JSON.stringify({
+      auth_user_id: user.id, email: user.email,
+      vorname: user.user_metadata?.vorname || '',
+      nachname: user.user_metadata?.nachname || '',
+      rolle: 'spieler', club_id: APP_CONFIG.ACTIVE_CLUB.club_id
+    }));
+    window.location.href = 'dashboard.html';
+  }
+}
+
+// ── Tabs ──
+function setTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  clearAlerts();
+}
+function clearAlerts() {
+  document.querySelectorAll('.alert').forEach(a => { a.style.display='none'; a.textContent=''; });
+}
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'alert ' + type;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ── Login ──
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  if (!email || !pass) { showAlert('l-alert','error','Bitte E-Mail und Passwort eingeben.'); return; }
+  const btn = document.getElementById('l-btn');
+  btn.disabled = true; btn.textContent = 'Anmelden...';
+
+  const { data, error } = await auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    const msg = error.message.includes('Invalid') || error.message.includes('invalid')
+      ? 'E-Mail oder Passwort falsch.' : error.message;
+    showAlert('l-alert','error', msg);
+    btn.disabled = false; btn.textContent = 'Anmelden';
+    return;
+  }
+  showAlert('l-alert','success','Anmeldung erfolgreich! Weiterleitung...');
+  setTimeout(() => loadUserAndRedirect(data.user), 400);
+}
+
+// ── Passwort vergessen ──
+async function resetPassword() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { showAlert('l-alert','error','Bitte zuerst E-Mail eingeben.'); return; }
+  const { error } = await auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/login.html'
+  });
+  if (error) { showAlert('l-alert','error', error.message); return; }
+  showAlert('l-alert','success','Passwort-Reset-Link wurde gesendet an ' + email);
+}
+
+// ── Registrierung ──
+function selectRolle(rolle) {
+  selectedRolle = rolle;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('role-' + rolle).classList.add('selected');
+}
+
+function nextStep(from) {
+  if (from === 1) {
+    if (!selectedRolle) { showAlert('r-alert','error','Bitte Rolle wählen.'); return; }
+    setRegisterStep(2);
+  } else if (from === 2) {
+    const vn = document.getElementById('r-vorname').value.trim();
+    const nn = document.getElementById('r-nachname').value.trim();
+    const email = document.getElementById('r-email').value.trim();
+    const pass = document.getElementById('r-pass').value;
+    const pass2 = document.getElementById('r-pass2').value;
+    if (!vn || !nn || !email || !pass) { showAlert('r-alert2','error','Bitte alle Felder ausfüllen.'); return; }
+    if (pass.length < 6) { showAlert('r-alert2','error','Passwort muss mindestens 6 Zeichen haben.'); return; }
+    if (pass !== pass2) { showAlert('r-alert2','error','Passwörter stimmen nicht überein.'); return; }
+    if (selectedRolle === 'spieler') setRegisterStep(3);
+    else doRegister();
+  }
+}
+
+function setRegisterStep(step) {
+  registerStep = step;
+  [1,2,3].forEach(s => {
+    document.getElementById('rstep-' + s).style.display = s === step ? 'block' : 'none';
+    const si = document.getElementById('si-' + s);
+    si.className = 'step ' + (s < step ? 'done' : s === step ? 'active' : 'pending');
+    const sl = document.getElementById('sl-' + s);
+    if (sl) sl.className = 'step-line' + (s < step ? ' done' : '');
+  });
+}
+
+// Spieler-Suche
+function searchPlayer(q) {
+  const res = document.getElementById('player-results');
+  if (!q || q.length < 2) { res.classList.remove('open'); return; }
+  const matches = allPlayers.filter(p =>
+    (p.vorname + ' ' + p.nachname).toLowerCase().includes(q.toLowerCase())
+  );
+  if (!matches.length) { res.classList.remove('open'); return; }
+  res.innerHTML = matches.slice(0,6).map(p => {
+    const init = (p.vorname[0]||'') + (p.nachname[0]||'');
+    const team = p.teams?.name?.replace('UHC Jonschwil ','') || '';
+    const pid = p.id, pname = p.vorname + ' ' + p.nachname;
+    return `<div class="player-result-item" onclick="selectPlayer('${pid}','${pname}')">
+      <div class="player-avatar">${init}</div>
+      <div><div style="font-weight:500">${pname}</div>
+      <div style="font-size:11px;color:var(--text3)">#${p.nummer||'–'} · ${team}</div></div>
+    </div>`;
+  }).join('');
+  res.classList.add('open');
+}
+function selectPlayer(id, name) {
+  selectedPlayerId = id;
+  document.getElementById('r-player-search').value = name;
+  document.getElementById('player-results').classList.remove('open');
+  showAlert('r-alert3','info','✓ Spielerprofil "' + name + '" wird verknüpft.');
+}
+function skipPlayerLink() {
+  selectedPlayerId = null;
+  doRegister();
+}
+
+// ── Account erstellen ──
+async function doRegister() {
+  const vn = document.getElementById('r-vorname').value.trim();
+  const nn = document.getElementById('r-nachname').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pass = document.getElementById('r-pass').value;
+  const alertId = registerStep === 3 ? 'r-alert3' : 'r-alert2';
+  const btn = document.getElementById('r-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Erstelle Account...'; }
+
+  // 1. Supabase Auth signUp
+  const { data, error } = await auth.signUp({
+    email, password: pass,
+    options: { data: { vorname: vn, nachname: nn } }
+  });
+
+  if (error) {
+    const msg = error.message.includes('already') ? 'Diese E-Mail wird bereits verwendet.' : error.message;
+    showAlert(alertId,'error', msg);
+    if (btn) { btn.disabled = false; btn.textContent = 'Account erstellen'; }
+    return;
+  }
+
+  const userId = data.user?.id;
+  if (!userId) {
+    showAlert(alertId,'error','Fehler: Kein User-ID erhalten.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Account erstellen'; }
+    return;
+  }
+
+  // 2. Bestehendes Profil per E-Mail suchen (vom Admin manuell erfasst)
+  const { data: existing } = await db
+    .from('user_profiles')
+    .select('*')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (existing) {
+    // Profil mit Auth verknüpfen
+    await db.from('user_profiles')
+      .update({ auth_user_id: userId, login_status: 'active', aktiv: true })
+      .eq('id', existing.id);
+    // Spieler per E-Mail verknüpfen
+    await db.from('players').update({ user_id: userId }).eq('email', email);
+    localStorage.setItem('vipers_user', JSON.stringify({
+      id: existing.id, auth_user_id: userId,
+      vorname: existing.vorname || vn, nachname: existing.nachname || nn,
+      email, rolle: existing.rolle || selectedRolle,
+      club_id: existing.club_id || APP_CONFIG.ACTIVE_CLUB.club_id,
+      login_status: 'active',
+    }));
+  } else {
+    // Neues Profil anlegen
+    const { data: newP } = await db.from('user_profiles').insert([{
+      auth_user_id: userId,
+      vorname: vn, nachname: nn, email,
+      rolle: selectedRolle,
+      club_id: APP_CONFIG.ACTIVE_CLUB.club_id,
+      aktiv: true, login_status: 'active',
+      mitglied_seit: new Date().toISOString().split('T')[0],
+    }]).select('id').single();
+
+    // Spielerprofil verknüpfen (falls in Schritt 3 gewählt)
+    if (selectedRolle === 'spieler' && selectedPlayerId) {
+      await db.from('players').update({ user_id: userId }).eq('id', selectedPlayerId);
+    }
+    localStorage.setItem('vipers_user', JSON.stringify({
+      id: newP?.id, auth_user_id: userId,
+      vorname: vn, nachname: nn, email,
+      rolle: selectedRolle,
+      club_id: APP_CONFIG.ACTIVE_CLUB.club_id,
+      login_status: 'active',
+    }));
+  }
+
+  // 3. Weiterleitung
+  if (data.session) {
+    // E-Mail-Bestätigung deaktiviert → direkt einloggen
+    showAlert(alertId,'success','Account erstellt! Weiterleitung...');
+    setTimeout(() => window.location.href = 'dashboard.html', 800);
+  } else {
+    // E-Mail-Bestätigung aktiv
+    showAlert(alertId,'success','Account erstellt! Bitte bestätige deine E-Mail-Adresse. Danach kannst du dich anmelden.');
+    if (btn) { btn.textContent = 'E-Mail bestätigt? → Anmelden'; btn.disabled = false; }
+    if (btn) btn.onclick = () => setTab('login');
+  }
+}
+
+// ── Trainer/Admin Anfrage ──
+function showTrainerRequest() {
+  document.getElementById('panel-request').style.display = 'block';
+  document.getElementById('panel-request').scrollIntoView({behavior:'smooth'});
+}
+function hideRequest() {
+  document.getElementById('panel-request').style.display = 'none';
+}
+async function submitRequest() {
+  const vn = document.getElementById('req-vn').value.trim();
+  const nn = document.getElementById('req-nn').value.trim();
+  const email = document.getElementById('req-email').value.trim();
+  if (!vn || !nn || !email) { showAlert('req-alert','error','Bitte alle Pflichtfelder ausfüllen.'); return; }
+  // Speichern als user_profile mit pending-Status
+  const { error } = await db.from('user_profiles').insert([{
+    vorname: vn, nachname: nn, email,
+    rolle: document.getElementById('req-rolle').value,
+    club_id: APP_CONFIG.ACTIVE_CLUB.club_id,
+    login_status: 'pending', aktiv: false,
+  }]);
+  if (error) { showAlert('req-alert','error','Fehler: ' + error.message); return; }
+  showAlert('req-alert','success','Anfrage gesendet! Der Vereinsadmin wird dich kontaktieren.');
+  setTimeout(() => hideRequest(), 3000);
+}
+
+// Enter-Taste für Login
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const panel = document.querySelector('.panel.active');
+  if (panel?.id === 'panel-login') doLogin();
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.player-search'))
+    document.getElementById('player-results')?.classList.remove('open');
+});
+
+init().catch(e => {
+  console.error(e);
+  showAlert('l-alert','error','Verbindung fehlgeschlagen. Bitte Seite neu laden.');
+});
+</script>
+
+<div class="container">
+  <div class="logo-area">
+    <div class="logo-icon">
+      <svg viewBox="0 0 28 28" fill="none">
+        <path d="M14 3L24 9V19L14 25L4 19V9L14 3Z" fill="#0c0d0f"/>
+        <path d="M10 14L13 17L19 11" stroke="#0c0d0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="logo-title">Stackflow</div>
+    <div class="logo-sub" id="logo-club">Vereinsplattform</div>
+  </div>
+
+  <div class="card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="setTab('login')">Anmelden</button>
+      <button class="auth-tab" id="tab-register" onclick="setTab('register')">Account erstellen</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="panel active" id="panel-login">
+      <div class="alert" id="l-alert"></div>
+      <div class="form-group">
+        <label class="form-label">E-Mail Adresse</label>
+        <input class="form-input" type="email" id="l-email" placeholder="deine@email.ch" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Passwort</label>
+        <input class="form-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-submit" id="l-btn" onclick="doLogin()">Anmelden</button>
+      <div style="text-align:center;margin-top:14px">
+        <a href="#" onclick="resetPassword();return false;" style="font-size:12px;color:var(--text3)">Passwort vergessen?</a>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="panel" id="panel-register">
+      <div class="step-indicator">
+        <div class="step active" id="si-1">1</div>
+        <div class="step-line" id="sl-1"></div>
+        <div class="step pending" id="si-2">2</div>
+        <div class="step-line" id="sl-2"></div>
+        <div class="step pending" id="si-3">3</div>
+      </div>
+
+      <!-- Schritt 1: Rolle -->
+      <div id="rstep-1">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:600;margin-bottom:6px">Ich bin...</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:18px">Wähle deine Rolle im Verein</div>
+        <div class="alert" id="r-alert"></div>
+        <div class="role-grid">
+          <div class="role-card selected" id="role-spieler" onclick="selectRolle('spieler')">
+            <div class="role-card-icon">🏑</div>
+            <div class="role-card-label">Spieler</div>
+            <div class="role-card-sub">Aktives Mitglied</div>
+          </div>
+          <div class="role-card" id="role-eltern" onclick="selectRolle('eltern')">
+            <div class="role-card-icon">👨‍👩‍👧</div>
+            <div class="role-card-label">Elternteil</div>
+            <div class="role-card-sub">Junioren-Eltern</div>
+          </div>
+        </div>
+        <div style="background:rgba(91,191,255,.08);border:1px solid rgba(91,191,255,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);margin-bottom:16px;line-height:1.6">
+          Trainer- und Admin-Zugänge werden vom Vereinsvorstand freigegeben.
+          <a href="#" onclick="showTrainerRequest();return false;" style="color:var(--accent);font-weight:500;display:block;margin-top:4px">→ Trainer- oder Admin-Zugang anfragen</a>
+        </div>
+        <button class="btn-submit" onclick="nextStep(1)">Weiter →</button>
+      </div>
+
+      <!-- Schritt 2: Account-Daten -->
+      <div id="rstep-2" style="display:none">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:600;margin-bottom:16px">Account-Daten</div>
+        <div class="alert" id="r-alert2"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Vorname</label>
+            <input class="form-input" type="text" id="r-vorname" placeholder="Max" autocomplete="given-name">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Nachname</label>
+            <input class="form-input" type="text" id="r-nachname" placeholder="Muster" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-Mail Adresse</label>
+          <input class="form-input" type="email" id="r-email" placeholder="deine@email.ch" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Passwort (min. 6 Zeichen)</label>
+          <input class="form-input" type="password" id="r-pass" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Passwort bestätigen</label>
+          <input class="form-input" type="password" id="r-pass2" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-submit" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border2)" onclick="setRegisterStep(1)">← Zurück</button>
+          <button class="btn-submit" id="r-btn-next2" onclick="nextStep(2)">Weiter →</button>
+        </div>
+      </div>
+
+      <!-- Schritt 3: Spielerprofil -->
+      <div id="rstep-3" style="display:none">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:600;margin-bottom:6px">Spielerprofil verknüpfen</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:18px">Verbinde deinen Account mit deinem Spielerprofil</div>
+        <div class="alert" id="r-alert3"></div>
+        <div class="form-group">
+          <label class="form-label">Deinen Namen suchen</label>
+          <div class="player-search">
+            <input class="form-input" type="text" id="r-player-search" placeholder="Name eingeben..." oninput="searchPlayer(this.value)" autocomplete="off">
+            <div class="player-results" id="player-results"></div>
+          </div>
+        </div>
+        <div style="background:rgba(91,191,255,.08);border:1px solid rgba(91,191,255,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);margin-bottom:16px;line-height:1.6">
+          Falls du noch kein Spielerprofil hast, kannst du diesen Schritt überspringen.
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-submit" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border2)" onclick="setRegisterStep(2)">← Zurück</button>
+          <button class="btn-submit" id="r-btn" onclick="doRegister()">Account erstellen</button>
+        </div>
+        <div style="text-align:center;margin-top:12px">
+          <a href="#" onclick="skipPlayerLink();return false;" style="font-size:12px;color:var(--text3)">Überspringen →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trainer/Admin Anfrage -->
+  <div id="panel-request" style="display:none;margin-top:12px">
+    <div class="card">
+      <div style="margin-bottom:20px">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px">Trainer / Admin Zugang anfragen</div>
+        <div style="font-size:13px;color:var(--text3)">Deine Anfrage wird dem Vereinsvorstand zur Freigabe gesendet.</div>
+      </div>
+      <div class="alert" id="req-alert"></div>
+      <div class="form-group">
+        <label class="form-label">Gewünschte Rolle</label>
+        <select class="form-input" id="req-rolle">
+          <option value="trainer">Trainer</option>
+          <option value="admin">Vereinsadmin / Vorstand</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Vorname</label><input class="form-input" type="text" id="req-vn"></div>
+        <div class="form-group"><label class="form-label">Nachname</label><input class="form-input" type="text" id="req-nn"></div>
+      </div>
+      <div class="form-group"><label class="form-label">E-Mail</label><input class="form-input" type="email" id="req-email"></div>
+      <button class="btn-submit" onclick="submitRequest()">Anfrage senden</button>
+      <div style="text-align:center;margin-top:12px">
+        <a href="#" onclick="hideRequest();return false;" style="font-size:12px;color:var(--text3)">← Zurück</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="back-link">
+    Fragen? Kontaktiere den <a href="mailto:info@uhcjonschwil.ch">Vereinsvorstand</a>
+  </div>
+</div>
+</body>
+</html>

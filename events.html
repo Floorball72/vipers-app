@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.stat-val{font-family:"DM Mono",monospace;font-size:30px;font-weight:400}
+.stat-hi .stat-val{color:var(--accent)}
+.events-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.event-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:border-color .15s}
+.event-card:hover{border-color:var(--border2)}
+.event-card-top{padding:16px 18px;display:flex;gap:14px;align-items:flex-start}
+.event-date-box{background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center;flex-shrink:0;min-width:52px}
+.event-date-day{font-family:"DM Mono",monospace;font-size:22px;font-weight:500;line-height:1}
+.event-date-mon{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.event-body{flex:1}
+.typ-badge{display:inline-flex;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:5px}
+.typ-cup{background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)}
+.typ-turnier{background:rgba(155,143,255,.1);color:var(--purple);border:1px solid rgba(155,143,255,.2)}
+.typ-gv{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+.typ-event{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.typ-training{background:rgba(212,240,74,.1);color:var(--accent);border:1px solid rgba(212,240,74,.2)}
+.event-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.event-meta{font-size:11px;color:var(--text3)}
+.todos-section{border-top:1px solid var(--border);padding:12px 16px}
+.todos-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.todos-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
+.todo-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.todo-check{width:16px;height:16px;border-radius:4px;border:1px solid var(--border2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.todo-check.done{background:rgba(77,214,140,.2);border-color:rgba(77,214,140,.4)}
+.todo-text{font-size:12px;color:var(--text2);flex:1}
+.todo-text.done{text-decoration:line-through;color:var(--text3)}
+.add-todo-row{display:flex;gap:6px;margin-top:8px}
+.todo-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none}
+.todo-input:focus{border-color:var(--accent)}
+.todo-add-btn{background:var(--accent);color:#0c0d0f;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.event-card-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:6px}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;margin-bottom:20px}
+.form-grid{display:grid;gap:14px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-title{font-size:16px;font-weight:500;color:var(--text2);margin-bottom:8px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+// Config aus config.js
+const CONFIG = APP_CONFIG;
+const MONATE=["Jan","Feb","Mar","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+const TYP_LABELS={cup:"Cup",turnier:"Turnier",gv:"Generalversammlung",event:"Event",training:"Training"};
+let db=null,CLUB_ID="uhc-jonschwil",events=[],editId=null;
+
+async function initDB(){
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  await loadEvents();
+}
+async function loadEvents(){
+  const{data}=await db.from('events').select("*").order("datum");
+  events=data||[];renderAll();
+}
+function renderAll(){renderEvents();updateStats();}
+function updateStats(){
+  const h=new Date().toISOString().split("T")[0];
+  const up=events.filter(e=>e.datum>=h);
+  document.getElementById("stat-total").textContent=events.length;
+  document.getElementById("stat-upcoming").textContent=up.length;
+  const nxt=up[0];
+  document.getElementById("stat-next").textContent=nxt?new Date(nxt.datum+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"}):"--";
+  const tot=events.reduce((s,e)=>s+((e.todos||[]).length),0);
+  const don=events.reduce((s,e)=>s+((e.todos||[]).filter(t=>t.done).length),0);
+  document.getElementById("stat-todos").textContent=tot?don+"/"+tot:"--";
+}
+function renderEvents(){
+  const cont=document.getElementById("events-container");
+  const h=new Date().toISOString().split("T")[0];
+  if(!events.length){cont.innerHTML="<div class='empty'><div class='empty-title'>Noch keine Events</div><div style='font-size:13px;color:var(--text3);margin-bottom:16px'>Erfasse den ersten Vereinsanlass</div><button class='btn btn-accent' onclick='openModal()'>+ Event erstellen</button></div>";return;}
+  const up=events.filter(e=>e.datum>=h);
+  const pa=events.filter(e=>e.datum<h);
+  let html="";
+  if(up.length){html+="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px'>Kommende Events</div><div class='events-grid' style='margin-bottom:28px'>"+up.map(evCard).join("")+"</div>";}
+  if(pa.length){html+="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px'>Vergangene Events</div><div class='events-grid' style='opacity:.55'>"+[...pa].reverse().map(evCard).join("")+"</div>";}
+  cont.innerHTML=html;
+}
+function evCard(e){
+  const d=new Date(e.datum+"T12:00:00");
+  const todos=e.todos||[];
+  const done=todos.filter(t=>t.done).length;
+  const pct=todos.length?Math.round(done/todos.length*100):0;
+  const meta=[e.uhrzeit?e.uhrzeit.slice(0,5)+" Uhr":"",e.ort||""].filter(Boolean).join(" · ");
+  return "<div class='event-card'><div class='event-card-top'><div class='event-date-box'><div class='event-date-day'>"+d.getDate()+"</div><div class='event-date-mon'>"+MONATE[d.getMonth()]+"</div></div><div class='event-body'><div class='typ-badge typ-"+(e.typ||"event")+"'>"+(TYP_LABELS[e.typ]||e.typ)+"</div><div class='event-title'>"+e.titel+"</div><div class='event-meta'>"+meta+"</div>"+(todos.length?"<div style='margin-top:8px;display:flex;align-items:center;gap:6px'><div style='flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden'><div style='height:100%;width:"+pct+"%;background:var(--green);border-radius:2px'></div></div><span style='font-size:10px;color:var(--text3)'>"+done+"/"+todos.length+"</span></div>":"")+"</div></div><div class='todos-section'><div class='todos-header'><span class='todos-label'>Todos</span><span style='font-size:11px;color:var(--text3)'>"+todos.length+" Aufgaben</span></div>"+todos.map((t,i)=>"<div class='todo-row'><div class='todo-check "+(t.done?"done":"")+"' onclick=\"toggleTodo('"+e.id+"',"+i+")\">"+( t.done?"<svg width='10' height='10' viewBox='0 0 10 10' fill='none'><path d='M2 5l2 2.5L8 3' stroke='var(--green)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>":"")+"</div><span class='todo-text "+(t.done?"done":"")+"'>"+t.text+"</span><button onclick=\"removeTodo('"+e.id+"',"+i+")\" style='background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px'>x</button></div>").join("")+"<div class='add-todo-row'><input class='todo-input' type='text' placeholder='Todo hinzufuegen...' id='ti-"+e.id+"' onkeydown=\"if(event.key==='Enter')addTodo('\"+e.id+\"')\"><button class='todo-add-btn' onclick=\"addTodo('"+e.id+"')\">+</button></div></div><div class='event-card-footer'><button class='btn btn-ghost' style='flex:1;font-size:11px;padding:5px;justify-content:center' onclick=\"openEdit('"+e.id+"')\">Bearbeiten</button><button class='icon-btn del' onclick=\"deleteEvent('"+e.id+"')\"><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button></div></div>";
+}
+async function addTodo(eid){
+  const inp=document.getElementById("ti-"+eid);
+  const text=(inp.value||"").trim();if(!text)return;
+  const e=events.find(x=>x.id===eid);
+  const todos=[...(e.todos||[]),{text,done:false}];
+  await db.from("events").update({todos}).eq("id",eid);
+  inp.value="";await loadEvents();
+}
+async function toggleTodo(eid,idx){
+  const e=events.find(x=>x.id===eid);
+  const todos=[...(e.todos||[])];todos[idx]={...todos[idx],done:!todos[idx].done};
+  await db.from("events").update({todos}).eq("id",eid);await loadEvents();
+}
+async function removeTodo(eid,idx){
+  const e=events.find(x=>x.id===eid);
+  const todos=(e.todos||[]).filter((_,i)=>i!==idx);
+  await db.from("events").update({todos}).eq("id",eid);await loadEvents();
+}
+function openModal(){editId=null;["ef-titel","ef-ort","ef-beschreibung"].forEach(id=>document.getElementById(id).value="");document.getElementById("ef-typ").value="event";document.getElementById("ef-datum").value="";document.getElementById("ef-uhrzeit").value="";document.getElementById("eventModal").classList.add("open");}
+function openEdit(id){
+  const e=events.find(x=>x.id===id);if(!e)return;editId=id;
+  document.getElementById("ef-titel").value=e.titel||"";document.getElementById("ef-typ").value=e.typ||"event";document.getElementById("ef-datum").value=e.datum||"";document.getElementById("ef-uhrzeit").value=e.uhrzeit?e.uhrzeit.slice(0,5):"";document.getElementById("ef-ort").value=e.ort||"";document.getElementById("ef-beschreibung").value=e.beschreibung||"";
+  document.getElementById("eventModal").classList.add("open");
+}
+function closeModal(){document.getElementById("eventModal").classList.remove("open");}
+async function saveEvent(){
+  const titel=document.getElementById("ef-titel").value;const datum=document.getElementById("ef-datum").value;
+  if(!titel||!datum){alert("Titel und Datum sind Pflichtfelder.");return;}
+  const data={titel,datum,typ:document.getElementById("ef-typ").value,uhrzeit:document.getElementById("ef-uhrzeit").value||null,ort:document.getElementById("ef-ort").value||null,beschreibung:document.getElementById("ef-beschreibung").value||null};
+  if(editId){await db.from("events").update(data).eq("id",editId);}
+  else{await db.from("events").insert([{club_id:CLUB_ID,...data,todos:[]}]);}
+  closeModal();await loadEvents();
+}
+async function deleteEvent(id){if(!confirm("Event wirklich loeschen?"))return;await db.from("events").delete().eq("id",id);await loadEvents();}
+document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="page-title">Events</div><div class="page-sub"><span id="club-name-sub"></span> · Anlaesse mit Todos</div></div>
+      <button class="btn btn-accent" onclick="openModal()">+ Event erstellen</button>
+    </div>
+    <div class="content">
+      <div class="stat-grid">
+        <div class="stat stat-hi"><div class="stat-label">Total</div><div class="stat-val" id="stat-total">-</div></div>
+        <div class="stat"><div class="stat-label">Kommend</div><div class="stat-val" id="stat-upcoming">-</div></div>
+        <div class="stat"><div class="stat-label">Naechster</div><div class="stat-val" style="font-size:18px;padding-top:6px" id="stat-next">-</div></div>
+        <div class="stat"><div class="stat-label">Todos</div><div class="stat-val" style="font-size:20px;padding-top:4px" id="stat-todos">-</div></div>
+      </div>
+      <div id="events-container"><div style="text-align:center;padding:40px;color:var(--text3)">Lade...</div></div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="eventModal">
+  <div class="modal">
+    <div class="modal-title">Event erfassen</div>
+    <div class="form-grid">
+      <div><label class="form-label">Titel</label><input class="form-input" type="text" id="ef-titel" placeholder="z.B. Cup-Heimspiel"></div>
+      <div class="form-row-2">
+        <div><label class="form-label">Typ</label><select class="form-input" id="ef-typ"><option value="event">Event</option><option value="cup">Cup</option><option value="turnier">Turnier</option><option value="gv">Generalversammlung</option><option value="training">Training</option></select></div>
+        <div><label class="form-label">Datum</label><input class="form-input" type="date" id="ef-datum"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Uhrzeit</label><input class="form-input" type="time" id="ef-uhrzeit"></div>
+        <div><label class="form-label">Ort</label><input class="form-input" type="text" id="ef-ort"></div>
+      </div>
+      <div><label class="form-label">Beschreibung</label><textarea class="form-input" id="ef-beschreibung" rows="2"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveEvent()">Speichern</button>
+    </div>
+  </div>
+</div>
+<script>document.addEventListener("DOMContentLoaded",()=>{const el=document.getElementById("club-name-sub");if(el)el.textContent=APP_CONFIG.ACTIVE_CLUB.name;});</script>
+<script src="nav.js"></script><script>renderNav("events");</script>
+</body></html>

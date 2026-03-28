@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Statistiken — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);cursor:pointer;transition:color .12s;border:none;background:none;font-family:'DM Sans',sans-serif;padding:0}
+.back-btn:hover{color:var(--text)}
+.page-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;text-align:center}
+.stat-val{font-family:'DM Mono',monospace;font-size:28px;font-weight:400}
+.stat-label{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600}
+.chart-bar-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.chart-bar-row:last-child{border-bottom:none}
+.chart-label{font-size:12px;color:var(--text2);width:90px}
+.chart-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:3px}
+.chart-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);width:40px;text-align:right}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+th.r{text-align:right}
+td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+td.r{text-align:right;font-family:'DM Mono',monospace;font-size:12px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02);cursor:pointer}
+.win-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+// Config aus config.js
+const CONFIG = APP_CONFIG;
+let db=null,CLUB_ID="uhc-jonschwil",team=null,games=[],scorer=[],players=[];
+const params=new URLSearchParams(location.search);
+const teamId=params.get('id');
+
+async function initDB(){
+  const mod=await import('https://esm.sh/@supabase/supabase-js@2.39.0');
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  if(!teamId){location.href='spielplan.html';return;}
+  const[t,g,s,p]=await Promise.all([
+    db.from('teams').select('*').eq('id',teamId).single(),
+    db.from('games').select('*').eq('team_id',teamId).order('datum'),
+    db.from('scorer').select('*,players(vorname,nachname,nummer)').eq('saison','2024/25'),
+    db.from('players').select('*').eq('team_id',teamId).eq('aktiv',true).order('nummer'),
+  ]);
+  team=t.data;games=g.data||[];scorer=s.data||[];players=p.data||[];
+  render();
+}
+
+function render(){
+  document.getElementById('team-name').textContent=team?.name||'Team';
+  document.getElementById('team-liga').textContent=team?.liga||'';
+
+  const played=games.filter(g=>g.resultat_heim!=null);
+  const wins=played.filter(g=>g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim).length;
+  const losses=played.filter(g=>g.heimspiel?g.resultat_heim<g.resultat_gast:g.resultat_gast<g.resultat_heim).length;
+  const draws=played.length-wins-losses;
+  const totalFor=played.reduce((s,g)=>s+(g.heimspiel?g.resultat_heim:g.resultat_gast),0);
+  const totalAgainst=played.reduce((s,g)=>s+(g.heimspiel?g.resultat_gast:g.resultat_heim),0);
+  const avgFor=played.length?+(totalFor/played.length).toFixed(1):0;
+  const avgAgainst=played.length?+(totalAgainst/played.length).toFixed(1):0;
+  const totalStraf=scorer.filter(s=>s.players?.team_id===teamId).reduce((s,x)=>s+(x.strafminuten||0),0);
+
+  document.getElementById('stat-gespielt').textContent=played.length;
+  document.getElementById('stat-siege').textContent=wins;
+  document.getElementById('stat-niederlagen').textContent=losses;
+  document.getElementById('stat-avg-tore').textContent=avgFor;
+  document.getElementById('stat-avg-gegen').textContent=avgAgainst;
+
+  // Tore pro Spiel Chart
+  const chartData=[
+    {label:'Tore/Spiel',val:avgFor,max:10,color:'var(--accent)'},
+    {label:'Gegentore/Sp.',val:avgAgainst,max:10,color:'var(--red)'},
+    {label:'Torverhältnis',val:totalFor,max:Math.max(totalFor,totalAgainst,1),color:'var(--green)'},
+    {label:'Strafminuten',val:totalStraf,max:Math.max(totalStraf,1),color:'var(--amber)'},
+  ];
+  document.getElementById('tore-chart').innerHTML=chartData.map(d=>`
+    <div class="chart-bar-row">
+      <div class="chart-label">${d.label}</div>
+      <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${Math.round(d.val/d.max*100)}%;background:${d.color}"></div></div>
+      <div class="chart-val">${d.val}</div>
+    </div>`).join('');
+
+  // Spiele Liste
+  document.getElementById('games-list').innerHTML=played.length===0?
+    '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Noch keine Resultate</td></tr>':
+    [...played].reverse().map(g=>{
+      const won=g.heimspiel?g.resultat_heim>g.resultat_gast:g.resultat_gast>g.resultat_heim;
+      const d=new Date(g.datum+'T12:00:00').toLocaleDateString('de-CH',{day:'numeric',month:'short'});
+      return `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${d}</td>
+        <td>${g.heimspiel?'vs.':'@'} <strong>${g.gegner}</strong></td>
+        <td><span style="font-size:10px;padding:2px 7px;border-radius:4px;background:${g.heimspiel?'rgba(77,214,140,.1)':'rgba(91,191,255,.1)'};color:${g.heimspiel?'var(--green)':'var(--blue)'}">${g.heimspiel?'Heim':'Ausw.'}</span></td>
+        <td class="r" style="color:${won?'var(--green)':'var(--red)'}">${g.resultat_heim}:${g.resultat_gast}</td>
+        <td class="r"><span class="win-dot" style="background:${won?'var(--green)':losses?'var(--red)':'var(--amber)'}"></span>${won?'Sieg':'Niederlage'}</td>
+      </tr>`;
+    }).join('');
+
+  // Spieler Scorer
+  const teamScorer={};
+  scorer.filter(s=>players.find(p=>p.id===s.player_id)).forEach(s=>{
+    if(!teamScorer[s.player_id]) teamScorer[s.player_id]={player:s.players,tore:0,assists:0,strafmin:0,spiele:0};
+    teamScorer[s.player_id].tore+=s.tore||0;
+    teamScorer[s.player_id].assists+=s.assists||0;
+    teamScorer[s.player_id].strafmin+=s.strafminuten||0;
+    teamScorer[s.player_id].spiele++;
+  });
+  const sorted=Object.values(teamScorer).sort((a,b)=>(b.tore+b.assists)-(a.tore+a.assists));
+  document.getElementById('scorer-list').innerHTML=sorted.length===0?
+    '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Keine Scorer-Daten</td></tr>':
+    sorted.map((d,i)=>`<tr onclick="location.href='spieler.html?id=${players.find(p=>p.id===Object.keys(teamScorer)[i])?.id||''}'">
+      <td><strong>${d.player?.vorname||''} ${d.player?.nachname||''}</strong><div style="font-size:11px;color:var(--text3)">#${d.player?.nummer||'–'}</div></td>
+      <td class="r" style="color:var(--amber)">${d.tore}</td>
+      <td class="r" style="color:var(--blue)">${d.assists}</td>
+      <td class="r"><strong>${d.tore+d.assists}</strong></td>
+      <td class="r" style="color:var(--text3)">${d.strafmin}'</td>
+    </tr>`).join('');
+}
+
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <button class="back-btn" onclick="history.back()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Zurück
+      </button>
+      <div style="flex:1">
+        <div class="page-title" id="team-name">Team</div>
+        <div class="page-sub" id="team-liga"></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-val" id="stat-gespielt">–</div><div class="stat-label">Gespielt</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--green)" id="stat-siege">–</div><div class="stat-label">Siege</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--red)" id="stat-niederlagen">–</div><div class="stat-label">Niederlagen</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--accent)" id="stat-avg-tore">–</div><div class="stat-label">Tore/Spiel</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--red)" id="stat-avg-gegen">–</div><div class="stat-label">Gegentore/Sp.</div></div>
+      </div>
+      <div class="two-col" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Kennzahlen</span></div>
+          <div id="tore-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Scorer</span></div>
+          <table><thead><tr><th>Spieler</th><th class="r" style="color:var(--amber)">T</th><th class="r" style="color:var(--blue)">A</th><th class="r">Pkt</th><th class="r">Str</th></tr></thead>
+          <tbody id="scorer-list"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Alle Resultate</span></div>
+        <table><thead><tr><th>Datum</th><th>Spiel</th><th>Ort</th><th class="r">Resultat</th><th class="r">Ergebnis</th></tr></thead>
+        <tbody id="games-list"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="nav.js"></script><script>renderNav('spielplan');</script>
+</body></html>

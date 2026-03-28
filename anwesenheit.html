@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anwesenheit — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.ctrl-select{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;cursor:pointer;min-width:180px}
+.ctrl-select:focus{border-color:var(--accent)}
+.ctrl-label{font-size:12px;color:var(--text3);font-weight:500}
+.event-context{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.event-context-title{font-size:14px;font-weight:600}
+.event-context-meta{font-size:12px;color:var(--text2);margin-top:3px}
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat-mini{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;text-align:center}
+.stat-mini-val{font-family:"DM Mono",monospace;font-size:24px;font-weight:400}
+.stat-mini-label{font-size:10px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:"Syne",sans-serif;font-size:14px;font-weight:600}
+/* Anwesenheits-Tabelle */
+.att-table{width:100%;border-collapse:collapse}
+.att-table th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.att-table td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.att-table tr:last-child td{border-bottom:none}
+.att-table tr:hover td{background:rgba(255,255,255,.02)}
+.att-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:12px;font-weight:600;font-family:"DM Sans",sans-serif;transition:all .15s}
+.att-anwesend{background:rgba(77,214,140,.15);border-color:rgba(77,214,140,.35);color:var(--green)}
+.att-abwesend{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.3);color:var(--red)}
+.att-entschuldigt{background:rgba(255,190,71,.1);border-color:rgba(255,190,71,.3);color:var(--amber)}
+.att-offen{background:transparent;border-color:var(--border2);color:var(--text3)}
+.bar-bg{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;width:80px}
+.bar-fill{height:100%;border-radius:2px;background:var(--green);transition:width .4s}
+/* Spieler-Ansicht (eigene An-/Abmeldung) */
+.event-list-item{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px}
+.event-list-item:last-child{border-bottom:none}
+.event-date-box{background:var(--bg3);border-radius:7px;padding:7px 10px;text-align:center;flex-shrink:0;min-width:48px}
+.event-date-day{font-family:"DM Mono",monospace;font-size:20px;font-weight:500;line-height:1}
+.event-date-mon{font-size:10px;color:var(--text3);text-transform:uppercase;margin-top:2px}
+.event-info{flex:1}
+.event-name{font-size:14px;font-weight:500}
+.event-meta2{font-size:12px;color:var(--text2);margin-top:2px}
+.event-participants{font-size:11px;color:var(--text3);margin-top:3px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+const CONFIG=APP_CONFIG;
+let db=null,CLUB_ID="uhc-jonschwil",teams=[],players=[],games=[],events=[],anwesenheit=[];
+let currentUser=null,currentRolle="admin";
+let selTeam="",selTyp="training",selDatum="",selGameId="",selEventId="";
+const MONATE=["Jan","Feb","Mar","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+
+async function initDB(){
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  currentUser=JSON.parse(localStorage.getItem("vipers_user")||"null");
+  currentRolle=currentUser?.rolle||"admin";
+  const[t,p,g,e,a]=await Promise.all([
+    db.from('teams').select("*").eq("aktiv",true).order("name"),
+    db.from('players').select("*").eq("aktiv",true).order("nachname"),
+    db.from('games').select("*,teams(name)").order("datum",{ascending:false}).limit(30),
+    db.from('events').select("*").order("datum",{ascending:false}).limit(20),
+    db.from('anwesenheit').select("*").order("created_at",{ascending:false}),
+  ]);
+  teams=t.data||[];players=p.data||[];games=g.data||[];events=e.data||[];anwesenheit=a.data||[];
+  if(teams.length&&!selTeam)selTeam=teams[0].id;
+  selDatum=new Date().toISOString().split("T")[0];
+  buildControls();
+  if(currentRolle==="spieler")renderSpielersicht();
+  else render();
+}
+
+function buildControls(){
+  // Team-Select
+  const ts=document.getElementById("sel-team");
+  if(ts){ts.innerHTML=teams.map(t=>"<option value='"+t.id+"'>"+t.name.replace("UHC Jonschwil ","")+"</option>").join("");ts.value=selTeam;}
+  // Typ-Select
+  updateEventSelect();
+}
+
+function updateEventSelect(){
+  const es=document.getElementById("sel-event");
+  if(!es)return;
+  selTyp=document.getElementById("sel-typ")?.value||"training";
+  if(selTyp==="spiel"){
+    const teamGames=games.filter(g=>g.team_id===selTeam);
+    es.innerHTML="<option value=''>-- Spiel waehlen --</option>"+teamGames.map(g=>{
+      const d=new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"short",day:"numeric",month:"short"});
+      return "<option value='"+g.id+"'>"+d+" vs. "+g.gegner+"</option>";
+    }).join("");
+    es.style.display="";
+    document.getElementById("sel-datum").style.display="none";
+  } else if(selTyp==="event"){
+    es.innerHTML="<option value=''>-- Event waehlen --</option>"+events.map(ev=>{
+      const d=new Date(ev.datum+"T12:00:00").toLocaleDateString("de-CH",{day:"numeric",month:"short"});
+      return "<option value='"+ev.id+"'>"+d+" "+ev.titel+"</option>";
+    }).join("");
+    es.style.display="";
+    document.getElementById("sel-datum").style.display="none";
+  } else {
+    // Training
+    es.style.display="none";
+    document.getElementById("sel-datum").style.display="";
+  }
+}
+
+function getContextDatum(){
+  if(selTyp==="spiel"){return games.find(g=>g.id===document.getElementById("sel-event")?.value)?.datum||selDatum;}
+  if(selTyp==="event"){return events.find(e=>e.id===document.getElementById("sel-event")?.value)?.datum||selDatum;}
+  return document.getElementById("sel-datum")?.value||selDatum;
+}
+function getContextKey(){
+  if(selTyp==="spiel"){const gid=document.getElementById("sel-event")?.value;return gid||selDatum;}
+  if(selTyp==="event"){const eid=document.getElementById("sel-event")?.value;return eid||selDatum;}
+  return document.getElementById("sel-datum")?.value||selDatum;
+}
+
+function render(){
+  const teamPlayers=players.filter(p=>p.team_id===selTeam);
+  const datum=getContextDatum();
+  const key=getContextKey();
+  // Hole Anwesenheiten für dieses Datum/Spiel/Event
+  const relevant=anwesenheit.filter(a=>{
+    if(selTyp==="spiel")return a.game_id===key&&a.typ==="spiel";
+    if(selTyp==="event")return a.event_id===key&&a.typ==="event";
+    return a.training_datum===key&&a.typ==="training";
+  });
+  const anw=relevant.filter(a=>a.status==="anwesend").length;
+  const abs=relevant.filter(a=>a.status==="abwesend").length;
+  const ent=relevant.filter(a=>a.status==="entschuldigt").length;
+  const off=teamPlayers.length-anw-abs-ent;
+  document.getElementById("s-anwesend").textContent=anw;
+  document.getElementById("s-abwesend").textContent=abs;
+  document.getElementById("s-entschuldigt").textContent=ent;
+  document.getElementById("s-offen").textContent=Math.max(0,off);
+  // Context anzeigen
+  let ctxTitle="Training",ctxMeta="";
+  if(selTyp==="spiel"){const g=games.find(x=>x.id===key);ctxTitle=g?"vs. "+g.gegner+" (Spiel)":"Spiel";ctxMeta=g?new Date(g.datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long"})+" "+( g.anstoss?.slice(0,5)):""}
+  else if(selTyp==="event"){const ev=events.find(x=>x.id===key);ctxTitle=ev?ev.titel+" (Event)":"Event";ctxMeta=ev?new Date(ev.datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long"}):""}
+  else{ctxTitle="Training";ctxMeta=new Date(datum+"T12:00:00").toLocaleDateString("de-CH",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+  document.getElementById("ctx-title").textContent=ctxTitle;
+  document.getElementById("ctx-meta").textContent=ctxMeta+" · "+teamPlayers.length+" Spieler";
+  // Tabelle
+  const tbody=document.getElementById("att-tbody");
+  if(!teamPlayers.length){tbody.innerHTML="<tr><td colspan='4' style='text-align:center;padding:30px;color:var(--text3)'>Keine Spieler in diesem Team.</td></tr>";return;}
+  const allAtt=anwesenheit.filter(a=>teamPlayers.find(p=>p.id===a.player_id));
+  tbody.innerHTML=teamPlayers.map(p=>{
+    const rec=relevant.find(a=>a.player_id===p.id);
+    const st=rec?.status||"offen";
+    const pAll=allAtt.filter(a=>a.player_id===p.id);
+    const pct=pAll.length?Math.round(pAll.filter(a=>a.status==="anwesend").length/pAll.length*100):null;
+    return "<tr><td><div style='font-weight:500'>"+p.vorname+" "+p.nachname+"</div>"
+      +(pct!==null?"<div class='bar-bg'><div class='bar-fill' style='width:"+pct+"%'></div></div><div style='font-size:10px;color:var(--text3)'>"+pct+"% Anwesenheitsquote</div>":"")
+      +"</td>"
+      +"<td style='text-align:center'><button class='att-btn att-"+st+"' onclick='toggleAtt(\""+p.id+"\",\""+key+"\",\""+st+"\")'>"+{anwesend:"✓ Anwesend",abwesend:"✗ Abwesend",entschuldigt:"E Entschuldigt",offen:"? Offen"}[st]+"</button></td>"
+      +"<td style='font-size:11px;color:var(--text3)'>"+(rec?.notiz||"")+"</td>"
+      +"<td>"+(pAll.length+" Eintraege")+"</td></tr>";
+  }).join("");
+}
+
+async function toggleAtt(playerId,key,currentStatus){
+  const order=["offen","anwesend","abwesend","entschuldigt"];
+  const next=order[(order.indexOf(currentStatus)+1)%order.length];
+  const datum=getContextDatum();
+  let insertData={club_id:CLUB_ID,player_id:playerId,team_id:selTeam,typ:selTyp,status:next};
+  if(selTyp==="spiel")insertData.game_id=key;
+  else if(selTyp==="event")insertData.event_id=key;
+  else insertData.training_datum=key;
+  const existing=anwesenheit.find(a=>{
+    if(selTyp==="spiel")return a.player_id===playerId&&a.game_id===key;
+    if(selTyp==="event")return a.player_id===playerId&&a.event_id===key;
+    return a.player_id===playerId&&a.training_datum===key&&a.typ==="training";
+  });
+  if(existing){
+    await db.from("anwesenheit").update({status:next}).eq("id",existing.id);
+    existing.status=next;
+  } else {
+    const{data}=await db.from("anwesenheit").insert([insertData]).select().single();
+    if(data)anwesenheit.push(data);
+  }
+  render();
+}
+
+// Spieler-Ansicht: eigene An-/Abmeldung
+function renderSpielersicht(){
+  document.getElementById("controls-area").style.display="none";
+  document.getElementById("admin-view").style.display="none";
+  document.getElementById("spieler-view").style.display="block";
+  // Eigene Player-ID finden
+  const myPlayerId=players.find(p=>p.user_id===currentUser?.id)?.id;
+  // Kommende Spiele und Trainings
+  const today=new Date().toISOString().split("T")[0];
+  const upcoming=games.filter(g=>g.datum>=today).slice(0,8);
+  const evts=events.filter(e=>e.datum>=today).slice(0,5);
+  const cont=document.getElementById("spieler-events");
+  let html="<div style='font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:14px 18px 8px'>Kommende Spiele & Events</div>";
+  [...upcoming,...evts].sort((a,b)=>a.datum>b.datum?1:-1).slice(0,10).forEach(item=>{
+    const isGame=!!item.gegner;
+    const d=new Date(item.datum+"T12:00:00");
+    const myAtt=anwesenheit.find(a=>a.player_id===myPlayerId&&(isGame?a.game_id===item.id:a.event_id===item.id));
+    const st=myAtt?.status||"offen";
+    // Teilnehmeranzahl
+    const anwCount=anwesenheit.filter(a=>(isGame?a.game_id===item.id:a.event_id===item.id)&&a.status==="anwesend").length;
+    html+="<div class='event-list-item'>"
+      +"<div class='event-date-box'><div class='event-date-day'>"+d.getDate()+"</div><div class='event-date-mon'>"+MONATE[d.getMonth()]+"</div></div>"
+      +"<div class='event-info'>"
+      +"<div class='event-name'>"+(isGame?"vs. "+item.gegner:item.titel)+"</div>"
+      +"<div class='event-meta2'>"+(item.teams?.name?.replace("UHC Jonschwil ","")||"")+(isGame?" · "+(item.heimspiel?"Heimspiel":"Auswaerts"):"")+(item.anstoss?" · "+item.anstoss.slice(0,5):"")+"</div>"
+      +"<div class='event-participants'>"+anwCount+" Angemeldete</div>"
+      +"</div>"
+      +(myPlayerId?"<div style='display:flex;gap:6px'>"
+        +"<button class='att-btn "+(st==="anwesend"?"att-anwesend":"att-offen")+"' onclick='myToggle(\""+item.id+"\",\""+( isGame?"spiel":"event")+"\",\"anwesend\",\""+( isGame?item.team_id:"")+"\")'>"+(st==="anwesend"?"✓ Dabei":"Dabei")+
+        "</button>"
+        +"<button class='att-btn "+(st==="abwesend"?"att-abwesend":"att-offen")+"' onclick='myToggle(\""+item.id+"\",\""+( isGame?"spiel":"event")+"\",\"abwesend\",\""+( isGame?item.team_id:"")+"\")'>"+(st==="abwesend"?"✗ Fehle":"Fehle")+
+        "</button></div>":"<span style='font-size:12px;color:var(--text3)'>Kein Spielerprofil</span>")
+      +"</div>";
+  });
+  cont.innerHTML=html;
+}
+
+async function myToggle(itemId,typ,newStatus,teamId){
+  const myPlayerId=players.find(p=>p.user_id===currentUser?.id)?.id;
+  if(!myPlayerId)return;
+  const existing=anwesenheit.find(a=>a.player_id===myPlayerId&&(typ==="spiel"?a.game_id===itemId:a.event_id===itemId));
+  const insertData={club_id:CLUB_ID,player_id:myPlayerId,typ,status:newStatus,team_id:teamId||null};
+  if(typ==="spiel")insertData.game_id=itemId;else insertData.event_id=itemId;
+  if(existing){
+    const ns=existing.status===newStatus?"offen":newStatus;
+    await db.from("anwesenheit").update({status:ns}).eq("id",existing.id);
+    existing.status=ns;
+  } else {
+    const{data}=await db.from("anwesenheit").insert([insertData]).select().single();
+    if(data)anwesenheit.push(data);
+  }
+  renderSpielersicht();
+}
+
+document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="page-title">Anwesenheit</div><div class="page-sub"><span id="club-name-sub"></span> · Training, Spiele & Events</div></div>
+    </div>
+    <div class="content">
+      <!-- Controls (Admin/Trainer) -->
+      <div class="controls" id="controls-area">
+        <div>
+          <div class="ctrl-label" style="margin-bottom:4px">Team</div>
+          <select class="ctrl-select" id="sel-team" onchange="selTeam=this.value;updateEventSelect();render()"></select>
+        </div>
+        <div>
+          <div class="ctrl-label" style="margin-bottom:4px">Typ</div>
+          <select class="ctrl-select" id="sel-typ" onchange="updateEventSelect();render()">
+            <option value="training">Training</option>
+            <option value="spiel">Spiel</option>
+            <option value="event">Event</option>
+          </select>
+        </div>
+        <div>
+          <div class="ctrl-label" style="margin-bottom:4px">Datum</div>
+          <input type="date" class="ctrl-select" id="sel-datum" onchange="render()">
+        </div>
+        <div id="sel-event-wrap">
+          <div class="ctrl-label" style="margin-bottom:4px">Auswahl</div>
+          <select class="ctrl-select" id="sel-event" style="display:none" onchange="render()"></select>
+        </div>
+      </div>
+
+      <!-- Admin-Ansicht -->
+      <div id="admin-view">
+        <div class="event-context">
+          <div>
+            <div class="event-context-title" id="ctx-title">Training</div>
+            <div class="event-context-meta" id="ctx-meta"></div>
+          </div>
+          <button class="btn btn-accent" style="font-size:12px;padding:7px 14px" onclick="render()">Aktualisieren</button>
+        </div>
+        <div class="stats-bar">
+          <div class="stat-mini"><div class="stat-mini-val" style="color:var(--green)" id="s-anwesend">–</div><div class="stat-mini-label">Anwesend</div></div>
+          <div class="stat-mini"><div class="stat-mini-val" style="color:var(--red)" id="s-abwesend">–</div><div class="stat-mini-label">Abwesend</div></div>
+          <div class="stat-mini"><div class="stat-mini-val" style="color:var(--amber)" id="s-entschuldigt">–</div><div class="stat-mini-label">Entschuldigt</div></div>
+          <div class="stat-mini"><div class="stat-mini-val" style="color:var(--text3)" id="s-offen">–</div><div class="stat-mini-label">Offen</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Spielerliste</span><span style="font-size:11px;color:var(--text3)">Klicken zum Aendern</span></div>
+          <table class="att-table">
+            <thead><tr><th>Spieler</th><th style="text-align:center">Status</th><th>Notiz</th><th>Statistik</th></tr></thead>
+            <tbody id="att-tbody"><tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text3)">Lade...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Spieler-Ansicht -->
+      <div id="spieler-view" style="display:none">
+        <div class="card"><div id="spieler-events"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>document.addEventListener("DOMContentLoaded",()=>{const el=document.getElementById("club-name-sub");if(el)el.textContent=APP_CONFIG.ACTIVE_CLUB.name;});</script>
+<script src="nav.js"></script><script>renderNav("anwesenheit");</script>
+</body></html>

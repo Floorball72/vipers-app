@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventar — Stackflow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+a{text-decoration:none}
+:root{--bg:#0c0d0f;--bg2:#141518;--bg3:#1c1d22;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#eceaf4;--text2:#8f8d9a;--text3:#4e4c58;--accent:#d4f04a;--accent2:#b8d93a;--purple:#9b8fff;--blue:#5bbfff;--green:#4dd68c;--amber:#ffbe47;--red:#ff6b6b;--r:10px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0}
+.logo-name{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;letter-spacing:.1em}
+.nav{padding:10px 8px;flex:1}
+.nav-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .12s;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(212,240,74,.1);color:var(--accent);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.main{flex:1;min-width:0}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.page-title{font-family:"Syne",sans-serif;font-size:22px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;transition:all .15s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#0c0d0f}.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{color:var(--text)}
+.content{padding:24px 28px}
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.stat-val{font-family:"DM Mono",monospace;font-size:26px;font-weight:400}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.inv-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;transition:border-color .15s}
+.inv-card:hover{border-color:var(--border2)}
+.inv-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.inv-meta{font-size:12px;color:var(--text2);margin-bottom:10px}
+.zustand-badge{display:inline-flex;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:8px}
+.zustand-neu{background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2)}
+.zustand-gut{background:rgba(91,191,255,.1);color:var(--blue);border:1px solid rgba(91,191,255,.2)}
+.zustand-gebr{background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2)}
+.zustand-def{background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+.avail-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px}
+.avail-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s}
+.inv-footer{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+/* Ausleihen Tabelle */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:"Syne",sans-serif;font-size:14px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge-bezahlt{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(77,214,140,.1);color:var(--green);border:1px solid rgba(77,214,140,.2);font-weight:600}
+.badge-offen{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,190,71,.1);color:var(--amber);border:1px solid rgba(255,190,71,.2);font-weight:600}
+.badge-ueber{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2);font-weight:600}
+.row-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s}
+tr:hover .row-actions{opacity:1}
+.icon-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.icon-btn:hover{color:var(--text)}.icon-btn.del:hover{color:var(--red);border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+/* Modals */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;margin-bottom:18px}
+.form-grid{display:grid;gap:12px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.empty{text-align:center;padding:40px;color:var(--text3)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+<script src="config.js"></script>
+<script>
+const CONFIG = APP_CONFIG;
+let db=null, CLUB_ID="uhc-jonschwil";
+let inventar=[], ausleihen=[], players=[], activeTab="inventar", editId=null, fotoUrl=null;
+
+async function initDB(){
+  const mod=await import("https://esm.sh/@supabase/supabase-js@2");
+  db=mod.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  CLUB_ID=APP_CONFIG.ACTIVE_CLUB.club_id;
+  await loadAll();
+}
+async function loadAll(){
+  const[inv,aus,pl]=await Promise.all([
+    db.from("inventar").select("*").order("kategorie").order("name"),
+    db.from("inventar_ausleihen").select("*,inventar(name),players(vorname,nachname)").order("ausgegeben_am",{ascending:false}),
+    db.from("players").select("id,vorname,nachname,nummer").eq("aktiv",true).order("nachname"),
+  ]);
+  inventar=inv.data||[]; ausleihen=aus.data||[]; players=pl.data||[];
+  render(); updateStats();
+}
+
+function updateStats(){
+  document.getElementById("s-total").textContent=inventar.length;
+  document.getElementById("s-verf").textContent=inventar.reduce((s,i)=>s+i.anzahl_verfuegbar,0);
+  document.getElementById("s-ausgeliehen").textContent=inventar.reduce((s,i)=>s+(i.anzahl_total-i.anzahl_verfuegbar),0);
+  document.getElementById("s-defekt").textContent=inventar.filter(i=>i.zustand==="defekt").length;
+}
+
+function setTab(tab,el){
+  activeTab=tab;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+  render();
+}
+function render(){
+  if(activeTab==="inventar") renderInventar();
+  else renderAusleihen();
+}
+
+// ── Inventar ─────────────────────────────────────────────────
+function renderInventar(){
+  const cont=document.getElementById("main-content");
+  if(!inventar.length){
+    cont.innerHTML="<div class='empty'><div style='font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px'>Noch kein Inventar erfasst</div><button class='btn btn-accent' onclick='openModal()'>+ Erstes Objekt</button></div>";
+    return;
+  }
+  const cats=[...new Set(inventar.map(i=>i.kategorie||"Sonstiges"))].sort();
+  cont.innerHTML=cats.map(cat=>{
+    const items=inventar.filter(i=>(i.kategorie||"Sonstiges")===cat);
+    const pct=t=>t.anzahl_total?Math.round(t.anzahl_verfuegbar/t.anzahl_total*100):0;
+    const zCls={neu:"zustand-neu",gut:"zustand-gut",gebraucht:"zustand-gebr",defekt:"zustand-def"};
+    const zLbl={neu:"Neu",gut:"Gut",gebraucht:"Gebraucht",defekt:"Defekt"};
+    return "<div style='margin-bottom:20px'>"
+      +"<div style='font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px'>"+cat+"</div>"
+      +"<div class='inv-grid'>"+items.map(item=>{
+        const p=pct(item); const color=p>50?"var(--green)":p>20?"var(--amber)":"var(--red)";
+        return "<div class='inv-card'>"
+          +"<div class='zustand-badge "+(zCls[item.zustand]||"zustand-gut")+"'>"+(zLbl[item.zustand]||item.zustand)+"</div>"
+          +"<div class='inv-name'>"+item.name+"</div>"
+          +"<div class='inv-meta'>"+(item.lagerort?"📦 "+item.lagerort+" · ":"")+(item.anschaffungspreis?"CHF "+parseFloat(item.anschaffungspreis).toFixed(0):"")+"</div>"
+          +"<div style='display:flex;align-items:center;justify-content:space-between'><span style='font-size:12px;color:var(--text2)'>"+item.anzahl_verfuegbar+"/"+item.anzahl_total+" verfügbar</span><span style='font-family:\"DM Mono\",monospace;font-size:12px;color:"+color+"'>"+p+"%</span></div>"
+          +"<div class='avail-bar'><div class='avail-fill' style='width:"+p+"%;background:"+color+"'></div></div>"
+          +"<div class='inv-footer'>"
+          +"<button class='btn btn-ghost' style='flex:1;font-size:11px;padding:5px;justify-content:center' onclick='openAusleiheModal(\""+item.id+"\",\""+item.name.replace(/"/g,'&quot;')+"\")'>Ausleihen</button>"
+          +"<button class='btn btn-ghost' style='font-size:11px;padding:5px 10px' onclick='openEdit(\""+item.id+"\")'>✎</button>"
+          +"<button class='icon-btn del' onclick='deleteItem(\""+item.id+"\")' title='Löschen'><svg width='12' height='12' viewBox='0 0 16 16' fill='none'><path d='M3 5h10M6 5V3h4v2M6 8v4M10 8v4' stroke='currentColor' stroke-width='1.3' stroke-linecap='round'/></svg></button>"
+          +"</div></div>";
+      }).join("")+"</div></div>";
+  }).join("");
+}
+
+// ── Ausleihen ─────────────────────────────────────────────────
+function renderAusleihen(){
+  const cont=document.getElementById("main-content");
+  const heute=new Date().toISOString().split("T")[0];
+  const aktive=ausleihen.filter(a=>!a.zurueckgegeben_am);
+  const vergangen=ausleihen.filter(a=>a.zurueckgegeben_am);
+  
+  let html="<div class='card' style='margin-bottom:16px'><div class='card-header'><span class='card-title'>Aktive Ausleihen ("+aktive.length+")</span></div>";
+  if(!aktive.length){
+    html+="<div class='empty' style='padding:24px'>Keine aktiven Ausleihen</div>";
+  } else {
+    html+="<div style='overflow-x:auto'><table><thead><tr><th>Objekt</th><th>An Spieler</th><th>Seit</th><th>Bis</th><th>Preis</th><th>Bezahlt</th><th>Aktion</th></tr></thead><tbody>";
+    html+=aktive.map(a=>{
+      const ueber=a.zurueck_bis&&a.zurueck_bis<heute;
+      return "<tr>"
+        +"<td style='font-weight:500'>"+(a.inventar?.name||"–")+"</td>"
+        +"<td>"+(a.players?a.players.vorname+" "+a.players.nachname:"Extern: "+(a.notizen||"–"))+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.ausgegeben_am||"–")+"</td>"
+        +"<td style='color:"+(ueber?"var(--red)":"var(--text2)")+";font-size:12px'>"+(a.zurueck_bis||"–")+(ueber?" ⚠":"")+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:12px'>"+(a.mietpreis?("CHF "+parseFloat(a.mietpreis).toFixed(2)):"–")+"</td>"
+        +"<td>"+(a.bezahlt?`<span class='badge-bezahlt'>Bezahlt</span>`:`<button onclick='setBezahlt("${a.id}",${a.mietpreis||0},"${a.inventar?.name||""}")' style='font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(255,190,71,.3);background:rgba(255,190,71,.08);color:var(--amber);cursor:pointer;font-family:"DM Sans",sans-serif'>Als bezahlt markieren</button>`)+"</td>"
+        +"<td><div class='row-actions'><button class='btn btn-ghost' style='font-size:11px;padding:4px 8px' onclick='zurueckgeben(\""+a.id+"\",\""+a.inventar_id+"\")'>Zurück</button></div></td>"
+        +"</tr>";
+    }).join("");
+    html+="</tbody></table></div>";
+  }
+  html+="</div>";
+  
+  if(vergangen.length){
+    html+="<div class='card'><div class='card-header'><span class='card-title'>Abgeschlossene Ausleihen</span></div>"
+      +"<div style='overflow-x:auto'><table><thead><tr><th>Objekt</th><th>Spieler</th><th>Ausgegeben</th><th>Zurück</th><th>Preis</th><th>Status</th></tr></thead><tbody>"
+      +vergangen.slice(0,20).map(a=>"<tr>"
+        +"<td>"+(a.inventar?.name||"–")+"</td>"
+        +"<td style='font-size:12px'>"+(a.players?a.players.vorname+" "+a.players.nachname:(a.notizen||"–"))+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.ausgegeben_am||"–")+"</td>"
+        +"<td style='font-family:\"DM Mono\",monospace;font-size:11px;color:var(--text3)'>"+(a.zurueckgegeben_am||"–")+"</td>"
+        +"<td style='font-size:12px;color:var(--text2)'>"+(a.mietpreis?"CHF "+parseFloat(a.mietpreis).toFixed(2):"–")+"</td>"
+        +"<td>"+(a.bezahlt?"<span class='badge-bezahlt'>Bezahlt</span>":"<span class='badge-offen'>Offen</span>")+"</td>"
+        +"</tr>").join("")
+      +"</tbody></table></div></div>";
+  }
+  cont.innerHTML=html;
+}
+
+// ── Ausleihe Modal ────────────────────────────────────────────
+let ausleiheInventarId="";
+function openAusleiheModal(invId,invName){
+  if(inventar.find(x=>x.id===invId)?.anzahl_verfuegbar<=0){
+    alert("Kein Exemplar verfügbar!"); return;
+  }
+  ausleiheInventarId=invId;
+  document.getElementById("am-titel").textContent="Ausleihe: "+invName;
+  // Spieler-Select befüllen
+  const sel=document.getElementById("am-spieler");
+  sel.innerHTML="<option value=''>– Kein Spieler (Extern) –</option>"
+    +players.map(p=>"<option value='"+p.id+"'>"+p.vorname+" "+p.nachname+(p.nummer?" (#"+p.nummer+")":"")+"</option>").join("");
+  document.getElementById("am-externe").value="";
+  document.getElementById("am-anzahl").value="1";
+  document.getElementById("am-von").value=new Date().toISOString().split("T")[0];
+  document.getElementById("am-bis").value="";
+  document.getElementById("am-preis").value="";
+  document.getElementById("ausleiheModal").classList.add("open");
+}
+function closeAusleiheModal(){document.getElementById("ausleiheModal").classList.remove("open");}
+async function saveAusleihe(){
+  const spielerId=document.getElementById("am-spieler").value||null;
+  const extern=document.getElementById("am-externe").value||null;
+  const von=document.getElementById("am-von").value;
+  const bis=document.getElementById("am-bis").value||null;
+  const preis=parseFloat(document.getElementById("am-preis").value)||null;
+  const anzahl=parseInt(document.getElementById("am-anzahl")?.value)||1;
+  if(!spielerId&&!extern){alert("Bitte Spieler wählen oder externen Namen eingeben.");return;}
+  const item=inventar.find(x=>x.id===ausleiheInventarId);
+  if(anzahl>item.anzahl_verfuegbar){alert("Nur "+item.anzahl_verfuegbar+" Stück verfügbar.");return;}
+  await db.from("inventar").update({anzahl_verfuegbar:item.anzahl_verfuegbar-anzahl}).eq("id",ausleiheInventarId);
+  const {error:_auslErr}=await db.from("inventar_ausleihen").insert([{
+    inventar_id:ausleiheInventarId,
+    player_id:spielerId||null,
+    ausgegeben_am:von,
+    zurueck_bis:bis,
+    mietpreis:preis?preis*anzahl:null,
+    bezahlt:false,
+    notizen:(extern?(extern+" ("+anzahl+"x)"):(anzahl>1?anzahl+"x":null))||null,
+  }]);
+  if(_auslErr){alert("Fehler: "+_auslErr.message);return;}
+  closeAusleiheModal();
+  await loadAll();
+}
+async function zurueckgeben(ausleiheId,invId){
+  if(!confirm("Ausleihe als zurückgegeben markieren?"))return;
+  const heute=new Date().toISOString().split("T")[0];
+  await db.from("inventar_ausleihen").update({zurueckgegeben_am:heute}).eq("id",ausleiheId);
+  const item=inventar.find(x=>x.id===invId);
+  if(item) await db.from("inventar").update({anzahl_verfuegbar:item.anzahl_verfuegbar+1}).eq("id",invId);
+  await loadAll();
+}
+async function setBezahlt(ausleiheId,preis,invName){
+  if(!confirm("Ausleihe als bezahlt markieren"+(preis>0?" (CHF "+parseFloat(preis).toFixed(2)+")?":"?")))return;
+  await db.from("inventar_ausleihen").update({bezahlt:true}).eq("id",ausleiheId);
+  // Betrag dem Gesamtkonto gutschreiben
+  if(preis>0){
+    await db.from("finanzen").insert([{
+      club_id:CLUB_ID,
+      typ:"einnahme",
+      betrag:parseFloat(preis),
+      beschreibung:"Ausleihe: "+invName,
+      kategorie:"Ausleihe",
+      konto:"Allgemein",
+      datum:new Date().toISOString().split("T")[0],
+    }]);
+  }
+  await loadAll();
+  if(preis>0) alert("CHF "+parseFloat(preis).toFixed(2)+" wurde dem Gesamtkonto gutgeschrieben.");
+}
+
+// ── Inventar CRUD ─────────────────────────────────────────────
+function openModal(){
+  editId=null; fotoUrl=null;
+  ["if-name","if-lagerort","if-preis"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("if-kategorie").value="";
+  document.getElementById("if-total").value="1";
+  document.getElementById("if-verf").value="1";
+  document.getElementById("if-zustand").value="gut";
+  document.getElementById("inventarModal").classList.add("open");
+  setTimeout(()=>typeof UPLOAD!=="undefined"&&UPLOAD.render("inv-foto-upload",{label:"Foto hochladen",folder:"inventar",onSuccess:(u)=>{fotoUrl=u;}}),50);
+}
+function openEdit(id){
+  const item=inventar.find(x=>x.id===id);if(!item)return;
+  editId=id; fotoUrl=item.foto_url||null;
+  document.getElementById("if-name").value=item.name||"";
+  document.getElementById("if-kategorie").value=item.kategorie||"";
+  document.getElementById("if-lagerort").value=item.lagerort||"";
+  document.getElementById("if-total").value=item.anzahl_total||1;
+  document.getElementById("if-verf").value=item.anzahl_verfuegbar||1;
+  document.getElementById("if-zustand").value=item.zustand||"gut";
+  document.getElementById("if-preis").value=item.anschaffungspreis||"";
+  document.getElementById("inventarModal").classList.add("open");
+}
+function closeModal(){document.getElementById("inventarModal").classList.remove("open");editId=null;}
+async function saveItem(){
+  const name=document.getElementById("if-name").value.trim();
+  if(!name){alert("Bitte Name eingeben.");return;}
+  const data={
+    name,
+    kategorie:document.getElementById("if-kategorie").value||"Sonstiges",
+    lagerort:document.getElementById("if-lagerort").value||null,
+    anzahl_total:parseInt(document.getElementById("if-total").value)||1,
+    anzahl_verfuegbar:parseInt(document.getElementById("if-verf").value)||1,
+    zustand:document.getElementById("if-zustand").value,
+    anschaffungspreis:parseFloat(document.getElementById("if-preis").value)||null,
+    foto_url:fotoUrl||null,
+  };
+  if(editId){await db.from("inventar").update(data).eq("id",editId);}
+  else{await db.from("inventar").insert([{club_id:CLUB_ID,...data}]);}
+  closeModal();await loadAll();
+}
+async function deleteItem(id){
+  if(!confirm("Objekt löschen?"))return;
+  await db.from("inventar").delete().eq("id",id);
+  await loadAll();
+}
+document.addEventListener("click",e=>{if(e.target.classList.contains("overlay"))e.target.classList.remove("open");});
+initDB().catch(e=>{console.error(e);const el=document.getElementById("main-content");if(el)el.innerHTML="<div style='text-align:center;padding:40px;color:var(--red);font-size:13px'>Fehler: "+e.message+"<br><small>Seite neu laden oder Supabase-Verbindung prüfen.</small></div>";});
+</script>
+
+<div class="shell">
+  <div id="nav-placeholder"></div>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="page-title">Inventar</div><div class="page-sub">Vereinsplattform · Material, Trikots & Ausleihe</div></div>
+      <button class="btn btn-accent" onclick="openModal()">+ Objekt erfassen</button>
+    </div>
+    <div class="content">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Total Objekte</div><div class="stat-val" id="s-total">–</div></div>
+        <div class="stat"><div class="stat-label">Verfügbar</div><div class="stat-val" style="color:var(--green)" id="s-verf">–</div></div>
+        <div class="stat"><div class="stat-label">Ausgeliehen</div><div class="stat-val" style="color:var(--amber)" id="s-ausgeliehen">–</div></div>
+        <div class="stat"><div class="stat-label">Defekt</div><div class="stat-val" style="color:var(--red)" id="s-defekt">–</div></div>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="setTab('inventar',this)">Inventar</div>
+        <div class="tab" onclick="setTab('ausleihen',this)">Ausleihen</div>
+      </div>
+      <div id="main-content"><div style="text-align:center;padding:40px;color:var(--text3)">Lade...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Objekt -->
+<div class="overlay" id="inventarModal">
+  <div class="modal">
+    <div class="modal-title">Objekt erfassen</div>
+    <div class="form-grid">
+      <div class="form-row-2">
+        <div><label class="form-label">Name</label><input class="form-input" type="text" id="if-name" placeholder="z.B. Spielball"></div>
+        <div><label class="form-label">Kategorie</label>
+          <select class="form-input" id="if-kategorie">
+            <option value="">– wählen –</option>
+            <option>Bälle</option><option>Trikots</option><option>Ausrüstung</option><option>Hygiene</option><option>Sonstiges</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div><label class="form-label">Anzahl total</label><input class="form-input" type="number" id="if-total" min="1" value="1"></div>
+        <div><label class="form-label">Verfügbar</label><input class="form-input" type="number" id="if-verf" min="0" value="1"></div>
+        <div><label class="form-label">Zustand</label>
+          <select class="form-input" id="if-zustand">
+            <option value="neu">Neu</option><option value="gut" selected>Gut</option>
+            <option value="gebraucht">Gebraucht</option><option value="defekt">Defekt</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Lagerort</label><input class="form-input" type="text" id="if-lagerort" placeholder="z.B. Gerätekammer"></div>
+        <div><label class="form-label">Preis (CHF)</label><input class="form-input" type="number" id="if-preis" step="0.50"></div>
+      </div>
+      <div><label class="form-label">Foto (optional)</label><div id="inv-foto-upload"></div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveItem()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ausleihe -->
+<div class="overlay" id="ausleiheModal">
+  <div class="modal">
+    <div class="modal-title" id="am-titel">Ausleihe erfassen</div>
+    <div class="form-grid">
+      <div><label class="form-label">An Spieler</label>
+        <select class="form-input" id="am-spieler"></select>
+      </div>
+      <div><label class="form-label">Oder: Externer Name</label>
+        <input class="form-input" type="text" id="am-externe" placeholder="Name (falls kein Spielerprofil)">
+      </div>
+      <div class="form-row-2">
+        <div><label class="form-label">Anzahl</label><input class="form-input" type="number" id="am-anzahl" min="1" value="1"></div>
+      <div><label class="form-label">Ausgegeben am</label><input class="form-input" type="date" id="am-von"></div>
+        <div><label class="form-label">Zurück bis</label><input class="form-input" type="date" id="am-bis"></div>
+      </div>
+      <div><label class="form-label">Mietpreis (CHF, optional)</label>
+        <input class="form-input" type="number" id="am-preis" min="0" step="0.50" placeholder="0.00">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Bei Zahlung wird der Betrag automatisch dem Gesamtkonto gutgeschrieben</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAusleiheModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="saveAusleihe()">Ausleihe erfassen</button>
+    </div>
+  </div>
+</div>
+
+<script src="upload.js"></script>
+<script src="nav.js"></script><script>renderNav("inventar");</script>
+</body></html>
